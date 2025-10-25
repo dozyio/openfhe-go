@@ -1,12 +1,8 @@
-// bridge.h (UPDATED)
 #ifndef BRIDGE_H
 #define BRIDGE_H
 
+#include <stddef.h>
 #include <stdint.h>
-
-// --- Move these definitions OUTSIDE extern "C" ---
-// (This is not strictly necessary for C but good C++ practice)
-// --- End of moved definitions ---
 
 #ifdef __cplusplus
 extern "C" {
@@ -20,6 +16,7 @@ typedef void *CiphertextPtr;
 typedef void *ParamsBFVPtr;
 typedef void *ParamsCKKSPtr;
 typedef void *ParamsBGVPtr;
+typedef void *EvalKeyPtr;
 
 // --- Enums ---
 #define PKE_FEATURE 1
@@ -81,9 +78,43 @@ CiphertextPtr CryptoContext_EvalRotate(CryptoContextPtr cc, CiphertextPtr ct,
                                        int32_t index);
 PlaintextPtr CryptoContext_Decrypt(CryptoContextPtr cc, KeyPairPtr keys,
                                    CiphertextPtr ct);
+
+void FreeString(char *s);
+
+// CryptoContext Serialization
+size_t SerializeCryptoContextToString(CryptoContextPtr cc, char **outString);
+CryptoContextPtr DeserializeCryptoContextFromString(const char *inString);
+
+// KeyPair Serialization (Serialize individual keys)
+size_t SerializePublicKeyToString(KeyPairPtr kp, char **outString);
+KeyPairPtr DeserializePublicKeyFromString(
+    const char *inString); // Returns a KP with only PK set
+
+size_t SerializePrivateKeyToString(KeyPairPtr kp, char **outString);
+KeyPairPtr DeserializePrivateKeyFromString(
+    const char *inString); // Returns a KP with only SK set
+
+// EvalMultKey (Relinearization Key) Serialization - Requires CryptoContext
+size_t SerializeEvalMultKeyToString(
+    CryptoContextPtr cc, const char *keyId,
+    char **outString); // Assuming EvalMultKeyGen was called
+void DeserializeEvalMultKeyFromString(CryptoContextPtr cc,
+                                      const char *inString); // Loads into CC
+
+// Ciphertext Serialization
+size_t SerializeCiphertextToString(CiphertextPtr ct, char **outString);
+CiphertextPtr DeserializeCiphertextFromString(const char *inString);
+
 void DestroyCryptoContext(CryptoContextPtr cc);
 
 // --- KeyPair ---
+// Need functions to access individual keys for deserialization reconstruction
+void *GetPublicKey(KeyPairPtr kp);
+void *GetPrivateKey(KeyPairPtr kp);
+KeyPairPtr
+NewKeyPair(); // Function to create an empty KeyPair for reconstruction
+void SetPublicKey(KeyPairPtr kp, void *pk);
+void SetPrivateKey(KeyPairPtr kp, void *sk);
 void DestroyKeyPair(KeyPairPtr kp);
 
 // --- Plaintext ---

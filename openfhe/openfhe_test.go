@@ -1,18 +1,11 @@
 package openfhe
 
-/*
-#cgo CPPFLAGS: -I${SRCDIR}/../openfhe-install/include/openfhe -I${SRCDIR}/../openfhe-install/include/openfhe/core -I${SRCDIR}/../openfhe-install/include/openfhe/pke -I${SRCDIR}/../openfhe-install/include/openfhe/binfhe -I${SRCDIR}/../openfhe-install/include/openfhe/cereal
-#cgo CXXFLAGS: -std=c++17
-#cgo LDFLAGS: ${SRCDIR}/../openfhe-install/lib/libOPENFHEpke_static.a ${SRCDIR}/../openfhe-install/lib/libOPENFHEcore_static.a ${SRCDIR}/../openfhe-install/lib/libOPENFHEbinfhe_static.a -lc++ -lm
-#include <stdint.h>
-#include "bridge.h"
-*/
 import (
 	"math"
 	"testing"
 )
 
-// Helper to check if two int64 slices are equal
+// --- Helper Functions ---
 func slicesEqual(a, b []int64) bool {
 	if len(a) != len(b) {
 		return false
@@ -25,7 +18,6 @@ func slicesEqual(a, b []int64) bool {
 	return true
 }
 
-// Helper to check if two float64 slices are approximately equal
 func slicesApproxEqual(a, b []float64, tolerance float64) bool {
 	if len(a) != len(b) {
 		return false
@@ -38,73 +30,36 @@ func slicesApproxEqual(a, b []float64, tolerance float64) bool {
 	return true
 }
 
-func TestSimpleIntegers(t *testing.T) {
-	t.Log("--- Go simple-integers (BFV) test starting ---")
-
-	// 1. Set up parameters
+// Helper to set up a basic BFV context and keys for integer tests
+func setupBFVContextAndKeys(t *testing.T) (*CryptoContext, *KeyPair) {
 	parameters := NewParamsBFVrns()
 	parameters.SetPlaintextModulus(65537)
 	parameters.SetMultiplicativeDepth(2)
-	t.Log("Parameters set.")
-
-	// 2. Generate CryptoContext
 	cc := NewCryptoContextBFV(parameters)
 	cc.Enable(PKE)
 	cc.Enable(KEYSWITCH)
 	cc.Enable(LEVELEDSHE)
-	t.Log("CryptoContext generated.")
-
-	// 3. Key Generation
 	keys := cc.KeyGen()
 	cc.EvalMultKeyGen(keys)
-	cc.EvalRotateKeyGen(keys, []int32{1, -2})
-	t.Log("Keys generated.")
-
-	// 4. Encoding and Encryption
-	vectorOfInts := []int64{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12}
-	plaintext := cc.MakePackedPlaintext(vectorOfInts)
-	ciphertext := cc.Encrypt(keys, plaintext)
-	t.Log("Encryption complete.")
-
-	// 5. Homomorphic Operations
-	ciphertext_add := cc.EvalAdd(ciphertext, ciphertext)
-	ciphertext_mul := cc.EvalMult(ciphertext, ciphertext)
-	ciphertext_rot1 := cc.EvalRotate(ciphertext, 1)
-	ciphertext_rot2 := cc.EvalRotate(ciphertext, -2)
-	t.Log("Homomorphic operations complete.")
-
-	// 6. Decryption
-	plaintext_dec_add := cc.Decrypt(keys, ciphertext_add)
-	plaintext_dec_mul := cc.Decrypt(keys, ciphertext_mul)
-	plaintext_dec_rot1 := cc.Decrypt(keys, ciphertext_rot1)
-	plaintext_dec_rot2 := cc.Decrypt(keys, ciphertext_rot2)
-	t.Log("Decryption complete.")
-
-	// 7. Check results
-	// Note: We only check the first 12 slots, as the rest are 0s
-	addExpected := []int64{2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24}
-	mulExpected := []int64{1, 4, 9, 16, 25, 36, 49, 64, 81, 100, 121, 144}
-	rot1Expected := []int64{2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 0}
-	rot2Expected := []int64{0, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10} // Corrected based on your last run
-
-	if !slicesEqual(plaintext_dec_add.GetPackedValue()[:12], addExpected) {
-		t.Errorf("Add failed. Expected %v, Got %v", addExpected, plaintext_dec_add.GetPackedValue()[:12])
-	}
-	if !slicesEqual(plaintext_dec_mul.GetPackedValue()[:12], mulExpected) {
-		t.Errorf("Mult failed. Expected %v, Got %v", mulExpected, plaintext_dec_mul.GetPackedValue()[:12])
-	}
-	if !slicesEqual(plaintext_dec_rot1.GetPackedValue()[:12], rot1Expected) {
-		t.Errorf("Rotate 1 failed. Expected %v, Got %v", rot1Expected, plaintext_dec_rot1.GetPackedValue()[:12])
-	}
-	if !slicesEqual(plaintext_dec_rot2.GetPackedValue()[:12], rot2Expected) {
-		t.Errorf("Rotate -2 failed. Expected %v, Got %v", rot2Expected, plaintext_dec_rot2.GetPackedValue()[:12])
-	}
+	return cc, keys
 }
 
-func TestSimpleRealNumbers(t *testing.T) {
-	t.Log("--- Go simple-real-numbers (CKKS) test starting ---")
+// Helper to set up a basic BGV context and keys for integer tests
+func setupBGVContextAndKeys(t *testing.T) (*CryptoContext, *KeyPair) {
+	parameters := NewParamsBGVrns()
+	parameters.SetPlaintextModulus(65537)
+	parameters.SetMultiplicativeDepth(2)
+	cc := NewCryptoContextBGV(parameters)
+	cc.Enable(PKE)
+	cc.Enable(KEYSWITCH)
+	cc.Enable(LEVELEDSHE)
+	keys := cc.KeyGen()
+	cc.EvalMultKeyGen(keys)
+	return cc, keys
+}
 
-	// 1. Set up parameters
+// Helper to set up a basic CKKS context and keys for real number tests
+func setupCKKSContextAndKeys(t *testing.T) (*CryptoContext, *KeyPair) {
 	scalingModSize := 50
 	batchSize := 8
 	multDepth := 1
@@ -113,185 +68,332 @@ func TestSimpleRealNumbers(t *testing.T) {
 	parameters.SetMultiplicativeDepth(multDepth)
 	parameters.SetScalingModSize(scalingModSize)
 	parameters.SetBatchSize(batchSize)
-	t.Log("Parameters set.")
-
-	// 2. Generate CryptoContext
 	cc := NewCryptoContextCKKS(parameters)
 	cc.Enable(PKE)
 	cc.Enable(KEYSWITCH)
 	cc.Enable(LEVELEDSHE)
-	t.Log("CryptoContext generated.")
-
-	// 3. Key Generation
 	keys := cc.KeyGen()
 	cc.EvalMultKeyGen(keys)
-	t.Log("Keys generated.")
+	return cc, keys
+}
 
-	// 4. Encoding and Encryption
-	vectorOfDoubles := []float64{1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0}
-	plaintext := cc.MakeCKKSPackedPlaintext(vectorOfDoubles)
+// --- BFV Tests ---
+
+func TestBFVEncryptDecryptPacked(t *testing.T) {
+	cc, keys := setupBFVContextAndKeys(t)
+	vectorOfInts := []int64{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12}
+	plaintext := cc.MakePackedPlaintext(vectorOfInts)
 	ciphertext := cc.Encrypt(keys, plaintext)
-	t.Log("Encryption complete.")
+	plaintextDec := cc.Decrypt(keys, ciphertext)
 
-	// 5. Homomorphic Operations
-	ciphertext_add := cc.EvalAdd(ciphertext, ciphertext)
-	ciphertext_sub := cc.EvalSub(ciphertext, ciphertext)
-	ciphertext_mul := cc.EvalMult(ciphertext, ciphertext)
-	ciphertext_mul_rescaled := cc.Rescale(ciphertext_mul)
-	t.Log("Homomorphic operations complete.")
-
-	// 6. Decryption
-	plaintext_dec_add := cc.Decrypt(keys, ciphertext_add)
-	plaintext_dec_sub := cc.Decrypt(keys, ciphertext_sub)
-	plaintext_dec_mul := cc.Decrypt(keys, ciphertext_mul_rescaled)
-	t.Log("Decryption complete.")
-
-	// 7. Check results
-	addExpected := []float64{2.0, 4.0, 6.0, 8.0, 10.0, 12.0, 14.0, 16.0}
-	subExpected := []float64{0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0}
-	mulExpected := []float64{1.0, 4.0, 9.0, 16.0, 25.0, 36.0, 49.0, 64.0}
-	tolerance := 0.0001 // CKKS is approximate
-
-	if !slicesApproxEqual(plaintext_dec_add.GetRealPackedValue()[:batchSize], addExpected, tolerance) {
-		t.Errorf("Add failed. Expected ~%v, Got %v", addExpected, plaintext_dec_add.GetRealPackedValue()[:batchSize])
-	}
-	if !slicesApproxEqual(plaintext_dec_sub.GetRealPackedValue()[:batchSize], subExpected, tolerance) {
-		t.Errorf("Sub failed. Expected ~%v, Got %v", subExpected, plaintext_dec_sub.GetRealPackedValue()[:batchSize])
-	}
-	if !slicesApproxEqual(plaintext_dec_mul.GetRealPackedValue()[:batchSize], mulExpected, tolerance) {
-		t.Errorf("Mult failed. Expected ~%v, Got %v", mulExpected, plaintext_dec_mul.GetRealPackedValue()[:batchSize])
+	vecLen := len(vectorOfInts)
+	if !slicesEqual(plaintextDec.GetPackedValue()[:vecLen], vectorOfInts) {
+		t.Errorf("BFV Encrypt/Decrypt mismatch. Expected %v, Got %v", vectorOfInts, plaintextDec.GetPackedValue()[:vecLen])
 	}
 }
 
-func TestSimpleIntegersBGVrns(t *testing.T) {
-	t.Log("--- Go simple-integers-bgvrns test starting ---")
+func TestBFVPackedAdd(t *testing.T) {
+	cc, keys := setupBFVContextAndKeys(t)
+	vectorOfInts := []int64{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12}
+	plaintext := cc.MakePackedPlaintext(vectorOfInts)
+	ciphertext := cc.Encrypt(keys, plaintext)
+	ctAdd := cc.EvalAdd(ciphertext, ciphertext)
+	ptAdd := cc.Decrypt(keys, ctAdd)
 
-	// 1. Set CryptoContext Parameters
-	parameters := NewParamsBGVrns() // Use BGV Params
-	parameters.SetPlaintextModulus(65537)
-	parameters.SetMultiplicativeDepth(2)
-	t.Log("Parameters set.")
+	vecLen := len(vectorOfInts)
+	addExpected := []int64{2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24}
+	if !slicesEqual(ptAdd.GetPackedValue()[:vecLen], addExpected) {
+		t.Errorf("BFV Packed Add failed. Expected %v, Got %v", addExpected, ptAdd.GetPackedValue()[:vecLen])
+	}
+}
 
-	// 2. Generate CryptoContext
-	cc := NewCryptoContextBGV(parameters) // Use BGV Context constructor
-	cc.Enable(PKE)
-	cc.Enable(KEYSWITCH)
-	cc.Enable(LEVELEDSHE)
-	t.Log("CryptoContext generated.")
+func TestBFVPackedMult(t *testing.T) {
+	cc, keys := setupBFVContextAndKeys(t)
+	vectorOfInts := []int64{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12}
+	plaintext := cc.MakePackedPlaintext(vectorOfInts)
+	ciphertext := cc.Encrypt(keys, plaintext)
+	ctMult := cc.EvalMult(ciphertext, ciphertext)
+	ptMult := cc.Decrypt(keys, ctMult)
 
-	// 3. Key Generation
-	keyPair := cc.KeyGen()
-	cc.EvalMultKeyGen(keyPair)
-	// Rotation keys needed for this test
-	rotationIndices := []int32{1, 2, -1, -2}
-	cc.EvalRotateKeyGen(keyPair, rotationIndices)
-	t.Log("Keys generated.")
+	vecLen := len(vectorOfInts)
+	mulExpected := []int64{1, 4, 9, 16, 25, 36, 49, 64, 81, 100, 121, 144}
+	if !slicesEqual(ptMult.GetPackedValue()[:vecLen], mulExpected) {
+		t.Errorf("BFV Packed Mult failed. Expected %v, Got %v", mulExpected, ptMult.GetPackedValue()[:vecLen])
+	}
+}
 
-	// 4. Encoding and Encryption
-	vectorOfInts1 := []int64{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12}
-	plaintext1 := cc.MakePackedPlaintext(vectorOfInts1)
+func TestBFVPackedRotate(t *testing.T) {
+	cc, keys := setupBFVContextAndKeys(t)
+	// Rotation keys needed for specific indices
+	rotIndices := []int32{1, -2}
+	cc.EvalRotateKeyGen(keys, rotIndices)
 
-	vectorOfInts2 := []int64{3, 2, 1, 4, 5, 6, 7, 8, 9, 10, 11, 12}
-	plaintext2 := cc.MakePackedPlaintext(vectorOfInts2)
+	vectorOfInts := []int64{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12}
+	plaintext := cc.MakePackedPlaintext(vectorOfInts)
+	ciphertext := cc.Encrypt(keys, plaintext)
 
-	vectorOfInts3 := []int64{1, 2, 5, 2, 5, 6, 7, 8, 9, 10, 11, 12}
-	plaintext3 := cc.MakePackedPlaintext(vectorOfInts3)
+	ctRot1 := cc.EvalRotate(ciphertext, 1)
+	ptRot1 := cc.Decrypt(keys, ctRot1)
+	ctRotNeg2 := cc.EvalRotate(ciphertext, -2)
+	ptRotNeg2 := cc.Decrypt(keys, ctRotNeg2)
 
-	ciphertext1 := cc.Encrypt(keyPair, plaintext1)
-	ciphertext2 := cc.Encrypt(keyPair, plaintext2)
-	ciphertext3 := cc.Encrypt(keyPair, plaintext3)
-	t.Log("Encryption complete.")
+	vecLen := len(vectorOfInts)
+	// Adjust expected results based on packed rotation behavior
+	rot1Expected := []int64{2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 0}
+	rotNeg2Expected := []int64{0, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
 
-	// 5. Evaluation
-	ciphertextAdd12 := cc.EvalAdd(ciphertext1, ciphertext2)
-	ciphertextAddResult := cc.EvalAdd(ciphertextAdd12, ciphertext3)
+	ptRot1.SetLength(vecLen) // Set length for correct comparison
+	ptRotNeg2.SetLength(vecLen)
 
-	ciphertextMult12 := cc.EvalMult(ciphertext1, ciphertext2)
-	ciphertextMultResult := cc.EvalMult(ciphertextMult12, ciphertext3)
+	if !slicesEqual(ptRot1.GetPackedValue(), rot1Expected) {
+		t.Errorf("BFV Rotate(1) failed. Expected %v, Got %v", rot1Expected, ptRot1.GetPackedValue())
+	}
+	if !slicesEqual(ptRotNeg2.GetPackedValue(), rotNeg2Expected) {
+		t.Errorf("BFV Rotate(-2) failed. Expected %v, Got %v", rotNeg2Expected, ptRotNeg2.GetPackedValue())
+	}
+}
 
-	ciphertextRot1 := cc.EvalRotate(ciphertext1, 1)
-	ciphertextRot2 := cc.EvalRotate(ciphertext1, 2)
-	ciphertextRotNeg1 := cc.EvalRotate(ciphertext1, -1)
-	ciphertextRotNeg2 := cc.EvalRotate(ciphertext1, -2)
-	t.Log("Homomorphic operations complete.")
+// --- BGV Tests ---
 
-	// 6. Decryption
-	plaintextAddResult := cc.Decrypt(keyPair, ciphertextAddResult)
-	plaintextMultResult := cc.Decrypt(keyPair, ciphertextMultResult)
-	plaintextRot1 := cc.Decrypt(keyPair, ciphertextRot1)
-	plaintextRot2 := cc.Decrypt(keyPair, ciphertextRot2)
-	plaintextRotNeg1 := cc.Decrypt(keyPair, ciphertextRotNeg1)
-	plaintextRotNeg2 := cc.Decrypt(keyPair, ciphertextRotNeg2)
-	t.Log("Decryption complete.")
+func TestBGVEncryptDecryptPacked(t *testing.T) {
+	cc, keys := setupBGVContextAndKeys(t)
+	vectorOfInts := []int64{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12}
+	plaintext := cc.MakePackedPlaintext(vectorOfInts)
+	ciphertext := cc.Encrypt(keys, plaintext)
+	plaintextDec := cc.Decrypt(keys, ciphertext)
 
-	// 7. Check results
-	vecLen := len(vectorOfInts1)
-	// Calculate expected values
+	vecLen := len(vectorOfInts)
+	if !slicesEqual(plaintextDec.GetPackedValue()[:vecLen], vectorOfInts) {
+		t.Errorf("BGV Encrypt/Decrypt mismatch. Expected %v, Got %v", vectorOfInts, plaintextDec.GetPackedValue()[:vecLen])
+	}
+}
+
+func TestBGVPackedAdd(t *testing.T) {
+	cc, keys := setupBGVContextAndKeys(t)
+	v1 := []int64{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12}
+	v2 := []int64{3, 2, 1, 4, 5, 6, 7, 8, 9, 10, 11, 12}
+	v3 := []int64{1, 2, 5, 2, 5, 6, 7, 8, 9, 10, 11, 12}
+	pt1 := cc.MakePackedPlaintext(v1)
+	pt2 := cc.MakePackedPlaintext(v2)
+	pt3 := cc.MakePackedPlaintext(v3)
+	ct1 := cc.Encrypt(keys, pt1)
+	ct2 := cc.Encrypt(keys, pt2)
+	ct3 := cc.Encrypt(keys, pt3)
+
+	ctAdd12 := cc.EvalAdd(ct1, ct2)
+	ctAddResult := cc.EvalAdd(ctAdd12, ct3)
+	ptAddResult := cc.Decrypt(keys, ctAddResult)
+
+	vecLen := len(v1)
 	addExpected := make([]int64, vecLen)
-	mulExpected := make([]int64, vecLen)
-	rot1Expected := make([]int64, vecLen)
-	rot2Expected := make([]int64, vecLen)
-	rotNeg1Expected := make([]int64, vecLen)
-	rotNeg2Expected := make([]int64, vecLen)
-
-	ptMod := int64(65537) // Plaintext modulus used
-
-	// Correctly calculate expected addition and multiplication
+	ptMod := int64(65537)
 	for i := 0; i < vecLen; i++ {
-		addExpected[i] = (vectorOfInts1[i] + vectorOfInts2[i] + vectorOfInts3[i]) % ptMod
-		mulExpected[i] = (vectorOfInts1[i] * vectorOfInts2[i] * vectorOfInts3[i]) % ptMod
+		addExpected[i] = (v1[i] + v2[i] + v3[i]) % ptMod
 	}
 
-	// Calculate expected rotations (handle wrap-around/zero padding) - keep corrected logic from previous step
-	// Rotate(1) - Left shift by 1
-	for i := 0; i < vecLen-1; i++ {
-		rot1Expected[i] = vectorOfInts1[i+1]
+	if !slicesEqual(ptAddResult.GetPackedValue()[:vecLen], addExpected) {
+		t.Errorf("BGV Packed Add failed. Expected %v, Got %v", addExpected, ptAddResult.GetPackedValue()[:vecLen])
 	}
-	rot1Expected[vecLen-1] = 0 // Zero padding
+}
 
-	// Rotate(2) - Left shift by 2
-	for i := 0; i < vecLen-2; i++ {
-		rot2Expected[i] = vectorOfInts1[i+2]
-	}
-	rot2Expected[vecLen-2], rot2Expected[vecLen-1] = 0, 0 // Zero padding
+func TestBGVPackedMult(t *testing.T) {
+	cc, keys := setupBGVContextAndKeys(t)
+	v1 := []int64{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12}
+	v2 := []int64{3, 2, 1, 4, 5, 6, 7, 8, 9, 10, 11, 12}
+	v3 := []int64{1, 2, 5, 2, 5, 6, 7, 8, 9, 10, 11, 12}
+	pt1 := cc.MakePackedPlaintext(v1)
+	pt2 := cc.MakePackedPlaintext(v2)
+	pt3 := cc.MakePackedPlaintext(v3)
+	ct1 := cc.Encrypt(keys, pt1)
+	ct2 := cc.Encrypt(keys, pt2)
+	ct3 := cc.Encrypt(keys, pt3)
 
-	// Rotate(-1) - Right shift by 1
-	rotNeg1Expected[0] = 0 // Zero padding
-	for i := 1; i < vecLen; i++ {
-		rotNeg1Expected[i] = vectorOfInts1[i-1]
+	ctMult12 := cc.EvalMult(ct1, ct2)
+	ctMultResult := cc.EvalMult(ctMult12, ct3)
+	ptMultResult := cc.Decrypt(keys, ctMultResult)
+
+	vecLen := len(v1)
+	mulExpected := make([]int64, vecLen)
+	ptMod := int64(65537)
+	for i := 0; i < vecLen; i++ {
+		mulExpected[i] = (v1[i] * v2[i] * v3[i]) % ptMod
 	}
 
-	// Rotate(-2) - Right shift by 2
-	rotNeg2Expected[0], rotNeg2Expected[1] = 0, 0 // Zero padding
-	for i := 2; i < vecLen; i++ {
-		rotNeg2Expected[i] = vectorOfInts1[i-2]
+	if !slicesEqual(ptMultResult.GetPackedValue()[:vecLen], mulExpected) {
+		t.Errorf("BGV Packed Mult failed. Expected %v, Got %v", mulExpected, ptMultResult.GetPackedValue()[:vecLen])
+	}
+}
+
+func TestBGVPackedRotate(t *testing.T) {
+	cc, keys := setupBGVContextAndKeys(t)
+	// Rotation keys needed for specific indices
+	rotIndices := []int32{1, 2, -1, -2}
+	cc.EvalRotateKeyGen(keys, rotIndices)
+
+	vectorOfInts := []int64{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12}
+	plaintext := cc.MakePackedPlaintext(vectorOfInts)
+	ciphertext := cc.Encrypt(keys, plaintext)
+
+	ctRot1 := cc.EvalRotate(ciphertext, 1)
+	ptRot1 := cc.Decrypt(keys, ctRot1)
+	ctRot2 := cc.EvalRotate(ciphertext, 2)
+	ptRot2 := cc.Decrypt(keys, ctRot2)
+	ctRotNeg1 := cc.EvalRotate(ciphertext, -1)
+	ptRotNeg1 := cc.Decrypt(keys, ctRotNeg1)
+	ctRotNeg2 := cc.EvalRotate(ciphertext, -2)
+	ptRotNeg2 := cc.Decrypt(keys, ctRotNeg2)
+
+	vecLen := len(vectorOfInts)
+	rot1Expected := []int64{2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 0}
+	rot2Expected := []int64{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 0, 0}
+	rotNeg1Expected := []int64{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11}
+	rotNeg2Expected := []int64{0, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
+
+	ptRot1.SetLength(vecLen)
+	ptRot2.SetLength(vecLen)
+	ptRotNeg1.SetLength(vecLen)
+	ptRotNeg2.SetLength(vecLen)
+
+	if !slicesEqual(ptRot1.GetPackedValue(), rot1Expected) {
+		t.Errorf("BGV Rotate(1) failed. Expected %v, Got %v", rot1Expected, ptRot1.GetPackedValue())
+	}
+	if !slicesEqual(ptRot2.GetPackedValue(), rot2Expected) {
+		t.Errorf("BGV Rotate(2) failed. Expected %v, Got %v", rot2Expected, ptRot2.GetPackedValue())
+	}
+	if !slicesEqual(ptRotNeg1.GetPackedValue(), rotNeg1Expected) {
+		t.Errorf("BGV Rotate(-1) failed. Expected %v, Got %v", rotNeg1Expected, ptRotNeg1.GetPackedValue())
+	}
+	if !slicesEqual(ptRotNeg2.GetPackedValue(), rotNeg2Expected) {
+		t.Errorf("BGV Rotate(-2) failed. Expected %v, Got %v", rotNeg2Expected, ptRotNeg2.GetPackedValue())
+	}
+}
+
+// --- CKKS Tests ---
+
+func TestCKKSEncryptDecryptPacked(t *testing.T) {
+	cc, keys := setupCKKSContextAndKeys(t)
+	vectorOfDoubles := []float64{1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0}
+	plaintext := cc.MakeCKKSPackedPlaintext(vectorOfDoubles)
+	ciphertext := cc.Encrypt(keys, plaintext)
+	plaintextDec := cc.Decrypt(keys, ciphertext)
+
+	batchSize := len(vectorOfDoubles) // Assuming batchSize matches vector length
+	tolerance := 0.0001
+	if !slicesApproxEqual(plaintextDec.GetRealPackedValue()[:batchSize], vectorOfDoubles, tolerance) {
+		t.Errorf("CKKS Encrypt/Decrypt mismatch. Expected ~%v, Got %v", vectorOfDoubles, plaintextDec.GetRealPackedValue()[:batchSize])
+	}
+}
+
+func TestCKKSPackedAdd(t *testing.T) {
+	cc, keys := setupCKKSContextAndKeys(t)
+	vectorOfDoubles := []float64{1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0}
+	plaintext := cc.MakeCKKSPackedPlaintext(vectorOfDoubles)
+	ciphertext := cc.Encrypt(keys, plaintext)
+	ctAdd := cc.EvalAdd(ciphertext, ciphertext)
+	ptAdd := cc.Decrypt(keys, ctAdd)
+
+	batchSize := len(vectorOfDoubles)
+	addExpected := []float64{2.0, 4.0, 6.0, 8.0, 10.0, 12.0, 14.0, 16.0}
+	tolerance := 0.0001
+	if !slicesApproxEqual(ptAdd.GetRealPackedValue()[:batchSize], addExpected, tolerance) {
+		t.Errorf("CKKS Packed Add failed. Expected ~%v, Got %v", addExpected, ptAdd.GetRealPackedValue()[:batchSize])
+	}
+}
+
+func TestCKKSPackedSub(t *testing.T) {
+	cc, keys := setupCKKSContextAndKeys(t)
+	vectorOfDoubles := []float64{1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0}
+	plaintext := cc.MakeCKKSPackedPlaintext(vectorOfDoubles)
+	ciphertext := cc.Encrypt(keys, plaintext)
+	ctSub := cc.EvalSub(ciphertext, ciphertext)
+	ptSub := cc.Decrypt(keys, ctSub)
+
+	batchSize := len(vectorOfDoubles)
+	subExpected := []float64{0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0}
+	tolerance := 0.0001
+	if !slicesApproxEqual(ptSub.GetRealPackedValue()[:batchSize], subExpected, tolerance) {
+		t.Errorf("CKKS Packed Sub failed. Expected ~%v, Got %v", subExpected, ptSub.GetRealPackedValue()[:batchSize])
+	}
+}
+
+func TestCKKSPackedMult(t *testing.T) {
+	cc, keys := setupCKKSContextAndKeys(t)
+	vectorOfDoubles := []float64{1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0}
+	plaintext := cc.MakeCKKSPackedPlaintext(vectorOfDoubles)
+	ciphertext := cc.Encrypt(keys, plaintext)
+	ctMult := cc.EvalMult(ciphertext, ciphertext)
+	ctMultRescaled := cc.Rescale(ctMult) // Rescale needed after multiplication
+	ptMult := cc.Decrypt(keys, ctMultRescaled)
+
+	batchSize := len(vectorOfDoubles)
+	mulExpected := []float64{1.0, 4.0, 9.0, 16.0, 25.0, 36.0, 49.0, 64.0}
+	tolerance := 0.0001
+	if !slicesApproxEqual(ptMult.GetRealPackedValue()[:batchSize], mulExpected, tolerance) {
+		t.Errorf("CKKS Packed Mult failed. Expected ~%v, Got %v", mulExpected, ptMult.GetRealPackedValue()[:batchSize])
+	}
+}
+
+// --- Serialization Tests ---
+
+func TestSerializationRoundTrip(t *testing.T) {
+	// 1. Setup Original
+	ccOrig, keysOrig := setupBFVContextAndKeys(t)
+	vectorOfInts := []int64{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12}
+	plaintextOrig := ccOrig.MakePackedPlaintext(vectorOfInts)
+	ciphertextOrig := ccOrig.Encrypt(keysOrig, plaintextOrig)
+
+	// 2. Serialize
+	ccSerial, err := SerializeCryptoContextToString(ccOrig)
+	if err != nil {
+		t.Fatalf("CryptoContext serialization failed: %v", err)
+	}
+	pkSerial, err := SerializePublicKeyToString(keysOrig)
+	if err != nil {
+		t.Fatalf("PublicKey serialization failed: %v", err)
+	}
+	skSerial, err := SerializePrivateKeyToString(keysOrig)
+	if err != nil {
+		t.Fatalf("PrivateKey serialization failed: %v", err)
+	}
+	ctSerial, err := SerializeCiphertextToString(ciphertextOrig)
+	if err != nil {
+		t.Fatalf("Ciphertext serialization failed: %v", err)
 	}
 
-	// Set length before comparison
-	plaintextRot1.SetLength(vecLen)
-	plaintextRot2.SetLength(vecLen)
-	plaintextRotNeg1.SetLength(vecLen)
-	plaintextRotNeg2.SetLength(vecLen)
+	// Nullify originals
+	ccOrig = nil
+	keysOrig = nil
+	ciphertextOrig = nil
 
-	if !slicesEqual(plaintextAddResult.GetPackedValue()[:vecLen], addExpected) {
-		t.Errorf("BGV Add failed. Expected %v, Got %v", addExpected, plaintextAddResult.GetPackedValue()[:vecLen])
+	// 3. Deserialize
+	ccLoaded := DeserializeCryptoContextFromString(ccSerial)
+	if ccLoaded == nil {
+		t.Fatalf("CryptoContext deserialization failed")
 	}
-	if !slicesEqual(plaintextAddResult.GetPackedValue()[:vecLen], addExpected) {
-		t.Errorf("BGV Add failed. Expected %v, Got %v", addExpected, plaintextAddResult.GetPackedValue()[:vecLen])
+	kpPublic := DeserializePublicKeyFromString(pkSerial)
+	if kpPublic == nil {
+		t.Fatalf("PublicKey deserialization failed")
 	}
-	if !slicesEqual(plaintextMultResult.GetPackedValue()[:vecLen], mulExpected) {
-		t.Errorf("BGV Mult failed. Expected %v, Got %v", mulExpected, plaintextMultResult.GetPackedValue()[:vecLen])
+	kpPrivate := DeserializePrivateKeyFromString(skSerial)
+	if kpPrivate == nil {
+		t.Fatalf("PrivateKey deserialization failed")
 	}
-	if !slicesEqual(plaintextRot1.GetPackedValue(), rot1Expected) {
-		t.Errorf("BGV Rotate(1) failed. Expected %v, Got %v", rot1Expected, plaintextRot1.GetPackedValue())
+	keysLoaded := NewKeyPair()
+	keysLoaded.SetPublicKey(kpPublic.GetPublicKey())
+	keysLoaded.SetPrivateKey(kpPrivate.GetPrivateKey())
+	ctLoaded := DeserializeCiphertextFromString(ctSerial)
+	if ctLoaded == nil {
+		t.Fatalf("Ciphertext deserialization failed")
 	}
-	if !slicesEqual(plaintextRot2.GetPackedValue(), rot2Expected) {
-		t.Errorf("BGV Rotate(2) failed. Expected %v, Got %v", rot2Expected, plaintextRot2.GetPackedValue())
+
+	// 4. Decrypt and Verify
+	plaintextLoaded := ccLoaded.Decrypt(keysLoaded, ctLoaded)
+	if plaintextLoaded == nil {
+		t.Fatalf("Decryption after round trip deserialization failed")
 	}
-	if !slicesEqual(plaintextRotNeg1.GetPackedValue(), rotNeg1Expected) {
-		t.Errorf("BGV Rotate(-1) failed. Expected %v, Got %v", rotNeg1Expected, plaintextRotNeg1.GetPackedValue())
-	}
-	if !slicesEqual(plaintextRotNeg2.GetPackedValue(), rotNeg2Expected) {
-		t.Errorf("BGV Rotate(-2) failed. Expected %v, Got %v", rotNeg2Expected, plaintextRotNeg2.GetPackedValue())
+	vecLen := len(vectorOfInts)
+	result := plaintextLoaded.GetPackedValue()[:vecLen]
+	if !slicesEqual(result, vectorOfInts) {
+		t.Errorf("Round Trip: Decryption mismatch. Expected %v, Got %v", vectorOfInts, result)
 	}
 }
