@@ -8,10 +8,8 @@ import (
 )
 
 /*
-#cgo CXXFLAGS: -std=c++17 -I${SRCDIR}/openfhe_install/include
-// Link statically. List ALL necessary .a files. You might need more depending on OpenFHE config.
-// Check the openfhe_install/lib directory after building OpenFHE to confirm filenames.
-#cgo LDFLAGS: -L${SRCDIR}/openfhe_install/lib -l:libOPENFHEpke.a -l:libOPENFHEcore.a -lstdc++ -lm
+#cgo CXXFLAGS: -std=c++17 -I${SRCDIR}/openfhe_install/include/openfhe -I${SRCDIR}/openfhe_install/include/openfhe/core -I${SRCDIR}/openfhe_install/include/openfhe/pke -I${SRCDIR}/openfhe_install/include/openfhe/binfhe -I${SRCDIR}/openfhe_install/include/openfhe/cereal
+#cgo LDFLAGS: ${SRCDIR}/openfhe_install/lib/libOPENFHEpke_static.a ${SRCDIR}/openfhe_install/lib/libOPENFHEcore_static.a ${SRCDIR}/openfhe_install/lib/libOPENFHEbinfhe_static.a -lstdc++ -lm
 #include "bridge.h"
 */
 import "C"
