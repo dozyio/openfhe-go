@@ -77,13 +77,13 @@ func main() {
 	// Let's serialize it but maybe not save it to a file easily without the ID.
 	// In OpenFHE C++, the ID is often implicitly derived when serializing *from* the CC.
 	// Let's try passing an empty string - it *might* work for the default key.
-	evalMultKeySerial, err := openfhe.SerializeEvalMultKeyToString(cc, "")
-	if err != nil {
-		fmt.Printf("Warning: Could not serialize EvalMultKey: %v\n", err)
-	} else {
-		// os.WriteFile(dataDir+"/key-eval-mult.json", []byte(evalMultKeySerial), 0644)
-		fmt.Println(" - EvalMultKey serialized (attempted).")
-	}
+	// evalMultKeySerial, err := openfhe.SerializeEvalMultKeyToString(cc, "")
+	// if err != nil {
+	// 	fmt.Printf("Warning: Could not serialize EvalMultKey: %v\n", err)
+	// } else {
+	// 	// os.WriteFile(dataDir+"/key-eval-mult.json", []byte(evalMultKeySerial), 0644)
+	// 	fmt.Println(" - EvalMultKey serialized (attempted).")
+	// }
 
 	// Serialize Ciphertext
 	ctSerial, err := openfhe.SerializeCiphertextToString(ciphertext)
@@ -133,16 +133,16 @@ func main() {
 	// kpPublic and kpPrivate can now go out of scope / be GC'd if desired
 
 	// Deserialize EvalMultKey (load into the deserialized context)
-	if evalMultKeySerial != "" {
-		err = openfhe.DeserializeEvalMultKeyFromString(ccLoaded, evalMultKeySerial)
-		if err != nil {
-			fmt.Printf("Warning: Could not deserialize EvalMultKey: %v\n", err)
-		} else {
-			fmt.Println(" - EvalMultKey deserialized (attempted).")
-		}
-	} else {
-		fmt.Println(" - EvalMultKey serialization was skipped, cannot deserialize.")
-	}
+	// if evalMultKeySerial != "" {
+	// 	err = openfhe.DeserializeEvalMultKeyFromString(ccLoaded, evalMultKeySerial)
+	// 	if err != nil {
+	// 		fmt.Printf("Warning: Could not deserialize EvalMultKey: %v\n", err)
+	// 	} else {
+	// 		fmt.Println(" - EvalMultKey deserialized (attempted).")
+	// 	}
+	// } else {
+	// 	fmt.Println(" - EvalMultKey serialization was skipped, cannot deserialize.")
+	// }
 
 	// Deserialize Ciphertext
 	ctLoaded := openfhe.DeserializeCiphertextFromString(ctSerial)
