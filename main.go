@@ -78,12 +78,12 @@ func (cc *CryptoContext) EvalMultKeyGen(keys *KeyPair) {
 	C.CryptoContext_EvalMultKeyGen(cc.ptr, keys.ptr)
 }
 
-func (cc *CryptoContext) EvalRotateKeyGen(keys *KeyPair, indices []int) {
+func (cc *CryptoContext) EvalRotateKeyGen(keys *KeyPair, indices []int32) {
 	if len(indices) == 0 {
 		return
 	}
-	// Get a C-style pointer to the first element of the Go slice
-	cIndices := (*C.int)(unsafe.Pointer(&indices[0]))
+	// Cast to C.int32_t pointer
+	cIndices := (*C.int32_t)(unsafe.Pointer(&indices[0]))
 	cLen := C.int(len(indices))
 	C.CryptoContext_EvalRotateKeyGen(cc.ptr, keys.ptr, cIndices, cLen)
 }
@@ -126,8 +126,9 @@ func (cc *CryptoContext) EvalMult(ct1, ct2 *Ciphertext) *Ciphertext {
 	return ct
 }
 
-func (cc *CryptoContext) EvalRotate(ct *Ciphertext, index int) *Ciphertext {
-	resCt := &Ciphertext{ptr: C.CryptoContext_EvalRotate(cc.ptr, ct.ptr, C.int(index))}
+func (cc *CryptoContext) EvalRotate(ct *Ciphertext, index int32) *Ciphertext {
+	// Pass as C.int32_t
+	resCt := &Ciphertext{ptr: C.CryptoContext_EvalRotate(cc.ptr, ct.ptr, C.int32_t(index))}
 	runtime.SetFinalizer(resCt, func(obj *Ciphertext) {
 		C.DestroyCiphertext(obj.ptr)
 	})
@@ -168,7 +169,6 @@ func truncateVector(vec []int64, maxLen int) []int64 {
 
 // --- main() ---
 // This is the Go equivalent of the Python script
-
 func main() {
 	fmt.Println("--- Go simple-integers example starting ---")
 
@@ -188,7 +188,8 @@ func main() {
 	// 3. Key Generation
 	keys := cc.KeyGen()
 	cc.EvalMultKeyGen(keys)
-	cc.EvalRotateKeyGen(keys, []int{1, -2})
+	// Use an int32 slice
+	cc.EvalRotateKeyGen(keys, []int32{1, -2})
 	fmt.Println("Keys generated.")
 
 	// 4. Encoding and Encryption
@@ -201,6 +202,7 @@ func main() {
 	// 5. Homomorphic Operations
 	ciphertext_add := cc.EvalAdd(ciphertext, ciphertext)
 	ciphertext_mul := cc.EvalMult(ciphertext, ciphertext)
+	// Use int32 for index
 	ciphertext_rot1 := cc.EvalRotate(ciphertext, 1)
 	ciphertext_rot2 := cc.EvalRotate(ciphertext, -2)
 	fmt.Println("Homomorphic operations complete.")

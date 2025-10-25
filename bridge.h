@@ -32,12 +32,12 @@ CryptoContextPtr NewCryptoContext(ParamsPtr p);
 void CryptoContext_Enable(CryptoContextPtr cc, int feature);
 KeyPairPtr CryptoContext_KeyGen(CryptoContextPtr cc);
 void CryptoContext_EvalMultKeyGen(CryptoContextPtr cc, KeyPairPtr keys);
-void CryptoContext_EvalRotateKeyGen(CryptoContextPtr cc, KeyPairPtr keys, int* indices, int len);
+void CryptoContext_EvalRotateKeyGen(CryptoContextPtr cc, KeyPairPtr keys, int32_t* indices, int len);
 PlaintextPtr CryptoContext_MakePackedPlaintext(CryptoContextPtr cc, int64_t* values, int len);
 CiphertextPtr CryptoContext_Encrypt(CryptoContextPtr cc, KeyPairPtr keys, PlaintextPtr pt);
 CiphertextPtr CryptoContext_EvalAdd(CryptoContextPtr cc, CiphertextPtr ct1, CiphertextPtr ct2);
 CiphertextPtr CryptoContext_EvalMult(CryptoContextPtr cc, CiphertextPtr ct1, CiphertextPtr ct2);
-CiphertextPtr CryptoContext_EvalRotate(CryptoContextPtr cc, CiphertextPtr ct, int index);
+CiphertextPtr CryptoContext_EvalRotate(CryptoContextPtr cc, CiphertextPtr ct, int32_t index);
 PlaintextPtr CryptoContext_Decrypt(CryptoContextPtr cc, KeyPairPtr keys, CiphertextPtr ct);
 void DestroyCryptoContext(CryptoContextPtr cc);
 

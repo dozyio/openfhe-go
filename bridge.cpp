@@ -10,17 +10,14 @@ using namespace lbcrypto;
 using CryptoContextSharedPtr = std::shared_ptr<CryptoContextImpl<DCRTPoly>>;
 using PlaintextSharedPtr     = std::shared_ptr<PlaintextImpl>;
 using CiphertextSharedPtr    = std::shared_ptr<CiphertextImpl<DCRTPoly>>;
-using KeyPairRawPtr          = KeyPair<DCRTPoly>*; 
+using KeyPairRawPtr          = KeyPair<DCRTPoly>*;
 
-// Helper function to get the shared_ptr object from the C pointer
 inline CryptoContextSharedPtr& GetCCSharedPtr(CryptoContextPtr cc_ptr_to_sptr) {
     return *reinterpret_cast<CryptoContextSharedPtr*>(cc_ptr_to_sptr);
 }
-// Helper function to get the Plaintext shared_ptr object from the C pointer
 inline PlaintextSharedPtr& GetPTSharedPtr(PlaintextPtr pt_ptr_to_sptr) {
     return *reinterpret_cast<PlaintextSharedPtr*>(pt_ptr_to_sptr);
 }
-// Helper function to get the Ciphertext shared_ptr object from the C pointer
 inline CiphertextSharedPtr& GetCTSharedPtr(CiphertextPtr ct_ptr_to_sptr) {
     return *reinterpret_cast<CiphertextSharedPtr*>(ct_ptr_to_sptr);
 }
@@ -69,23 +66,16 @@ void CryptoContext_EvalMultKeyGen(CryptoContextPtr cc_ptr_to_sptr, KeyPairPtr ke
     cc_sptr->EvalMultKeyGen(kp_raw->secretKey);
 }
 
-// ****** THIS IS THE FIX ******
-void CryptoContext_EvalRotateKeyGen(CryptoContextPtr cc_ptr_to_sptr, KeyPairPtr keys_raw_ptr, int* indices, int len) {
+void CryptoContext_EvalRotateKeyGen(CryptoContextPtr cc_ptr_to_sptr, KeyPairPtr keys_raw_ptr, int32_t* indices, int len) {
     auto& cc_sptr = GetCCSharedPtr(cc_ptr_to_sptr);
     auto kp_raw = reinterpret_cast<KeyPairRawPtr>(keys_raw_ptr);
     
-    // Explicitly create a vector of int32_t by casting each element
-    // from the C-style 'int' array.
-    std::vector<int32_t> vec;
-    vec.reserve(len);
-    for (int i = 0; i < len; ++i) {
-        vec.push_back(static_cast<int32_t>(indices[i]));
-    }
+    // Now 'indices' is already int32_t*, so we can construct the vector directly
+    std::vector<int32_t> vec(indices, indices + len);
 
     // Call OpenFHE with the correctly typed vector
     cc_sptr->EvalRotateKeyGen(kp_raw->secretKey, vec); 
 }
-// ****** END OF FIX ******
 
 PlaintextPtr CryptoContext_MakePackedPlaintext(CryptoContextPtr cc_ptr_to_sptr, int64_t* values, int len) {
     auto& cc_sptr = GetCCSharedPtr(cc_ptr_to_sptr);
@@ -122,11 +112,13 @@ CiphertextPtr CryptoContext_EvalMult(CryptoContextPtr cc_ptr_to_sptr, Ciphertext
     return reinterpret_cast<CiphertextPtr>(heap_sptr_ptr);
 }
 
-CiphertextPtr CryptoContext_EvalRotate(CryptoContextPtr cc_ptr_to_sptr, CiphertextPtr ct_ptr_to_sptr, int index) {
+CiphertextPtr CryptoContext_EvalRotate(CryptoContextPtr cc_ptr_to_sptr, CiphertextPtr ct_ptr_to_sptr, int32_t index) {
     auto& cc_sptr = GetCCSharedPtr(cc_ptr_to_sptr);
     auto& ct_sptr = GetCTSharedPtr(ct_ptr_to_sptr);
-    // Pass the 32-bit integer index directly
-    Ciphertext<DCRTPoly> result_ct_sptr = cc_sptr->EvalRotate(ct_sptr, static_cast<int32_t>(index));
+
+    // index is already int32_t
+    Ciphertext<DCRTPoly> result_ct_sptr = cc_sptr->EvalRotate(ct_sptr, index);
+
     auto* heap_sptr_ptr = new CiphertextSharedPtr(result_ct_sptr);
     return reinterpret_cast<CiphertextPtr>(heap_sptr_ptr);
 }
