@@ -162,3 +162,136 @@ func TestSimpleRealNumbers(t *testing.T) {
 		t.Errorf("Mult failed. Expected ~%v, Got %v", mulExpected, plaintext_dec_mul.GetRealPackedValue()[:batchSize])
 	}
 }
+
+func TestSimpleIntegersBGVrns(t *testing.T) {
+	t.Log("--- Go simple-integers-bgvrns test starting ---")
+
+	// 1. Set CryptoContext Parameters
+	parameters := NewParamsBGVrns() // Use BGV Params
+	parameters.SetPlaintextModulus(65537)
+	parameters.SetMultiplicativeDepth(2)
+	t.Log("Parameters set.")
+
+	// 2. Generate CryptoContext
+	cc := NewCryptoContextBGV(parameters) // Use BGV Context constructor
+	cc.Enable(PKE)
+	cc.Enable(KEYSWITCH)
+	cc.Enable(LEVELEDSHE)
+	t.Log("CryptoContext generated.")
+
+	// 3. Key Generation
+	keyPair := cc.KeyGen()
+	cc.EvalMultKeyGen(keyPair)
+	// Rotation keys needed for this test
+	rotationIndices := []int32{1, 2, -1, -2}
+	cc.EvalRotateKeyGen(keyPair, rotationIndices)
+	t.Log("Keys generated.")
+
+	// 4. Encoding and Encryption
+	vectorOfInts1 := []int64{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12}
+	plaintext1 := cc.MakePackedPlaintext(vectorOfInts1)
+
+	vectorOfInts2 := []int64{3, 2, 1, 4, 5, 6, 7, 8, 9, 10, 11, 12}
+	plaintext2 := cc.MakePackedPlaintext(vectorOfInts2)
+
+	vectorOfInts3 := []int64{1, 2, 5, 2, 5, 6, 7, 8, 9, 10, 11, 12}
+	plaintext3 := cc.MakePackedPlaintext(vectorOfInts3)
+
+	ciphertext1 := cc.Encrypt(keyPair, plaintext1)
+	ciphertext2 := cc.Encrypt(keyPair, plaintext2)
+	ciphertext3 := cc.Encrypt(keyPair, plaintext3)
+	t.Log("Encryption complete.")
+
+	// 5. Evaluation
+	ciphertextAdd12 := cc.EvalAdd(ciphertext1, ciphertext2)
+	ciphertextAddResult := cc.EvalAdd(ciphertextAdd12, ciphertext3)
+
+	ciphertextMult12 := cc.EvalMult(ciphertext1, ciphertext2)
+	ciphertextMultResult := cc.EvalMult(ciphertextMult12, ciphertext3)
+
+	ciphertextRot1 := cc.EvalRotate(ciphertext1, 1)
+	ciphertextRot2 := cc.EvalRotate(ciphertext1, 2)
+	ciphertextRotNeg1 := cc.EvalRotate(ciphertext1, -1)
+	ciphertextRotNeg2 := cc.EvalRotate(ciphertext1, -2)
+	t.Log("Homomorphic operations complete.")
+
+	// 6. Decryption
+	plaintextAddResult := cc.Decrypt(keyPair, ciphertextAddResult)
+	plaintextMultResult := cc.Decrypt(keyPair, ciphertextMultResult)
+	plaintextRot1 := cc.Decrypt(keyPair, ciphertextRot1)
+	plaintextRot2 := cc.Decrypt(keyPair, ciphertextRot2)
+	plaintextRotNeg1 := cc.Decrypt(keyPair, ciphertextRotNeg1)
+	plaintextRotNeg2 := cc.Decrypt(keyPair, ciphertextRotNeg2)
+	t.Log("Decryption complete.")
+
+	// 7. Check results
+	vecLen := len(vectorOfInts1)
+	// Calculate expected values
+	addExpected := make([]int64, vecLen)
+	mulExpected := make([]int64, vecLen)
+	rot1Expected := make([]int64, vecLen)
+	rot2Expected := make([]int64, vecLen)
+	rotNeg1Expected := make([]int64, vecLen)
+	rotNeg2Expected := make([]int64, vecLen)
+
+	ptMod := int64(65537) // Plaintext modulus used
+
+	// Correctly calculate expected addition and multiplication
+	for i := 0; i < vecLen; i++ {
+		addExpected[i] = (vectorOfInts1[i] + vectorOfInts2[i] + vectorOfInts3[i]) % ptMod
+		mulExpected[i] = (vectorOfInts1[i] * vectorOfInts2[i] * vectorOfInts3[i]) % ptMod
+	}
+
+	// Calculate expected rotations (handle wrap-around/zero padding) - keep corrected logic from previous step
+	// Rotate(1) - Left shift by 1
+	for i := 0; i < vecLen-1; i++ {
+		rot1Expected[i] = vectorOfInts1[i+1]
+	}
+	rot1Expected[vecLen-1] = 0 // Zero padding
+
+	// Rotate(2) - Left shift by 2
+	for i := 0; i < vecLen-2; i++ {
+		rot2Expected[i] = vectorOfInts1[i+2]
+	}
+	rot2Expected[vecLen-2], rot2Expected[vecLen-1] = 0, 0 // Zero padding
+
+	// Rotate(-1) - Right shift by 1
+	rotNeg1Expected[0] = 0 // Zero padding
+	for i := 1; i < vecLen; i++ {
+		rotNeg1Expected[i] = vectorOfInts1[i-1]
+	}
+
+	// Rotate(-2) - Right shift by 2
+	rotNeg2Expected[0], rotNeg2Expected[1] = 0, 0 // Zero padding
+	for i := 2; i < vecLen; i++ {
+		rotNeg2Expected[i] = vectorOfInts1[i-2]
+	}
+
+	// Set length before comparison
+	plaintextRot1.SetLength(vecLen)
+	plaintextRot2.SetLength(vecLen)
+	plaintextRotNeg1.SetLength(vecLen)
+	plaintextRotNeg2.SetLength(vecLen)
+
+	if !slicesEqual(plaintextAddResult.GetPackedValue()[:vecLen], addExpected) {
+		t.Errorf("BGV Add failed. Expected %v, Got %v", addExpected, plaintextAddResult.GetPackedValue()[:vecLen])
+	}
+	if !slicesEqual(plaintextAddResult.GetPackedValue()[:vecLen], addExpected) {
+		t.Errorf("BGV Add failed. Expected %v, Got %v", addExpected, plaintextAddResult.GetPackedValue()[:vecLen])
+	}
+	if !slicesEqual(plaintextMultResult.GetPackedValue()[:vecLen], mulExpected) {
+		t.Errorf("BGV Mult failed. Expected %v, Got %v", mulExpected, plaintextMultResult.GetPackedValue()[:vecLen])
+	}
+	if !slicesEqual(plaintextRot1.GetPackedValue(), rot1Expected) {
+		t.Errorf("BGV Rotate(1) failed. Expected %v, Got %v", rot1Expected, plaintextRot1.GetPackedValue())
+	}
+	if !slicesEqual(plaintextRot2.GetPackedValue(), rot2Expected) {
+		t.Errorf("BGV Rotate(2) failed. Expected %v, Got %v", rot2Expected, plaintextRot2.GetPackedValue())
+	}
+	if !slicesEqual(plaintextRotNeg1.GetPackedValue(), rotNeg1Expected) {
+		t.Errorf("BGV Rotate(-1) failed. Expected %v, Got %v", rotNeg1Expected, plaintextRotNeg1.GetPackedValue())
+	}
+	if !slicesEqual(plaintextRotNeg2.GetPackedValue(), rotNeg2Expected) {
+		t.Errorf("BGV Rotate(-2) failed. Expected %v, Got %v", rotNeg2Expected, plaintextRotNeg2.GetPackedValue())
+	}
+}

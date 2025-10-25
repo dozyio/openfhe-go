@@ -51,7 +51,8 @@ func (cc *CryptoContext) MakeCKKSPackedPlaintext(vec []float64) *Plaintext {
 	}
 	cVec := (*C.double)(unsafe.Pointer(&vec[0]))
 	cLen := C.int(len(vec))
-	pt := &Plaintext{ptr: C.CryptoContext_MakeCKKSPackedPlaintext(cc.ptr, cVec, cLen, 1, 0, 0)}
+	// pt := &Plaintext{ptr: C.CryptoContext_MakeCKKSPackedPlaintext(cc.ptr, cVec, cLen, 1, 0, 0)}
+	pt := &Plaintext{ptr: C.CryptoContext_MakeCKKSPackedPlaintext(cc.ptr, cVec, cLen)} // NEW 3-argument call
 	runtime.SetFinalizer(pt, func(obj *Plaintext) {
 		C.DestroyPlaintext(obj.ptr)
 	})

@@ -13,13 +13,13 @@ extern "C" {
 #endif
 
 // Opaque pointers to hide C++ implementation details
-// typedef void* ParamsPtr;
 typedef void *CryptoContextPtr;
 typedef void *KeyPairPtr;
 typedef void *PlaintextPtr;
 typedef void *CiphertextPtr;
 typedef void *ParamsBFVPtr;
 typedef void *ParamsCKKSPtr;
+typedef void *ParamsBGVPtr;
 
 // --- Enums ---
 #define PKE_FEATURE 1
@@ -30,16 +30,22 @@ typedef void *ParamsCKKSPtr;
 ParamsBFVPtr NewParamsBFV();
 void ParamsBFV_SetPlaintextModulus(ParamsBFVPtr p, uint64_t mod);
 void ParamsBFV_SetMultiplicativeDepth(ParamsBFVPtr p, int depth);
-void DestroyParamsBFV(ParamsBFVPtr p); // Specific destructor
+void DestroyParamsBFV(ParamsBFVPtr p);
+
+ParamsBGVPtr NewParamsBGV();
+void ParamsBGV_SetPlaintextModulus(ParamsBGVPtr p, uint64_t mod);
+void ParamsBGV_SetMultiplicativeDepth(ParamsBGVPtr p, int depth);
+void DestroyParamsBGV(ParamsBGVPtr p);
 
 ParamsCKKSPtr NewParamsCKKS();
 void ParamsCKKS_SetScalingModSize(ParamsCKKSPtr p, int modSize);
 void ParamsCKKS_SetBatchSize(ParamsCKKSPtr p, int batchSize);
 void ParamsCKKS_SetMultiplicativeDepth(ParamsCKKSPtr p, int depth);
-void DestroyParamsCKKS(ParamsCKKSPtr p); // Specific destructor
+void DestroyParamsCKKS(ParamsCKKSPtr p);
 
 // --- CryptoContext ---
 CryptoContextPtr NewCryptoContextBFV(ParamsBFVPtr p);
+CryptoContextPtr NewCryptoContextBGV(ParamsBGVPtr p);
 CryptoContextPtr NewCryptoContextCKKS(ParamsCKKSPtr p);
 
 void CryptoContext_Enable(CryptoContextPtr cc, int feature);
@@ -48,19 +54,21 @@ void CryptoContext_EvalMultKeyGen(CryptoContextPtr cc, KeyPairPtr keys);
 void CryptoContext_EvalRotateKeyGen(CryptoContextPtr cc, KeyPairPtr keys,
                                     int32_t *indices, int len);
 
-// (BFV function from before)
+// BFV specific
 PlaintextPtr CryptoContext_MakePackedPlaintext(CryptoContextPtr cc,
                                                int64_t *values, int len);
 
-// *** NEW CKKS FUNCTIONS ***
+// CKKS specific
+// PlaintextPtr CryptoContext_MakeCKKSPackedPlaintext(CryptoContextPtr cc,
+//                                                    double *values, int len,
+//                                                    uint32_t depth,
+//                                                    uint32_t level,
+//                                                    double scale);
 PlaintextPtr CryptoContext_MakeCKKSPackedPlaintext(CryptoContextPtr cc,
-                                                   double *values, int len,
-                                                   uint32_t depth,
-                                                   uint32_t level,
-                                                   double scale);
+                                                   double *values, int len);
 CiphertextPtr CryptoContext_Rescale(CryptoContextPtr cc, CiphertextPtr ct);
-// *** END NEW ***
 
+// Common Operations
 CiphertextPtr CryptoContext_Encrypt(CryptoContextPtr cc, KeyPairPtr keys,
                                     PlaintextPtr pt);
 CiphertextPtr CryptoContext_EvalAdd(CryptoContextPtr cc, CiphertextPtr ct1,
@@ -79,14 +87,16 @@ void DestroyCryptoContext(CryptoContextPtr cc);
 void DestroyKeyPair(KeyPairPtr kp);
 
 // --- Plaintext ---
-// (BFV functions from before)
+// BFV/BGV Packed Value Access
 int Plaintext_GetPackedValueLength(PlaintextPtr pt);
 int64_t Plaintext_GetPackedValueAt(PlaintextPtr pt, int i);
 
-// *** NEW CKKS FUNCTIONS ***
+// BGV specific
+void Plaintext_SetLength(PlaintextPtr pt, int len);
+
+// CKKS Packed Value Access
 int Plaintext_GetRealPackedValueLength(PlaintextPtr pt);
 double Plaintext_GetRealPackedValueAt(PlaintextPtr pt, int i);
-// *** END NEW ***
 
 void DestroyPlaintext(PlaintextPtr pt);
 

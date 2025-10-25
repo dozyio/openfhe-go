@@ -26,6 +26,7 @@ inline CiphertextSharedPtr &GetCTSharedPtr(CiphertextPtr ct_ptr_to_sptr) {
 extern "C" {
 
 // --- CCParams ---
+// BVF
 ParamsBFVPtr NewParamsBFV() { return new CCParams<CryptoContextBFVRNS>(); }
 void ParamsBFV_SetPlaintextModulus(ParamsBFVPtr p, uint64_t mod) {
   reinterpret_cast<CCParams<CryptoContextBFVRNS> *>(p)->SetPlaintextModulus(
@@ -39,6 +40,21 @@ void DestroyParamsBFV(ParamsBFVPtr p) {
   delete reinterpret_cast<CCParams<CryptoContextBFVRNS> *>(p);
 }
 
+// BGV
+ParamsBGVPtr NewParamsBGV() { return new CCParams<CryptoContextBGVRNS>(); }
+void ParamsBGV_SetPlaintextModulus(ParamsBGVPtr p, uint64_t mod) {
+  reinterpret_cast<CCParams<CryptoContextBGVRNS> *>(p)->SetPlaintextModulus(
+      mod);
+}
+void ParamsBGV_SetMultiplicativeDepth(ParamsBGVPtr p, int depth) {
+  reinterpret_cast<CCParams<CryptoContextBGVRNS> *>(p)->SetMultiplicativeDepth(
+      depth);
+}
+void DestroyParamsBGV(ParamsBGVPtr p) {
+  delete reinterpret_cast<CCParams<CryptoContextBGVRNS> *>(p);
+}
+
+// CKKS
 ParamsCKKSPtr NewParamsCKKS() { return new CCParams<CryptoContextCKKSRNS>(); }
 void ParamsCKKS_SetScalingModSize(ParamsCKKSPtr p, int modSize) {
   reinterpret_cast<CCParams<CryptoContextCKKSRNS> *>(p)->SetScalingModSize(
@@ -66,6 +82,13 @@ CryptoContextPtr NewCryptoContextBFV(ParamsBFVPtr p) {
 
 CryptoContextPtr NewCryptoContextCKKS(ParamsCKKSPtr p) {
   auto params_ptr = reinterpret_cast<CCParams<CryptoContextCKKSRNS> *>(p);
+  CryptoContext<DCRTPoly> cc_sptr = GenCryptoContext(*params_ptr);
+  auto *heap_sptr_ptr = new CryptoContextSharedPtr(cc_sptr);
+  return reinterpret_cast<CryptoContextPtr>(heap_sptr_ptr);
+}
+
+CryptoContextPtr NewCryptoContextBGV(ParamsBGVPtr p) {
+  auto params_ptr = reinterpret_cast<CCParams<CryptoContextBGVRNS> *>(p);
   CryptoContext<DCRTPoly> cc_sptr = GenCryptoContext(*params_ptr);
   auto *heap_sptr_ptr = new CryptoContextSharedPtr(cc_sptr);
   return reinterpret_cast<CryptoContextPtr>(heap_sptr_ptr);
@@ -102,6 +125,7 @@ void CryptoContext_EvalRotateKeyGen(CryptoContextPtr cc_ptr_to_sptr,
   cc_sptr->EvalRotateKeyGen(kp_raw->secretKey, vec);
 }
 
+// BFV/BGV MakePackedPlaintext (Same underlying C++ call)
 PlaintextPtr CryptoContext_MakePackedPlaintext(CryptoContextPtr cc_ptr_to_sptr,
                                                int64_t *values, int len) {
   auto &cc_sptr = GetCCSharedPtr(cc_ptr_to_sptr);
@@ -111,26 +135,37 @@ PlaintextPtr CryptoContext_MakePackedPlaintext(CryptoContextPtr cc_ptr_to_sptr,
   return reinterpret_cast<PlaintextPtr>(heap_sptr_ptr);
 }
 
-// *** NEW CKKS FUNCTIONS ***
+// CKKS MakeCKKSPackedPlaintext (Simplified)
 PlaintextPtr
 CryptoContext_MakeCKKSPackedPlaintext(CryptoContextPtr cc_ptr_to_sptr,
-                                      double *values, int len, uint32_t depth,
-                                      uint32_t level, double scale) {
+                                      double *values, int len) {
   auto &cc_sptr = GetCCSharedPtr(cc_ptr_to_sptr);
   std::vector<double> vec(values, values + len);
-
-  // Note: The simple-real-numbers example doesn't specify depth, level, or
-  // scale. The MakeCKKSPackedPlaintext has multiple overloads. Let's use the
-  // one that matches the python example's simplicity. The python
-  // `MakeCKKSPackedPlaintext(vector)` calls the C++:
-  // `MakeCKKSPackedPlaintext(const std::vector<double>& value, ...)`
-  // This C++ function has defaults for noiseScaleDeg, level, params, slots.
-  // Let's try to match that.
-  Plaintext pt_sptr = cc_sptr->MakeCKKSPackedPlaintext(vec);
-
+  Plaintext pt_sptr =
+      cc_sptr->MakeCKKSPackedPlaintext(vec); // Calls the simple C++ overload
   auto *heap_sptr_ptr = new PlaintextSharedPtr(pt_sptr);
   return reinterpret_cast<PlaintextPtr>(heap_sptr_ptr);
 }
+
+// PlaintextPtr
+// CryptoContext_MakeCKKSPackedPlaintext(CryptoContextPtr cc_ptr_to_sptr,
+//                                       double *values, int len, uint32_t
+//                                       depth, uint32_t level, double scale) {
+//   auto &cc_sptr = GetCCSharedPtr(cc_ptr_to_sptr);
+//   std::vector<double> vec(values, values + len);
+//
+//   // Note: The simple-real-numbers example doesn't specify depth, level, or
+//   // scale. The MakeCKKSPackedPlaintext has multiple overloads. Let's use the
+//   // one that matches the python example's simplicity. The python
+//   // `MakeCKKSPackedPlaintext(vector)` calls the C++:
+//   // `MakeCKKSPackedPlaintext(const std::vector<double>& value, ...)`
+//   // This C++ function has defaults for noiseScaleDeg, level, params, slots.
+//   // Let's try to match that.
+//   Plaintext pt_sptr = cc_sptr->MakeCKKSPackedPlaintext(vec);
+//
+//   auto *heap_sptr_ptr = new PlaintextSharedPtr(pt_sptr);
+//   return reinterpret_cast<PlaintextPtr>(heap_sptr_ptr);
+// }
 
 CiphertextPtr CryptoContext_Rescale(CryptoContextPtr cc_ptr_to_sptr,
                                     CiphertextPtr ct_ptr_to_sptr) {
@@ -140,7 +175,6 @@ CiphertextPtr CryptoContext_Rescale(CryptoContextPtr cc_ptr_to_sptr,
   auto *heap_sptr_ptr = new CiphertextSharedPtr(result_ct_sptr);
   return reinterpret_cast<CiphertextPtr>(heap_sptr_ptr);
 }
-// *** END NEW ***
 
 CiphertextPtr CryptoContext_Encrypt(CryptoContextPtr cc_ptr_to_sptr,
                                     KeyPairPtr keys_raw_ptr,
@@ -225,16 +259,32 @@ void DestroyKeyPair(KeyPairPtr kp_raw_ptr) {
 }
 
 // --- Plaintext ---
+// BFV/BGV GetPackedValue
 int Plaintext_GetPackedValueLength(PlaintextPtr pt_ptr_to_sptr) {
   auto &pt_sptr = GetPTSharedPtr(pt_ptr_to_sptr);
-  return pt_sptr->GetPackedValue().size();
-}
-int64_t Plaintext_GetPackedValueAt(PlaintextPtr pt_ptr_to_sptr, int i) {
-  auto &pt_sptr = GetPTSharedPtr(pt_ptr_to_sptr);
-  return pt_sptr->GetPackedValue()[i];
+  // Ensure the underlying PlaintextImpl has GetPackedValue()
+  try {
+    return pt_sptr->GetPackedValue().size();
+  } catch (...) {
+    // Handle cases where GetPackedValue might not be available (e.g., CKKS)
+    return 0;
+  }
 }
 
-// *** NEW CKKS FUNCTIONS ***
+// int64_t Plaintext_GetPackedValueAt(PlaintextPtr pt_ptr_to_sptr, int i) {
+//   auto &pt_sptr = GetPTSharedPtr(pt_ptr_to_sptr);
+//   return pt_sptr->GetPackedValue()[i];
+// }
+int64_t Plaintext_GetPackedValueAt(PlaintextPtr pt_ptr_to_sptr, int i) {
+  auto &pt_sptr = GetPTSharedPtr(pt_ptr_to_sptr);
+  try {
+    return pt_sptr->GetPackedValue()[i];
+  } catch (...) {
+    return 0; // Or some error indicator
+  }
+}
+
+// CKKS GetRealPackedValue
 int Plaintext_GetRealPackedValueLength(PlaintextPtr pt_ptr_to_sptr) {
   auto &pt_sptr = GetPTSharedPtr(pt_ptr_to_sptr);
   // Need to decode first before accessing
@@ -247,7 +297,11 @@ double Plaintext_GetRealPackedValueAt(PlaintextPtr pt_ptr_to_sptr, int i) {
   // GetRealPackedValue() returns a std::vector<double>
   return pt_sptr->GetRealPackedValue()[i];
 }
-// *** END NEW ***
+
+void Plaintext_SetLength(PlaintextPtr pt_ptr_to_sptr, int len) {
+  auto &pt_sptr = GetPTSharedPtr(pt_ptr_to_sptr);
+  pt_sptr->SetLength(len);
+}
 
 void DestroyPlaintext(PlaintextPtr pt_ptr_to_sptr) {
   delete reinterpret_cast<PlaintextSharedPtr *>(pt_ptr_to_sptr);
