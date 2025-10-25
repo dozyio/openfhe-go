@@ -1,10 +1,7 @@
-# Makefile
-
 # --- Variables ---
-# Assumes OpenFHE source is cloned into ./openfhe
-OPENFHE_SRC_DIR := $(CURDIR)/openfhe
-OPENFHE_BUILD_DIR := $(CURDIR)/build
-OPENFHE_INSTALL_DIR := $(CURDIR)/openfhe_install
+OPENFHE_SRC_DIR := $(CURDIR)/openfhe-development
+OPENFHE_BUILD_DIR := $(CURDIR)/openfhe-build
+OPENFHE_INSTALL_DIR := $(CURDIR)/openfhe-install
 
 # Path to the marker file indicating OpenFHE install is complete
 OPENFHE_INSTALL_MARKER := $(OPENFHE_INSTALL_DIR)/.installed
@@ -21,7 +18,7 @@ OPENFHE_TAG := v1.4.2
 # - Install locally within the project
 # - Add other options as needed (e.g., -DWITH_NATIVEOPT=ON for performance)
 CMAKE_OPTIONS := -DBUILD_SHARED=OFF \
-								 -DBUILD_STATIC=ON \
+                 -DBUILD_STATIC=ON \
                  -DCMAKE_INSTALL_PREFIX=$(OPENFHE_INSTALL_DIR) \
                  -DBUILD_EXAMPLES=OFF \
                  -DBUILD_UNITTESTS=OFF \
@@ -72,15 +69,17 @@ $(OPENFHE_SRC_DIR)/CMakeLists.txt:
 build_openfhe: $(OPENFHE_INSTALL_MARKER)
 	@echo "--- OpenFHE build and install complete ---"
 
-# Target to build the Go application (depends on OpenFHE install)
-build: $(OPENFHE_INSTALL_MARKER) main.go bridge.cpp bridge.h go.mod
-	@echo "--- Building Go application ---"
-	@go build -o $(GO_APP_NAME) .
+test: $(OPENFHE_INSTALL_MARKER)
+	@go test -v -count 1 ./openfhe
 
-# Target to run the Go application (depends on build)
-run: build
-	@echo "--- Running Go application ---"
-	@./$(GO_APP_NAME)
+# Targets to run the examples
+run-bfv-example: $(OPENFHE_INSTALL_MARKER)
+	@echo "--- Running BFV (Integers) Example ---"
+	@go run ./examples/simple-integers/main.go
+
+run-ckks-example: $(OPENFHE_INSTALL_MARKER)
+	@echo "--- Running CKKS (Real Numbers) Example ---"
+	@go run ./examples/simple-real-numbers/main.go
 
 # Target to clean Go build artifacts
 clean:
@@ -92,15 +91,3 @@ clean:
 clean_openfhe:
 	@echo "--- Cleaning OpenFHE build and install directories ---"
 	@rm -rf $(OPENFHE_BUILD_DIR) $(OPENFHE_INSTALL_DIR) $(OPENFHE_SRC_DIR)
-
-# --- Help ---
-.PHONY: help
-help:
-	@echo "Makefile Targets:"
-	@echo "  all            Build the Go application (default)"
-	@echo "  build_openfhe  Fetch and build/install OpenFHE locally"
-	@echo "  build          Build the Go application (requires OpenFHE)"
-	@echo "  run            Build and run the Go application"
-	@echo "  clean          Clean Go build artifacts"
-	@echo "  clean_openfhe  Clean OpenFHE build, install, and source directories"
-	@echo "  help           Show this help message"
