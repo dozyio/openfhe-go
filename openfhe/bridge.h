@@ -18,10 +18,30 @@ typedef void *ParamsCKKSPtr;
 typedef void *ParamsBGVPtr;
 typedef void *EvalKeyPtr;
 
-// --- Enums ---
-#define PKE_FEATURE 1
-#define KEYSWITCH_FEATURE 2
-#define LEVELEDSHE_FEATURE 4
+// Enums
+typedef enum {
+  HEStd_uniform,
+  HEStd_error,
+  HEStd_ternary,
+} DistributionType;
+
+typedef enum {
+  HEStd_128_classic,
+  HEStd_192_classic,
+  HEStd_256_classic,
+  HEStd_128_quantum,
+  HEStd_192_quantum,
+  HEStd_256_quantum,
+  HEStd_NotSet,
+} OFHESecurityLevel;
+
+typedef enum {
+  GAUSSIAN = 0,
+  UNIFORM_TERNARY =
+      1, // Default value, all schemes support this key distribution
+  SPARSE_TERNARY = 2,
+  SPARSE_ENCAPSULATED = 3, // For more effient bootstrapping in SIMD schemes
+} OFHESecretKeyDist;
 
 // --- CCParams ---
 ParamsBFVPtr NewParamsBFV();
@@ -38,6 +58,12 @@ ParamsCKKSPtr NewParamsCKKS();
 void ParamsCKKS_SetScalingModSize(ParamsCKKSPtr p, int modSize);
 void ParamsCKKS_SetBatchSize(ParamsCKKSPtr p, int batchSize);
 void ParamsCKKS_SetMultiplicativeDepth(ParamsCKKSPtr p, int depth);
+void ParamsCKKS_SetSecurityLevel(ParamsCKKSPtr p, OFHESecurityLevel level);
+void ParamsCKKS_SetRingDim(ParamsCKKSPtr p, uint64_t ringDim);
+void ParamsCKKS_SetScalingTechnique(ParamsCKKSPtr p, int technique);
+void ParamsCKKS_SetFirstModSize(ParamsCKKSPtr p, int modSize);
+void ParamsCKKS_SetNumLargeDigits(ParamsCKKSPtr p, int numDigits);
+void ParamsCKKS_SetSecretKeyDist(ParamsCKKSPtr p, OFHESecretKeyDist dist);
 void DestroyParamsCKKS(ParamsCKKSPtr p);
 
 // --- CryptoContext ---
@@ -50,6 +76,7 @@ KeyPairPtr CryptoContext_KeyGen(CryptoContextPtr cc);
 void CryptoContext_EvalMultKeyGen(CryptoContextPtr cc, KeyPairPtr keys);
 void CryptoContext_EvalRotateKeyGen(CryptoContextPtr cc, KeyPairPtr keys,
                                     int32_t *indices, int len);
+uint64_t CryptoContext_GetRingDimension(CryptoContextPtr cc);
 
 // BFV specific
 PlaintextPtr CryptoContext_MakePackedPlaintext(CryptoContextPtr cc,
@@ -64,6 +91,35 @@ PlaintextPtr CryptoContext_MakePackedPlaintext(CryptoContextPtr cc,
 PlaintextPtr CryptoContext_MakeCKKSPackedPlaintext(CryptoContextPtr cc,
                                                    double *values, int len);
 CiphertextPtr CryptoContext_Rescale(CryptoContextPtr cc, CiphertextPtr ct);
+
+// Bootstrapping (CKKS)
+// void CryptoContext_EvalBootstrapKeyGen(CryptoContextPtr cc, KeyPairPtr keys,
+//                                        uint32_t numSlots);
+// CiphertextPtr CryptoContext_EvalBootstrap(CryptoContextPtr cc,
+//                                           CiphertextPtr ct);
+// // Bootstrapping (CKKS)
+// void CryptoContext_EvalBootstrapSetup(
+//     CryptoContextPtr cc,
+//     uint32_t slots); // uses defaults {5,4},{0,0}
+// void CryptoContext_EvalBootstrapPrecompute(CryptoContextPtr cc, uint32_t
+// slots);
+// New API: returns 1 on success, 0 on error; errOut (malloc'ed) holds
+// message on error.
+int CryptoContext_EvalBootstrapSetup(CryptoContextPtr cc, uint32_t slots,
+                                     char **errOut);
+
+int CryptoContext_EvalBootstrapSetup_Simple(CryptoContextPtr cc,
+                                            const uint32_t *levelBudget,
+                                            int len, char **errOut);
+
+int CryptoContext_EvalBootstrapPrecompute(CryptoContextPtr cc, uint32_t slots,
+                                          char **errOut);
+int CryptoContext_EvalBootstrapKeyGen(CryptoContextPtr cc, KeyPairPtr keys,
+                                      uint32_t slots, char **errOut);
+CiphertextPtr CryptoContext_EvalBootstrap(CryptoContextPtr cc, CiphertextPtr ct,
+                                          char **errOut);
+uint32_t CKKS_GetBootstrapDepth(const uint32_t *levelBudget, int len,
+                                int secretKeyDist);
 
 // Common Operations
 CiphertextPtr CryptoContext_Encrypt(CryptoContextPtr cc, KeyPairPtr keys,

@@ -5,13 +5,39 @@ package openfhe
 #cgo CXXFLAGS: -std=c++17
 #cgo LDFLAGS: ${SRCDIR}/../openfhe-install/lib/libOPENFHEpke_static.a ${SRCDIR}/../openfhe-install/lib/libOPENFHEcore_static.a ${SRCDIR}/../openfhe-install/lib/libOPENFHEbinfhe_static.a -lc++ -lm
 #include <stdint.h>
+#include <stdlib.h>
 #include "bridge.h"
 */
 import "C"
 
 import (
+	"fmt"
 	"runtime"
 	"unsafe"
+)
+
+// --- Feature Flags ---
+const (
+	PKE          = 0x01 // 1
+	KEYSWITCH    = 0x02 // 2
+	PRE          = 0x04 // 4
+	LEVELEDSHE   = 0x08 // 8
+	ADVANCEDSHE  = 0x10 // 16
+	MULTIPARTY   = 0x20 // 32
+	FHE          = 0x40 // 64
+	SCHEMESWITCH = 0x80 // 128
+)
+
+// --- Scaling Techniques ---
+const (
+	FIXEDMANUAL            = 0
+	FIXEDAUTO              = 1
+	FLEXIBLEAUTO           = 2
+	FLEXIBLEAUTOEXT        = 3
+	COMPOSITESCALINGAUTO   = 4
+	COMPOSITESCALINGMANUAL = 5
+	NORESCALE              = 6
+	INVALID_RS_TECHNIQUE   = 7
 )
 
 // --- Common CryptoContext Methods ---
@@ -91,4 +117,75 @@ func (cc *CryptoContext) EvalRotate(ct *Ciphertext, index int32) *Ciphertext {
 		C.DestroyCiphertext(obj.ptr)
 	})
 	return resCt
+}
+
+// --- CKKS Bootstrapping ---
+func (cc *CryptoContext) EvalBootstrapKeyGen(keys *KeyPair, slots uint32) error {
+	var cErr *C.char
+	ok := C.CryptoContext_EvalBootstrapKeyGen(cc.ptr, keys.ptr, C.uint32_t(slots), &cErr)
+	if ok == 1 {
+		return nil
+	}
+	defer func() {
+		if cErr != nil {
+			C.free(unsafe.Pointer(cErr))
+		}
+	}()
+	if cErr != nil {
+		return fmt.Errorf("%s", C.GoString(cErr))
+	}
+	return fmt.Errorf("EvalBootstrapKeyGen failed")
+}
+
+func (cc *CryptoContext) EvalBootstrap(ct *Ciphertext) (*Ciphertext, error) {
+	var cErr *C.char
+	out := C.CryptoContext_EvalBootstrap(cc.ptr, ct.ptr, &cErr)
+	if out != nil {
+		res := &Ciphertext{ptr: out}
+		runtime.SetFinalizer(res, func(obj *Ciphertext) { C.DestroyCiphertext(obj.ptr) })
+		return res, nil
+	}
+	defer func() {
+		if cErr != nil {
+			C.free(unsafe.Pointer(cErr))
+		}
+	}()
+	if cErr != nil {
+		return nil, fmt.Errorf("%s", C.GoString(cErr))
+	}
+	return nil, fmt.Errorf("EvalBootstrap failed")
+}
+
+func (cc *CryptoContext) EvalBootstrapSetup(slots uint32) error {
+	var cErr *C.char
+	ok := C.CryptoContext_EvalBootstrapSetup(cc.ptr, C.uint32_t(slots), &cErr)
+	if ok == 1 {
+		return nil
+	}
+	defer func() {
+		if cErr != nil {
+			C.free(unsafe.Pointer(cErr))
+		}
+	}()
+	if cErr != nil {
+		return fmt.Errorf("%s", C.GoString(cErr))
+	}
+	return fmt.Errorf("EvalBootstrapSetup failed")
+}
+
+func (cc *CryptoContext) EvalBootstrapPrecompute(slots uint32) error {
+	var cErr *C.char
+	ok := C.CryptoContext_EvalBootstrapPrecompute(cc.ptr, C.uint32_t(slots), &cErr)
+	if ok == 1 {
+		return nil
+	}
+	defer func() {
+		if cErr != nil {
+			C.free(unsafe.Pointer(cErr))
+		}
+	}()
+	if cErr != nil {
+		return fmt.Errorf("%s", C.GoString(cErr))
+	}
+	return fmt.Errorf("EvalBootstrapPrecompute failed")
 }

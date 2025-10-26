@@ -9,13 +9,6 @@ package openfhe
 */
 import "C"
 
-// --- Enums ---
-const (
-	PKE        = C.PKE_FEATURE
-	KEYSWITCH  = C.KEYSWITCH_FEATURE
-	LEVELEDSHE = C.LEVELEDSHE_FEATURE
-)
-
 // --- Structs ---
 type (
 	ParamsBFV  struct{ ptr C.ParamsBFVPtr }
@@ -23,8 +16,34 @@ type (
 )
 
 type (
-	CryptoContext struct{ ptr C.CryptoContextPtr }
-	KeyPair       struct{ ptr C.KeyPairPtr }
-	Plaintext     struct{ ptr C.PlaintextPtr }
-	Ciphertext    struct{ ptr C.CiphertextPtr }
+	CryptoContext    struct{ ptr C.CryptoContextPtr }
+	KeyPair          struct{ ptr C.KeyPairPtr }
+	Plaintext        struct{ ptr C.PlaintextPtr }
+	Ciphertext       struct{ ptr C.CiphertextPtr }
+	DistributionType C.DistributionType
+	SecurityLevel    C.OFHESecurityLevel
+	SecretKeyDist    C.OFHESecretKeyDist
+)
+
+const (
+	HEStdUniform DistributionType = C.HEStd_uniform
+	HEStdError   DistributionType = C.HEStd_error
+	HEStdTernary DistributionType = C.HEStd_ternary
+)
+
+const (
+	HEStd128Classic SecurityLevel = C.HEStd_128_classic
+	HEStd192Classic SecurityLevel = C.HEStd_192_classic
+	HEStd256Classic SecurityLevel = C.HEStd_256_classic
+	HEStd128Quantum SecurityLevel = C.HEStd_128_quantum
+	HEStd192Quantum SecurityLevel = C.HEStd_192_quantum
+	HEStd256Quantum SecurityLevel = C.HEStd_256_quantum
+	HEStdNotSet     SecurityLevel = C.HEStd_NotSet
+)
+
+const (
+	SecretKeyGaussian           SecretKeyDist = C.GAUSSIAN
+	SecretKeyUniformTernary     SecretKeyDist = C.UNIFORM_TERNARY
+	SecretKeySparseTernary      SecretKeyDist = C.SPARSE_TERNARY
+	SecretKeySparseEncapsulated SecretKeyDist = C.SPARSE_ENCAPSULATED
 )

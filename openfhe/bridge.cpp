@@ -1,9 +1,10 @@
-// bridge.cpp
 #include "bridge.h"
-#include "ciphertext-ser.h"    // For ciphertext serialization
-#include "cryptocontext-ser.h" // For CryptoContext serialization
-#include "key/key-ser.h"       // For key serialization
+#include "key/key-ser.h"        // For key serialization
+#include "pke/ciphertext-ser.h" // For ciphertext serialization
 #include "pke/ciphertext.h"
+#include "pke/cryptocontext-ser.h"  // For CryptoContext serialization
+#include "pke/cryptocontext.h"      // defines CryptoContextImpl
+#include "pke/encoding/plaintext.h" // defines PlaintextImpl
 #include "pke/gen-cryptocontext.h"
 #include "pke/key/keypair.h"
 #include "pke/key/privatekey.h"
@@ -41,6 +42,17 @@ inline PublicKeySharedPtr &GetPKSharedPtr(void *pk_ptr_to_sptr) {
 }
 inline PrivateKeySharedPtr &GetSKSharedPtr(void *sk_ptr_to_sptr) {
   return *reinterpret_cast<PrivateKeySharedPtr *>(sk_ptr_to_sptr);
+}
+
+static void set_err(char **out, const char *msg) {
+  if (!out)
+    return;
+  size_t n = std::strlen(msg);
+  char *p = (char *)std::malloc(n + 1);
+  if (p) {
+    std::memcpy(p, msg, n + 1);
+    *out = p;
+  }
 }
 // --- End of helpers ---
 
@@ -89,6 +101,54 @@ void ParamsCKKS_SetMultiplicativeDepth(ParamsCKKSPtr p, int depth) {
   reinterpret_cast<CCParams<CryptoContextCKKSRNS> *>(p)->SetMultiplicativeDepth(
       depth);
 }
+void ParamsCKKS_SetSecurityLevel(ParamsCKKSPtr p, OFHESecurityLevel level) {
+  auto params = reinterpret_cast<CCParams<CryptoContextCKKSRNS> *>(p);
+  params->SetSecurityLevel(static_cast<lbcrypto::SecurityLevel>(level));
+}
+void ParamsCKKS_SetRingDim(ParamsCKKSPtr p, uint64_t ringDim) {
+  reinterpret_cast<CCParams<CryptoContextCKKSRNS> *>(p)->SetRingDim(ringDim);
+}
+void ParamsCKKS_SetScalingTechnique(ParamsCKKSPtr p, int technique) {
+  // Map integer constants back to C++ enum
+  ScalingTechnique st;
+  // Use C++ enum names directly
+  switch (technique) {
+  case 0:
+    st = lbcrypto::FIXEDMANUAL;
+    break; // Use lbcrypto::FIXEDMANUAL, check value 0
+  case 1:
+    st = lbcrypto::FIXEDAUTO;
+    break; // Use lbcrypto::FIXEDAUTO, check value 1
+  case 2:
+    st = lbcrypto::FLEXIBLEAUTO;
+    break; // Use lbcrypto::FLEXIBLEAUTO, check value 2
+  case 3:
+    st = lbcrypto::FLEXIBLEAUTOEXT;
+    break; // Use lbcrypto::FLEXIBLEAUTOEXT, check value 3
+  // Add cases for COMPOSITESCALING* if you expose them later
+  case 6:
+    st = lbcrypto::NORESCALE;
+    break; // Use lbcrypto::NORESCALE, check value 6
+  default:
+    st = lbcrypto::INVALID_RS_TECHNIQUE; // Or throw error
+  }
+  reinterpret_cast<CCParams<CryptoContextCKKSRNS> *>(p)->SetScalingTechnique(
+      st);
+}
+void ParamsCKKS_SetSecretKeyDist(ParamsCKKSPtr p, OFHESecretKeyDist dist) {
+  auto params = reinterpret_cast<CCParams<CryptoContextCKKSRNS> *>(p);
+  params->SetSecretKeyDist(static_cast<lbcrypto::SecretKeyDist>(dist));
+}
+
+void ParamsCKKS_SetFirstModSize(ParamsCKKSPtr p, int modSize) {
+  reinterpret_cast<CCParams<CryptoContextCKKSRNS> *>(p)->SetFirstModSize(
+      modSize);
+}
+void ParamsCKKS_SetNumLargeDigits(ParamsCKKSPtr p, int numDigits) {
+  reinterpret_cast<CCParams<CryptoContextCKKSRNS> *>(p)->SetNumLargeDigits(
+      numDigits);
+}
+
 void DestroyParamsCKKS(ParamsCKKSPtr p) {
   delete reinterpret_cast<CCParams<CryptoContextCKKSRNS> *>(p);
 }
@@ -117,12 +177,192 @@ CryptoContextPtr NewCryptoContextBGV(ParamsBGVPtr p) {
 
 void CryptoContext_Enable(CryptoContextPtr cc_ptr_to_sptr, int feature) {
   auto &cc_sptr = GetCCSharedPtr(cc_ptr_to_sptr);
-  if (feature == PKE_FEATURE)
+  // Use C++ enum names directly for comparison
+  if (feature & lbcrypto::PKE)
     cc_sptr->Enable(PKE);
-  else if (feature == KEYSWITCH_FEATURE)
+  if (feature & lbcrypto::KEYSWITCH)
     cc_sptr->Enable(KEYSWITCH);
-  else if (feature == LEVELEDSHE_FEATURE)
+  // PRE feature might need lbcrypto::PRE
+  if (feature & lbcrypto::LEVELEDSHE)
     cc_sptr->Enable(LEVELEDSHE);
+  if (feature & lbcrypto::ADVANCEDSHE)
+    cc_sptr->Enable(ADVANCEDSHE);
+  // MULTIPARTY feature might need lbcrypto::MULTIPARTY
+  if (feature & lbcrypto::FHE)
+    cc_sptr->Enable(FHE);
+}
+
+int CryptoContext_EvalBootstrapKeyGen(CryptoContextPtr cc_ptr_to_sptr,
+                                      KeyPairPtr keys_raw_ptr, uint32_t slots,
+                                      char **errOut) {
+  try {
+    auto &cc = GetCCSharedPtr(cc_ptr_to_sptr);
+    if (!cc) {
+      set_err(errOut, "null CryptoContext");
+      return 0;
+    }
+    auto kp_raw = reinterpret_cast<KeyPairRawPtr>(keys_raw_ptr);
+    if (!kp_raw || !kp_raw->secretKey) {
+      set_err(errOut, "missing secret key");
+      return 0;
+    }
+
+    auto N = cc->GetRingDimension();
+    if (slots == 0 || slots > N / 2)
+      slots = (uint32_t)(N / 2);
+
+    // std::fprintf(stderr, "[OpenFHE] KeyGen: slots=%u\n", (unsigned)slots);
+    // std::fflush(stderr);
+    cc->EvalBootstrapKeyGen(kp_raw->secretKey, slots);
+    // std::fprintf(stderr, "[OpenFHE] KeyGen: ok\n");
+    // std::fflush(stderr);
+    return 1;
+  } catch (const std::exception &e) {
+    set_err(errOut, e.what());
+    // std::fprintf(stderr, "[OpenFHE] KeyGen exception: %s\n", e.what());
+    // std::fflush(stderr);
+    return 0;
+  } catch (...) {
+    // set_err(errOut, "unknown exception in EvalBootstrapKeyGen");
+    // std::fprintf(stderr, "[OpenFHE] KeyGen unknown exception\n");
+    std::fflush(stderr);
+    return 0;
+  }
+}
+
+CiphertextPtr CryptoContext_EvalBootstrap(CryptoContextPtr cc_ptr_to_sptr,
+                                          CiphertextPtr ct_ptr_to_sptr,
+                                          char **errOut) {
+  try {
+    auto &cc = GetCCSharedPtr(cc_ptr_to_sptr);
+    auto &ct = GetCTSharedPtr(ct_ptr_to_sptr);
+    if (!cc) {
+      set_err(errOut, "null CryptoContext");
+      return nullptr;
+    }
+    if (!ct) {
+      set_err(errOut, "null ciphertext");
+      return nullptr;
+    }
+
+    // std::fprintf(stderr, "[OpenFHE] Bootstrap: begin\n");
+    // std::fflush(stderr);
+    auto out = cc->EvalBootstrap(ct);
+    // std::fprintf(stderr, "[OpenFHE] Bootstrap: ok\n");
+    // std::fflush(stderr);
+
+    return reinterpret_cast<CiphertextPtr>(new CiphertextSharedPtr(out));
+  } catch (const std::exception &e) {
+    set_err(errOut, e.what());
+    // std::fprintf(stderr, "[OpenFHE] Bootstrap exception: %s\n", e.what());
+    // std::fflush(stderr);
+    return nullptr;
+  } catch (...) {
+    set_err(errOut, "unknown exception in EvalBootstrap");
+    // std::fprintf(stderr, "[OpenFHE] Bootstrap unknown exception\n");
+    // std::fflush(stderr);
+    return nullptr;
+  }
+}
+
+// TODO: Add support for levelBudget, correctionFactor and precompute
+int CryptoContext_EvalBootstrapSetup(CryptoContextPtr cc_ptr_to_sptr,
+                                     uint32_t slots, char **errOut) {
+  try {
+    auto &cc = GetCCSharedPtr(cc_ptr_to_sptr);
+    if (!cc) {
+      set_err(errOut, "null CryptoContext");
+      return 0;
+    }
+
+    auto N = cc->GetRingDimension();
+    if (slots == 0 || slots > N / 2)
+      slots = (uint32_t)(N / 2);
+
+    std::vector<uint32_t> levelBudget{5, 4};
+    std::vector<uint32_t> dim1{0, 0}; // let OpenFHE pick
+    cc->EvalBootstrapSetup(levelBudget, dim1, slots,
+                           /*correctionFactor=*/0, /*precompute=*/true);
+
+    return 1;
+  } catch (const std::exception &e) {
+    set_err(errOut, e.what());
+    return 0;
+  } catch (...) {
+    set_err(errOut, "unknown exception in EvalBootstrapSetup");
+    return 0;
+  }
+}
+
+int CryptoContext_EvalBootstrapSetup_Simple(CryptoContextPtr cc_ptr_to_sptr,
+                                            const uint32_t *lb, int len,
+                                            char **errOut) {
+  if (errOut)
+    *errOut = nullptr;
+  try {
+    auto &cc = GetCCSharedPtr(cc_ptr_to_sptr);
+    if (!cc) {
+      if (errOut)
+        set_err(errOut, "null CryptoContext");
+      return 0;
+    }
+    std::vector<uint32_t> levelBudget;
+    if (lb && len > 0)
+      levelBudget.assign(lb, lb + len);
+    else
+      levelBudget = {4, 4};
+
+    cc->EvalBootstrapSetup(levelBudget);
+    return 1;
+  } catch (const std::exception &e) {
+    if (errOut)
+      set_err(errOut, e.what());
+    return 0;
+  } catch (...) {
+    if (errOut)
+      set_err(errOut, "unknown exception");
+    return 0;
+  }
+}
+
+// void CryptoContext_EvalBootstrapPrecompute(CryptoContextPtr cc_ptr_to_sptr,
+//                                            uint32_t slots) {
+//   auto &cc = GetCCSharedPtr(cc_ptr_to_sptr);
+//   cc->EvalBootstrapPrecompute(slots);
+// }
+int CryptoContext_EvalBootstrapPrecompute(CryptoContextPtr cc_ptr_to_sptr,
+                                          uint32_t slots, char **errOut) {
+  try {
+    auto &cc = GetCCSharedPtr(cc_ptr_to_sptr);
+    if (!cc) {
+      set_err(errOut, "null CryptoContext");
+      return 0;
+    }
+
+    auto N = cc->GetRingDimension();
+    if (slots == 0 || slots > N / 2)
+      slots = (uint32_t)(N / 2);
+
+    // std::fprintf(stderr, "[OpenFHE] Precompute: N=%llu slots=%u\n",
+    //              (unsigned long long)N, (unsigned)slots);
+    // std::fflush(stderr);
+
+    cc->EvalBootstrapPrecompute(slots);
+
+    // std::fprintf(stderr, "[OpenFHE] Precompute: ok\n");
+    // std::fflush(stderr);
+    return 1;
+  } catch (const std::exception &e) {
+    set_err(errOut, e.what());
+    // std::fprintf(stderr, "[OpenFHE] Precompute exception: %s\n", e.what());
+    // std::fflush(stderr);
+    return 0;
+  } catch (...) {
+    set_err(errOut, "unknown exception in EvalBootstrapPrecompute");
+    // std::fprintf(stderr, "[OpenFHE] Precompute unknown exception\n");
+    // std::fflush(stderr);
+    return 0;
+  }
 }
 
 KeyPairPtr CryptoContext_KeyGen(CryptoContextPtr cc_ptr_to_sptr) {
@@ -146,6 +386,11 @@ void CryptoContext_EvalRotateKeyGen(CryptoContextPtr cc_ptr_to_sptr,
   cc_sptr->EvalRotateKeyGen(kp_raw->secretKey, vec);
 }
 
+uint64_t CryptoContext_GetRingDimension(CryptoContextPtr cc_ptr_to_sptr) {
+  auto &cc = GetCCSharedPtr(cc_ptr_to_sptr);
+  return cc->GetRingDimension(); // CKKS: N (power of two)
+}
+
 // BFV/BGV MakePackedPlaintext (Same underlying C++ call)
 PlaintextPtr CryptoContext_MakePackedPlaintext(CryptoContextPtr cc_ptr_to_sptr,
                                                int64_t *values, int len) {
@@ -157,6 +402,7 @@ PlaintextPtr CryptoContext_MakePackedPlaintext(CryptoContextPtr cc_ptr_to_sptr,
 }
 
 // CKKS MakeCKKSPackedPlaintext (Simplified)
+// # TODO support depth, level, etc
 PlaintextPtr
 CryptoContext_MakeCKKSPackedPlaintext(CryptoContextPtr cc_ptr_to_sptr,
                                       double *values, int len) {
@@ -167,26 +413,6 @@ CryptoContext_MakeCKKSPackedPlaintext(CryptoContextPtr cc_ptr_to_sptr,
   auto *heap_sptr_ptr = new PlaintextSharedPtr(pt_sptr);
   return reinterpret_cast<PlaintextPtr>(heap_sptr_ptr);
 }
-
-// PlaintextPtr
-// CryptoContext_MakeCKKSPackedPlaintext(CryptoContextPtr cc_ptr_to_sptr,
-//                                       double *values, int len, uint32_t
-//                                       depth, uint32_t level, double scale) {
-//   auto &cc_sptr = GetCCSharedPtr(cc_ptr_to_sptr);
-//   std::vector<double> vec(values, values + len);
-//
-//   // Note: The simple-real-numbers example doesn't specify depth, level, or
-//   // scale. The MakeCKKSPackedPlaintext has multiple overloads. Let's use the
-//   // one that matches the python example's simplicity. The python
-//   // `MakeCKKSPackedPlaintext(vector)` calls the C++:
-//   // `MakeCKKSPackedPlaintext(const std::vector<double>& value, ...)`
-//   // This C++ function has defaults for noiseScaleDeg, level, params, slots.
-//   // Let's try to match that.
-//   Plaintext pt_sptr = cc_sptr->MakeCKKSPackedPlaintext(vec);
-//
-//   auto *heap_sptr_ptr = new PlaintextSharedPtr(pt_sptr);
-//   return reinterpret_cast<PlaintextPtr>(heap_sptr_ptr);
-// }
 
 CiphertextPtr CryptoContext_Rescale(CryptoContextPtr cc_ptr_to_sptr,
                                     CiphertextPtr ct_ptr_to_sptr) {
@@ -327,17 +553,26 @@ int Plaintext_GetPackedValueLength(PlaintextPtr pt_ptr_to_sptr) {
   }
 }
 
-// int64_t Plaintext_GetPackedValueAt(PlaintextPtr pt_ptr_to_sptr, int i) {
-//   auto &pt_sptr = GetPTSharedPtr(pt_ptr_to_sptr);
-//   return pt_sptr->GetPackedValue()[i];
-// }
 int64_t Plaintext_GetPackedValueAt(PlaintextPtr pt_ptr_to_sptr, int i) {
   auto &pt_sptr = GetPTSharedPtr(pt_ptr_to_sptr);
   try {
     return pt_sptr->GetPackedValue()[i];
   } catch (...) {
+    // TODO: return error
     return 0; // Or some error indicator
   }
+}
+
+// Depth helper: FHECKKSRNS::GetBootstrapDepth(levelBudget, skd)
+uint32_t CKKS_GetBootstrapDepth(const uint32_t *levelBudget, int len,
+                                int secretKeyDist) {
+  std::vector<uint32_t> lb;
+  if (levelBudget && len > 0)
+    lb.assign(levelBudget, levelBudget + len);
+  else
+    lb = {4, 4};
+  auto skd = static_cast<SecretKeyDist>(secretKeyDist);
+  return FHECKKSRNS::GetBootstrapDepth(lb, skd);
 }
 
 // CKKS GetRealPackedValue

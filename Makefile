@@ -23,8 +23,17 @@ CMAKE_OPTIONS := -DBUILD_SHARED=OFF \
                  -DBUILD_EXAMPLES=OFF \
                  -DBUILD_UNITTESTS=OFF \
                  -DBUILD_BENCHMARKS=OFF \
+                 -DBUILD_SERIALIZATION=ON \
                  -DCMAKE_BUILD_TYPE=Release \
                  -DWITH_OPENMP=OFF # Disable OpenMP if not needed/causing issues
+
+CPPFLAGS = -Iopenfhe/../openfhe-install/include/openfhe \
+            -Iopenfhe/../openfhe-install/include/openfhe/core \
+            -Iopenfhe/../openfhe-install/include/openfhe/pke \
+            -Iopenfhe/../openfhe-install/include/openfhe/binfhe \
+            -Iopenfhe/../openfhe-install/include/openfhe/cereal
+
+CXXFLAGS = -std=c++17
 
 # --- Targets ---
 
@@ -42,7 +51,7 @@ $(OPENFHE_INSTALL_MARKER): $(OPENFHE_SRC_DIR)/CMakeLists.txt
 	@mkdir -p $(OPENFHE_BUILD_DIR)
 	cd $(OPENFHE_BUILD_DIR) && cmake $(CMAKE_OPTIONS) $(OPENFHE_SRC_DIR)
 	@echo "--- Building OpenFHE (this may take a while) ---"
-	@cmake --build $(OPENFHE_BUILD_DIR) --parallel $$(nproc)
+	@cmake --build $(OPENFHE_BUILD_DIR) --parallel $$(sysctl -n hw.ncpu)
 	@echo "--- Installing OpenFHE ---"
 	@cmake --install $(OPENFHE_BUILD_DIR)
 	@touch $(OPENFHE_INSTALL_MARKER) # Create marker file upon success
@@ -68,6 +77,13 @@ $(OPENFHE_SRC_DIR)/CMakeLists.txt:
 # Explicit target to build OpenFHE (depends on fetching)
 build_openfhe: $(OPENFHE_INSTALL_MARKER)
 	@echo "--- OpenFHE build and install complete ---"
+
+openfhe/bridge.o: openfhe/bridge.cpp openfhe/bridge.h
+	c++ $(CPPFLAGS) $(CXXFLAGS) -c -o $@ $<
+
+build: openfhe/bridge.o
+	@echo "Building Go package..."
+	go build ./...
 
 test: $(OPENFHE_INSTALL_MARKER)
 	@go test -v -count 1 ./openfhe
