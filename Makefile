@@ -26,13 +26,13 @@ CMAKE_OPTIONS := -DBUILD_SHARED=OFF \
                  -DBUILD_SERIALIZATION=ON \
                  -DCMAKE_BUILD_TYPE=Release \
                  -DWITH_OPENMP=OFF # Disable OpenMP if not needed/causing issues
-
-CPPFLAGS = -Iopenfhe/../openfhe-install/include/openfhe \
-            -Iopenfhe/../openfhe-install/include/openfhe/core \
-            -Iopenfhe/../openfhe-install/include/openfhe/pke \
-            -Iopenfhe/../openfhe-install/include/openfhe/binfhe \
-            -Iopenfhe/../openfhe-install/include/openfhe/cereal
-
+CPPFLAGS = \
+  -I$(CURDIR)/openfhe-install/include \
+  -I$(CURDIR)/openfhe-install/include/openfhe \
+  -I$(CURDIR)/openfhe-install/include/openfhe/core \
+  -I$(CURDIR)/openfhe-install/include/openfhe/pke \
+  -I$(CURDIR)/openfhe-install/include/openfhe/binfhe \
+  -I$(CURDIR)/openfhe-install/include/openfhe/cereal
 CXXFLAGS = -std=c++17
 
 # --- Targets ---
@@ -96,6 +96,9 @@ run-bfv-example: $(OPENFHE_INSTALL_MARKER)
 run-ckks-example: $(OPENFHE_INSTALL_MARKER)
 	@echo "--- Running CKKS (Real Numbers) Example ---"
 	@go run ./examples/simple-real-numbers/main.go
+
+run-examples: ${OPENFHE_INSTALL_MARKER}
+	find ./examples -type f -name 'main.go' -execdir sh -c 'echo "▶ running $$(pwd)/$$1"; go run . ' _ {} \;
 
 # Target to clean Go build artifacts
 clean:

@@ -1,0 +1,8 @@
+-std=c++17
+-I../openfhe-install/include
+-I../openfhe-install/include/openfhe
+-I../openfhe-install/include/openfhe/core
+-I../openfhe-install/include/openfhe/pke
+-I../openfhe-install/include/openfhe/binfhe
+-I../openfhe-install/include/openfhe/cereal
+

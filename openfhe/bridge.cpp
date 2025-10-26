@@ -1,19 +1,20 @@
 #include "bridge.h"
-#include "key/key-ser.h"        // For key serialization
-#include "pke/ciphertext-ser.h" // For ciphertext serialization
-#include "pke/ciphertext.h"
-#include "pke/cryptocontext-ser.h"  // For CryptoContext serialization
-#include "pke/cryptocontext.h"      // defines CryptoContextImpl
-#include "pke/encoding/plaintext.h" // defines PlaintextImpl
-#include "pke/gen-cryptocontext.h"
-#include "pke/key/keypair.h"
-#include "pke/key/privatekey.h"
-#include "pke/key/publickey.h"
-#include "pke/openfhe.h"
-#include "utils/serial.h"  // For Serial::Serialize/Deserialize
-#include "utils/sertype.h" // For SerType::JSON
 #include <cstring>
 #include <memory>
+#include <openfhe/core/lattice/hal/default/dcrtpoly.h>
+#include <openfhe/core/utils/serial.h>
+#include <openfhe/core/utils/sertype.h>
+#include <openfhe/pke/ciphertext-ser.h>
+#include <openfhe/pke/ciphertext.h>
+#include <openfhe/pke/cryptocontext-ser.h>
+#include <openfhe/pke/cryptocontext.h>
+#include <openfhe/pke/encoding/plaintext.h>
+#include <openfhe/pke/gen-cryptocontext.h>
+#include <openfhe/pke/key/key-ser.h>
+#include <openfhe/pke/key/keypair.h>
+#include <openfhe/pke/key/privatekey.h>
+#include <openfhe/pke/key/publickey.h>
+#include <openfhe/pke/openfhe.h>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -21,12 +22,12 @@
 using namespace lbcrypto;
 
 // --- Helper types and functions (OUTSIDE extern "C") ---
-using CryptoContextSharedPtr = std::shared_ptr<CryptoContextImpl<DCRTPoly>>;
-using PlaintextSharedPtr = std::shared_ptr<PlaintextImpl>;
-using CiphertextSharedPtr = std::shared_ptr<CiphertextImpl<DCRTPoly>>;
+using CryptoContextSharedPtr = CryptoContext<DCRTPoly>;
+using PlaintextSharedPtr = Plaintext;
+using CiphertextSharedPtr = Ciphertext<DCRTPoly>;
 using KeyPairRawPtr = KeyPair<DCRTPoly> *;
-using PublicKeySharedPtr = std::shared_ptr<PublicKeyImpl<DCRTPoly>>;
-using PrivateKeySharedPtr = std::shared_ptr<PrivateKeyImpl<DCRTPoly>>;
+using PublicKeySharedPtr = PublicKey<DCRTPoly>;
+using PrivateKeySharedPtr = PrivateKey<DCRTPoly>;
 
 inline CryptoContextSharedPtr &GetCCSharedPtr(CryptoContextPtr cc_ptr_to_sptr) {
   return *reinterpret_cast<CryptoContextSharedPtr *>(cc_ptr_to_sptr);
@@ -325,11 +326,6 @@ int CryptoContext_EvalBootstrapSetup_Simple(CryptoContextPtr cc_ptr_to_sptr,
   }
 }
 
-// void CryptoContext_EvalBootstrapPrecompute(CryptoContextPtr cc_ptr_to_sptr,
-//                                            uint32_t slots) {
-//   auto &cc = GetCCSharedPtr(cc_ptr_to_sptr);
-//   cc->EvalBootstrapPrecompute(slots);
-// }
 int CryptoContext_EvalBootstrapPrecompute(CryptoContextPtr cc_ptr_to_sptr,
                                           uint32_t slots, char **errOut) {
   try {
