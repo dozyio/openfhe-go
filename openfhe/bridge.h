@@ -1,6 +1,7 @@
 #ifndef BRIDGE_H
 #define BRIDGE_H
 
+#include "binfhe.h"
 #include <stddef.h>
 #include <stdint.h>
 
@@ -93,6 +94,7 @@ PlaintextPtr CryptoContext_MakeCKKSPackedPlaintext(CryptoContextPtr cc,
 CiphertextPtr CryptoContext_Rescale(CryptoContextPtr cc, CiphertextPtr ct);
 
 // Bootstrapping (CKKS)
+
 // void CryptoContext_EvalBootstrapKeyGen(CryptoContextPtr cc, KeyPairPtr keys,
 //                                        uint32_t numSlots);
 // CiphertextPtr CryptoContext_EvalBootstrap(CryptoContextPtr cc,
@@ -103,6 +105,7 @@ CiphertextPtr CryptoContext_Rescale(CryptoContextPtr cc, CiphertextPtr ct);
 //     uint32_t slots); // uses defaults {5,4},{0,0}
 // void CryptoContext_EvalBootstrapPrecompute(CryptoContextPtr cc, uint32_t
 // slots);
+
 // New API: returns 1 on success, 0 on error; errOut (malloc'ed) holds
 // message on error.
 int CryptoContext_EvalBootstrapSetup(CryptoContextPtr cc, uint32_t slots,

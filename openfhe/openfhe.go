@@ -3,7 +3,6 @@ package openfhe
 /*
 #cgo CPPFLAGS: -I${SRCDIR}/../openfhe-install/include -I${SRCDIR}/../openfhe-install/include/openfhe -I${SRCDIR}/../openfhe-install/include/openfhe/core -I${SRCDIR}/../openfhe-install/include/openfhe/pke -I${SRCDIR}/../openfhe-install/include/openfhe/binfhe -I${SRCDIR}/../openfhe-install/include/openfhe/cereal
 #cgo CXXFLAGS: -std=c++17
-#cgo LDFLAGS: ${SRCDIR}/../openfhe-install/lib/libOPENFHEpke_static.a ${SRCDIR}/../openfhe-install/lib/libOPENFHEcore_static.a ${SRCDIR}/../openfhe-install/lib/libOPENFHEbinfhe_static.a -lc++ -lm
 #include <stdint.h>
 #include <stdlib.h>
 #include "bridge.h"
@@ -15,6 +14,13 @@ import (
 	"runtime"
 	"unsafe"
 )
+
+// Interface for objects that need C++ memory released
+type Releasable interface {
+	Release()
+}
+
+var releaseQueue []Releasable
 
 // --- Feature Flags ---
 const (
@@ -189,3 +195,83 @@ func (cc *CryptoContext) EvalBootstrapPrecompute(slots uint32) error {
 	}
 	return fmt.Errorf("EvalBootstrapPrecompute failed")
 }
+
+// Cleanup releases all tracked C++ objects.
+// Call this function typically at the end of your main function or when
+// you are sure you no longer need any OpenFHE objects.
+func Cleanup() {
+	fmt.Println("TODO Running OpenFHE Cleanup...") // Optional: for debugging
+	//
+	// // Release BinFHE C++ objects first (using the map-clearing C function)
+	// C.ReleaseAllBinFHE()
+	//
+	// // Release PKE C++ objects (using the map-clearing C function)
+	// C.ReleaseAllPKE()
+	//
+	// // Double-check: Iterate through the Go queue to ensure Release() was called
+	// // Although the C++ maps are cleared above, this ensures Go wrappers
+	// // also run their specific Release() logic if any were added beyond just
+	// // calling the C function (currently they don't, but it's safer).
+	// // It also helps catch potential errors if an object wasn't properly released C-side.
+	// if len(releaseQueue) > 0 {
+	// 	fmt.Printf("  Releasing %d Go wrapper objects from queue...\n", len(releaseQueue)) // Optional: Debugging
+	// 	for i, obj := range releaseQueue {
+	// 		// fmt.Printf("  Releasing object %d: Type %T\n", i, obj) // Optional: More debugging
+	// 		switch t := obj.(type) {
+	// 		// PKE Types
+	// 		case CryptoContext:
+	// 			t.Release()
+	// 		case Plaintext:
+	// 			t.Release()
+	// 		case KeyPair:
+	// 			t.Release()
+	// 		case PublicKey:
+	// 			t.Release()
+	// 		case PrivateKey:
+	// 			t.Release()
+	// 		case Ciphertext:
+	// 			t.Release()
+	// 		// BinFHE Types
+	// 		case BinFHEContext:
+	// 			t.Release()
+	// 		case BinFHESecretKey:
+	// 			t.Release()
+	// 		case BinFHECiphertext:
+	// 			t.Release()
+	// 		default:
+	// 			fmt.Printf("Warning: Unknown type in releaseQueue: %T\n", t)
+	// 		}
+	// 	}
+	// } else {
+	// 	fmt.Println("  Go wrapper release queue is empty.") // Optional: Debugging
+	// }
+	//
+	// // Clear the Go queue itself
+	// releaseQueue = nil
+	// fmt.Println("OpenFHE Cleanup finished.") // Optional: Debugging
+}
+
+// Add the Release methods for existing types if they aren't exactly like this:
+// func (cc CryptoContext) Release() {
+// 	C.ReleaseCryptoContext(cc.id)
+// }
+//
+// func (pt Plaintext) Release() {
+// 	C.ReleasePlaintext(pt.id)
+// }
+//
+// func (kp KeyPair) Release() {
+// 	C.ReleaseKeyPair(kp.id)
+// }
+//
+// func (pk PublicKey) Release() {
+// 	C.ReleasePublicKey(pk.id)
+// }
+//
+// func (sk PrivateKey) Release() {
+// 	C.ReleasePrivateKey(sk.id)
+// }
+//
+// func (ct Ciphertext) Release() {
+// 	C.ReleaseCiphertext(ct.id)
+// }
