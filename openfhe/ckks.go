@@ -13,6 +13,8 @@ import (
 	"unsafe"
 )
 
+type complexDouble C.complex_double_t
+
 // --- CKKS Params Functions ---
 func NewParamsCKKSRNS() (*ParamsCKKS, error) {
 	var pH C.ParamsCKKSPtr
@@ -181,33 +183,37 @@ func (cc *CryptoContext) MakeCKKSPackedPlaintext(vec []float64) (*Plaintext, err
 	return pt, nil
 }
 
-func (pt *Plaintext) GetRealPackedValue() ([]float64, error) {
-	if pt.ptr == nil {
-		return nil, errors.New("Plaintext is closed or invalid")
+// MakeCKKSComplexPackedPlaintext creates a CKKS plaintext from a slice of complex128.
+func (cc *CryptoContext) MakeCKKSComplexPackedPlaintext(vec []complex128) (*Plaintext, error) {
+	if cc.ptr == nil {
+		return nil, errors.New("CryptoContext is closed or invalid")
 	}
-	var lengthC C.int
-	status := C.Plaintext_GetRealPackedValueLength(pt.ptr, &lengthC)
+	if len(vec) == 0 {
+		return nil, errors.New("MakeCKKSComplexPackedPlaintext: input vector is empty")
+	}
+
+	// Convert Go []complex128 to C []complex_double_t
+	cVec := make([]C.complex_double_t, len(vec))
+	for i, v := range vec {
+		cVec[i].real = C.double(real(v))
+		cVec[i].imag = C.double(imag(v))
+	}
+
+	cLen := C.int(len(vec))
+	var ptH C.PlaintextPtr
+	status := C.CryptoContext_MakeCKKSComplexPackedPlaintext(cc.ptr, &cVec[0], cLen, &ptH)
 	if status != PKE_OK {
 		return nil, lastPKEError()
 	}
-	length := int(lengthC)
-	if length == 0 {
-		return nil, nil // Empty vector
+	if ptH == nil {
+		return nil, errors.New("MakeCKKSComplexPackedPlaintext returned OK but null handle")
 	}
-	goSlice := make([]float64, length)
-	for i := 0; i < length; i++ {
-		var valC C.double
-		status = C.Plaintext_GetRealPackedValueAt(pt.ptr, C.int(i), &valC)
-		if status != PKE_OK {
-			return nil, lastPKEError()
-		}
-		goSlice[i] = float64(valC)
-	}
-	return goSlice, nil
+	pt := &Plaintext{ptr: ptH}
+	return pt, nil
 }
 
 // --- CKKS Operations ---
-func (cc *CryptoContext) Rescale(ct *Ciphertext) (*Ciphertext, error) { // CHANGED signature
+func (cc *CryptoContext) Rescale(ct *Ciphertext) (*Ciphertext, error) {
 	if cc.ptr == nil {
 		return nil, errors.New("CryptoContext is closed or invalid")
 	}
@@ -221,6 +227,26 @@ func (cc *CryptoContext) Rescale(ct *Ciphertext) (*Ciphertext, error) { // CHANG
 	}
 	if ctH == nil {
 		return nil, errors.New("Rescale returned OK but null handle")
+	}
+	resCt := &Ciphertext{ptr: ctH}
+	return resCt, nil
+}
+
+// ModReduce reduces the modulus of the ciphertext without rescaling.
+func (cc *CryptoContext) ModReduce(ct *Ciphertext) (*Ciphertext, error) {
+	if cc.ptr == nil {
+		return nil, errors.New("CryptoContext is closed or invalid")
+	}
+	if ct == nil || ct.ptr == nil {
+		return nil, errors.New("Input Ciphertext is closed or invalid")
+	}
+	var ctH C.CiphertextPtr
+	status := C.CryptoContext_ModReduce(cc.ptr, ct.ptr, &ctH)
+	if status != PKE_OK {
+		return nil, lastPKEError()
+	}
+	if ctH == nil {
+		return nil, errors.New("ModReduce returned OK but null handle")
 	}
 	resCt := &Ciphertext{ptr: ctH}
 	return resCt, nil

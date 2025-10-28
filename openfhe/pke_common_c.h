@@ -55,6 +55,7 @@ PKE_Err CryptoContext_EvalMultKeyGen(CryptoContextPtr cc, KeyPairPtr keys);
 PKE_Err CryptoContext_EvalRotateKeyGen(CryptoContextPtr cc, KeyPairPtr keys,
                                        int32_t *indices, int len);
 uint64_t CryptoContext_GetRingDimension(CryptoContextPtr cc);
+int Ciphertext_GetLevel(CiphertextPtr ct);
 void DestroyCryptoContext(CryptoContextPtr cc);
 
 // --- Common Operations ---

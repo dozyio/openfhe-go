@@ -472,6 +472,19 @@ void DestroyPlaintext(PlaintextPtr pt_ptr_to_sptr) {
 }
 
 // --- Ciphertext ---
+int Ciphertext_GetLevel(CiphertextPtr ct_ptr_to_sptr) {
+  if (!ct_ptr_to_sptr) {
+    return -1;
+  }
+
+  auto &ct_sptr = GetCTSharedPtr(ct_ptr_to_sptr);
+  if (!ct_sptr) {
+    return -1;
+  }
+
+  return static_cast<int>(ct_sptr->GetLevel()); // Cast size_t to int
+}
+
 void DestroyCiphertext(CiphertextPtr ct_ptr_to_sptr) {
   delete reinterpret_cast<CiphertextSharedPtr *>(ct_ptr_to_sptr);
 }

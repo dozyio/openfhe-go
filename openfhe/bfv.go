@@ -96,28 +96,3 @@ func (cc *CryptoContext) MakePackedPlaintext(vec []int64) (*Plaintext, error) {
 	pt := &Plaintext{ptr: ptH}
 	return pt, nil
 }
-
-func (pt *Plaintext) GetPackedValue() ([]int64, error) { // CHANGED signature
-	if pt.ptr == nil {
-		return nil, errors.New("Plaintext is closed or invalid")
-	}
-	var lengthC C.int
-	status := C.Plaintext_GetPackedValueLength(pt.ptr, &lengthC)
-	if status != PKE_OK {
-		return nil, lastPKEError()
-	}
-	length := int(lengthC)
-	if length == 0 {
-		return nil, nil // Empty vector
-	}
-	goSlice := make([]int64, length)
-	for i := 0; i < length; i++ {
-		var valC C.int64_t
-		status = C.Plaintext_GetPackedValueAt(pt.ptr, C.int(i), &valC)
-		if status != PKE_OK {
-			return nil, lastPKEError()
-		}
-		goSlice[i] = int64(valC)
-	}
-	return goSlice, nil
-}

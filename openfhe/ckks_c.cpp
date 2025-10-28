@@ -1,5 +1,6 @@
 #include "ckks_c.h"
 #include "pke_helpers_c.h"
+#include <complex>
 
 using namespace lbcrypto;
 
@@ -175,6 +176,86 @@ return PKE_OK;
 PKE_CATCH_RETURN(PKE_ERR)
 }
 
+PKE_Err CryptoContext_MakeCKKSComplexPackedPlaintext(
+    CryptoContextPtr cc_ptr_to_sptr, complex_double_t *values, int len,
+    PlaintextPtr *out){PKE_TRY{if (!cc_ptr_to_sptr){set_last_error_pke_str(
+    "CryptoContext_MakeCKKSComplexPackedPlaintext: null context");
+return PKE_ERR;
+}
+if (len > 0 && !values) {
+  set_last_error_pke_str(
+      "CryptoContext_MakeCKKSComplexPackedPlaintext: non-zero length "
+      "with null values");
+  return PKE_ERR;
+}
+if (!out) {
+  set_last_error_pke_str(
+      "CryptoContext_MakeCKKSComplexPackedPlaintext: null output "
+      "pointer");
+  return PKE_ERR;
+}
+auto &cc_sptr = GetCCSharedPtr(cc_ptr_to_sptr);
+
+// Convert C struct array to std::vector<std::complex<double>>
+std::vector<std::complex<double>> vec(len);
+for (int i = 0; i < len; ++i) {
+  vec[i] = std::complex<double>(values[i].real, values[i].imag);
+}
+
+Plaintext pt_sptr = cc_sptr->MakeCKKSPackedPlaintext(vec);
+*out = reinterpret_cast<PlaintextPtr>(new PlaintextSharedPtr(pt_sptr));
+return PKE_OK;
+}
+PKE_CATCH_RETURN(PKE_ERR)
+}
+
+PKE_Err Plaintext_GetComplexPackedValueLength(PlaintextPtr pt_ptr_to_sptr,
+                                              int *out_len){
+    PKE_TRY{if (!pt_ptr_to_sptr){set_last_error_pke_str(
+        "Plaintext_GetComplexPackedValueLength: null plaintext");
+return PKE_ERR;
+}
+if (!out_len) {
+  set_last_error_pke_str(
+      "Plaintext_GetComplexPackedValueLength: null output pointer");
+  return PKE_ERR;
+}
+auto &pt_sptr = GetPTSharedPtr(pt_ptr_to_sptr);
+// Assuming GetCKKSPackedValue is the method for complex (check OpenFHE source
+// if needed)
+*out_len = pt_sptr->GetCKKSPackedValue().size();
+return PKE_OK;
+}
+PKE_CATCH_RETURN(PKE_ERR)
+}
+
+PKE_Err Plaintext_GetComplexPackedValueAt(
+    PlaintextPtr pt_ptr_to_sptr, int i,
+    complex_double_t *out_val){PKE_TRY{if (!pt_ptr_to_sptr){
+    set_last_error_pke_str("Plaintext_GetComplexPackedValueAt: null plaintext");
+return PKE_ERR;
+}
+if (!out_val) {
+  set_last_error_pke_str(
+      "Plaintext_GetComplexPackedValueAt: null output pointer");
+  return PKE_ERR;
+}
+auto &pt_sptr = GetPTSharedPtr(pt_ptr_to_sptr);
+const auto &complex_vec =
+    pt_sptr->GetCKKSPackedValue(); // Assuming this is correct
+// Add bounds check
+if (i < 0 || (size_t)i >= complex_vec.size()) {
+  set_last_error_pke_str(
+      "Plaintext_GetComplexPackedValueAt: index out of bounds");
+  return PKE_ERR;
+}
+out_val->real = complex_vec[i].real();
+out_val->imag = complex_vec[i].imag();
+return PKE_OK;
+}
+PKE_CATCH_RETURN(PKE_ERR)
+}
+
 // --- CKKS Operations ---
 PKE_Err CryptoContext_Rescale(CryptoContextPtr cc_ptr_to_sptr,
                               CiphertextPtr ct_ptr_to_sptr,
@@ -193,6 +274,31 @@ if (!out) {
 auto &cc_sptr = GetCCSharedPtr(cc_ptr_to_sptr);
 auto &ct_sptr = GetCTSharedPtr(ct_ptr_to_sptr);
 Ciphertext<DCRTPoly> result_ct_sptr = cc_sptr->Rescale(ct_sptr);
+*out = reinterpret_cast<CiphertextPtr>(new CiphertextSharedPtr(result_ct_sptr));
+return PKE_OK;
+}
+PKE_CATCH_RETURN(PKE_ERR)
+}
+
+PKE_Err CryptoContext_ModReduce(CryptoContextPtr cc_ptr_to_sptr,
+                                CiphertextPtr ct_ptr_to_sptr,
+                                CiphertextPtr *out){
+    PKE_TRY{if (!cc_ptr_to_sptr){
+        set_last_error_pke_str("CryptoContext_ModReduce: null context");
+return PKE_ERR;
+}
+if (!ct_ptr_to_sptr) {
+  set_last_error_pke_str("CryptoContext_ModReduce: null ciphertext");
+  return PKE_ERR;
+}
+if (!out) {
+  set_last_error_pke_str("CryptoContext_ModReduce: null output pointer");
+  return PKE_ERR;
+}
+auto &cc_sptr = GetCCSharedPtr(cc_ptr_to_sptr);
+auto &ct_sptr = GetCTSharedPtr(ct_ptr_to_sptr);
+
+Ciphertext<DCRTPoly> result_ct_sptr = cc_sptr->ModReduce(ct_sptr);
 *out = reinterpret_cast<CiphertextPtr>(new CiphertextSharedPtr(result_ct_sptr));
 return PKE_OK;
 }

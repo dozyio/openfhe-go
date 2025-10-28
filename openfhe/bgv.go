@@ -75,20 +75,3 @@ func NewCryptoContextBGV(p *ParamsBGV) (*CryptoContext, error) {
 	cc := &CryptoContext{ptr: ccH}
 	return cc, nil
 }
-
-// --- BGV Plaintext ---
-// Note: MakePackedPlaintext and GetPackedValue are already defined in bfv.go and common.go
-// We only need the BGV-specific SetLength method added to the Plaintext type.
-
-// This method should be added to the existing Plaintext type, likely in common.go or a new plaintext.go
-// For now, let's put it here, but ideally it integrates with the existing Plaintext struct.
-func (pt *Plaintext) SetLength(len int) error {
-	if pt.ptr == nil {
-		return errors.New("Plaintext is closed or invalid")
-	}
-	status := C.Plaintext_SetLength(pt.ptr, C.int(len))
-	if status != PKE_OK {
-		return lastPKEError()
-	}
-	return nil
-}

@@ -328,6 +328,18 @@ func Cleanup() {
 	fmt.Println("OpenFHE Global Cleanup finished.") // Optional
 }
 
+func (ct *Ciphertext) GetLevel() (int, bool) {
+	if ct.ptr == nil {
+		return -1, false // Indicate invalid state
+	}
+	level := C.Ciphertext_GetLevel(ct.ptr)
+	if level == -1 {
+		return -1, false
+	}
+
+	return int(level), true
+}
+
 // --- Release Methods for Go Wrappers ---
 
 // Close frees the underlying C++ CryptoContext object.
@@ -335,14 +347,6 @@ func (cc *CryptoContext) Close() {
 	if cc.ptr != nil {
 		C.DestroyCryptoContext(cc.ptr)
 		cc.ptr = nil
-	}
-}
-
-// Close frees the underlying C++ Plaintext object.
-func (pt *Plaintext) Close() {
-	if pt.ptr != nil {
-		C.DestroyPlaintext(pt.ptr)
-		pt.ptr = nil
 	}
 }
 
