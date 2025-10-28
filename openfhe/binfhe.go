@@ -1,6 +1,6 @@
 package openfhe
 
-// #cgo CXXFLAGS: -std=c++17 -I${SRCDIR}/include -I${SRCDIR}/openfhe/include -I${SRCDIR}/openfhe/include/pke -I${SRCDIR}/openfhe/include/core -I${SRCDIR}/openfhe/include/binfhe -I${SRCDIR}/openfhe/include/core/include -I${SRCDIR}/openfhe/include/pke/include
+// #cgo CPPFLAGS: -I${SRCDIR}/../openfhe-install/include -I${SRCDIR}/../openfhe-install/include/openfhe -I${SRCDIR}/../openfhe-install/include/openfhe/core -I${SRCDIR}/../openfhe-install/include/openfhe/pke -I${SRCDIR}/../openfhe-install/include/openfhe/binfhe -I${SRCDIR}/../openfhe-install/include/openfhe/cereal
 // #include "binfhe_c.h"
 import "C"
 

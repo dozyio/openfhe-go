@@ -4,7 +4,7 @@ package openfhe
 #cgo CPPFLAGS: -I${SRCDIR}/../openfhe-install/include -I${SRCDIR}/../openfhe-install/include/openfhe -I${SRCDIR}/../openfhe-install/include/openfhe/core -I${SRCDIR}/../openfhe-install/include/openfhe/pke -I${SRCDIR}/../openfhe-install/include/openfhe/binfhe -I${SRCDIR}/../openfhe-install/include/openfhe/cereal
 #cgo CXXFLAGS: -std=c++17
 #include <stdint.h>
-#include "bridge.h"
+#include "bgv_c.h"
 */
 import "C"
 import "errors"

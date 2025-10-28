@@ -5,7 +5,8 @@ package openfhe
 #cgo CXXFLAGS: -std=c++17
 #include <stdint.h>
 #include <stdlib.h>
-#include "bridge.h"
+#include "pke_common_c.h"
+#include "ckks_c.h"
 */
 import "C"
 

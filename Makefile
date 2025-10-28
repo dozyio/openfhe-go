@@ -14,9 +14,6 @@ OPENFHE_REPO := https://github.com/openfheorg/openfhe-development.git
 OPENFHE_TAG := v1.4.2
 
 # CMake options for OpenFHE
-# - Build statically
-# - Install locally within the project
-# - Add other options as needed (e.g., -DWITH_NATIVEOPT=ON for performance)
 CMAKE_OPTIONS := -DBUILD_SHARED=OFF \
                  -DBUILD_STATIC=ON \
                  -DCMAKE_INSTALL_PREFIX=$(OPENFHE_INSTALL_DIR) \
@@ -26,14 +23,6 @@ CMAKE_OPTIONS := -DBUILD_SHARED=OFF \
                  -DBUILD_SERIALIZATION=ON \
                  -DCMAKE_BUILD_TYPE=Release \
                  -DWITH_OPENMP=OFF # Disable OpenMP if not needed/causing issues
-CPPFLAGS = \
-  -I$(CURDIR)/openfhe-install/include \
-  -I$(CURDIR)/openfhe-install/include/openfhe \
-  -I$(CURDIR)/openfhe-install/include/openfhe/core \
-  -I$(CURDIR)/openfhe-install/include/openfhe/pke \
-  -I$(CURDIR)/openfhe-install/include/openfhe/binfhe \
-  -I$(CURDIR)/openfhe-install/include/openfhe/cereal
-CXXFLAGS = -std=c++17
 
 # --- Targets ---
 
@@ -78,18 +67,19 @@ $(OPENFHE_SRC_DIR)/CMakeLists.txt:
 build_openfhe: $(OPENFHE_INSTALL_MARKER)
 	@echo "--- OpenFHE build and install complete ---"
 
-openfhe/bridge.o: openfhe/bridge.cpp openfhe/bridge.h
-	c++ $(CPPFLAGS) $(CXXFLAGS) -c -o $@ $<
-
-build: openfhe/bridge.o
-	@echo "Building Go package..."
+# Build the Go package (depends on OpenFHE being installed)
+# CGO will now compile the C++ files listed in //CGO_SOURCES
+build: $(OPENFHE_INSTALL_MARKER)
+	@echo "Building Go package (CGO will compile C++ wrapper files)..."
 	go build ./...
 
 test: $(OPENFHE_INSTALL_MARKER)
+	@echo "Running Go tests..."
 	@go test -v -count 1 ./openfhe
 
-run-examples: ${OPENFHE_INSTALL_MARKER}
-	find ./examples -type f -name 'main.go' -execdir sh -c 'echo "\n▶ running $$(pwd)/$$1"; go run . ' _ {} \;
+run-examples: $(OPENFHE_INSTALL_MARKER)
+	@echo "Running all Go examples..."
+	@find ./examples -type f -name 'main.go' -execdir sh -c 'echo "\n▶ running $$(pwd)/$$1"; go run . ' _ {} \;
 
 # Target to clean Go build artifacts
 clean:
