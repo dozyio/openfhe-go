@@ -7,6 +7,7 @@ package openfhe
 #include "bridge.h"
 */
 import "C"
+import "errors"
 
 // --- BGV Params Type ---
 // Opaque struct to hold the C pointer for BGV Params
@@ -15,21 +16,43 @@ type ParamsBGV struct {
 }
 
 // --- BGV Params Functions ---
-func NewParamsBGVrns() *ParamsBGV {
-	p := &ParamsBGV{ptr: C.NewParamsBGV()}
-	return p
+func NewParamsBGVrns() (*ParamsBGV, error) {
+	var pH C.ParamsBGVPtr
+	status := C.NewParamsBGV(&pH)
+	if status != PKE_OK {
+		return nil, lastPKEError()
+	}
+	if pH == nil {
+		return nil, errors.New("NewParamsBGV returned OK but null handle")
+	}
+	p := &ParamsBGV{ptr: pH}
+	return p, nil
 }
 
-func (p *ParamsBGV) SetPlaintextModulus(mod uint64) {
-	C.ParamsBGV_SetPlaintextModulus(p.ptr, C.uint64_t(mod))
+func (p *ParamsBGV) SetPlaintextModulus(mod uint64) error {
+	if p.ptr == nil {
+		return errors.New("ParamsBGV is closed or invalid")
+	}
+	status := C.ParamsBGV_SetPlaintextModulus(p.ptr, C.uint64_t(mod))
+	if status != PKE_OK {
+		return lastPKEError()
+	}
+	return nil
 }
 
-func (p *ParamsBGV) SetMultiplicativeDepth(depth int) {
-	C.ParamsBGV_SetMultiplicativeDepth(p.ptr, C.int(depth))
+func (p *ParamsBGV) SetMultiplicativeDepth(depth int) error {
+	if p.ptr == nil {
+		return errors.New("ParamsBGV is closed or invalid")
+	}
+	status := C.ParamsBGV_SetMultiplicativeDepth(p.ptr, C.int(depth))
+	if status != PKE_OK {
+		return lastPKEError()
+	}
+	return nil
 }
 
-// Release method for ParamsBGV
-func (p *ParamsBGV) Release() {
+// Close method for ParamsBGV
+func (p *ParamsBGV) Close() {
 	if p.ptr != nil {
 		C.DestroyParamsBGV(p.ptr)
 		p.ptr = nil
@@ -37,9 +60,20 @@ func (p *ParamsBGV) Release() {
 }
 
 // --- BGV CryptoContext ---
-func NewCryptoContextBGV(p *ParamsBGV) *CryptoContext {
-	cc := &CryptoContext{ptr: C.NewCryptoContextBGV(p.ptr)}
-	return cc
+func NewCryptoContextBGV(p *ParamsBGV) (*CryptoContext, error) {
+	if p == nil || p.ptr == nil {
+		return nil, errors.New("ParamsBGV is closed or invalid")
+	}
+	var ccH C.CryptoContextPtr
+	status := C.NewCryptoContextBGV(p.ptr, &ccH)
+	if status != PKE_OK {
+		return nil, lastPKEError()
+	}
+	if ccH == nil {
+		return nil, errors.New("NewCryptoContextBGV returned OK but null handle")
+	}
+	cc := &CryptoContext{ptr: ccH}
+	return cc, nil
 }
 
 // --- BGV Plaintext ---
@@ -48,6 +82,13 @@ func NewCryptoContextBGV(p *ParamsBGV) *CryptoContext {
 
 // This method should be added to the existing Plaintext type, likely in common.go or a new plaintext.go
 // For now, let's put it here, but ideally it integrates with the existing Plaintext struct.
-func (pt *Plaintext) SetLength(len int) {
-	C.Plaintext_SetLength(pt.ptr, C.int(len))
+func (pt *Plaintext) SetLength(len int) error {
+	if pt.ptr == nil {
+		return errors.New("Plaintext is closed or invalid")
+	}
+	status := C.Plaintext_SetLength(pt.ptr, C.int(len))
+	if status != PKE_OK {
+		return lastPKEError()
+	}
+	return nil
 }

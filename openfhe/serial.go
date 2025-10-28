@@ -9,6 +9,7 @@ package openfhe
 import "C"
 
 import (
+	"errors"
 	"fmt"
 	"unsafe"
 )
@@ -153,46 +154,79 @@ func DeserializeCiphertextFromString(s string) *Ciphertext {
 // --- Helper for KeyPair Reconstruction ---
 
 // NewKeyPair creates an empty KeyPair struct. Useful for combining deserialized keys.
-func NewKeyPair() *KeyPair {
-	kp := &KeyPair{ptr: C.NewKeyPair()}
-	// No finalizer
-	return kp
+func NewKeyPair() (*KeyPair, error) {
+	var kpH C.KeyPairPtr
+	status := C.NewKeyPair(&kpH)
+	if status != PKE_OK {
+		return nil, lastPKEError()
+	}
+	if kpH == nil {
+		return nil, errors.New("NewKeyPair returned OK but null handle")
+	}
+	kp := &KeyPair{ptr: kpH}
+	return kp, nil
 }
 
 // GetPublicKey extracts the public key part from a KeyPair.
-// Returns a temporary pointer managed by Go's garbage collector.
-func (kp *KeyPair) GetPublicKey() unsafe.Pointer {
-	pkPtr := C.GetPublicKey(kp.ptr)
-	if pkPtr == nil {
-		return nil
+func (kp *KeyPair) GetPublicKey() (unsafe.Pointer, error) {
+	if kp.ptr == nil {
+		return nil, errors.New("KeyPair is closed or invalid")
 	}
-	// No finalizer needed here as SetPublicKey should consume this pointer
-	return pkPtr
+	var pkH unsafe.Pointer
+	status := C.GetPublicKey(kp.ptr, &pkH)
+	if status != PKE_OK {
+		return nil, lastPKEError()
+	}
+	if pkH == nil {
+		return nil, errors.New("GetPublicKey returned OK but null handle")
+	}
+	return pkH, nil
 }
 
 // GetPrivateKey extracts the private key part from a KeyPair.
-// Returns a temporary pointer managed by Go's garbage collector.
-func (kp *KeyPair) GetPrivateKey() unsafe.Pointer {
-	skPtr := C.GetPrivateKey(kp.ptr)
-	if skPtr == nil {
-		return nil
+func (kp *KeyPair) GetPrivateKey() (unsafe.Pointer, error) {
+	if kp.ptr == nil {
+		return nil, errors.New("KeyPair is closed or invalid")
 	}
-	// No finalizer needed here as SetPrivateKey should consume this pointer
-	return skPtr
+	var skH unsafe.Pointer
+	status := C.GetPrivateKey(kp.ptr, &skH)
+	if status != PKE_OK {
+		return nil, lastPKEError()
+	}
+	if skH == nil {
+		return nil, errors.New("GetPrivateKey returned OK but null handle")
+	}
+	return skH, nil
 }
 
 // SetPublicKey sets the public key part of an existing KeyPair.
 // It takes the temporary pointer returned by GetPublicKey or a deserialization.
-func (kp *KeyPair) SetPublicKey(pkPtr unsafe.Pointer) {
-	if pkPtr != nil {
-		C.SetPublicKey(kp.ptr, pkPtr)
+func (kp *KeyPair) SetPublicKey(pkPtr unsafe.Pointer) error { // ADDED error
+	if kp.ptr == nil {
+		return errors.New("KeyPair is closed or invalid")
 	}
+	if pkPtr == nil {
+		return errors.New("Input public key pointer is nil")
+	}
+	status := C.SetPublicKey(kp.ptr, pkPtr)
+	if status != PKE_OK {
+		return lastPKEError()
+	}
+	return nil
 }
 
 // SetPrivateKey sets the private key part of an existing KeyPair.
 // It takes the temporary pointer returned by GetPrivateKey or a deserialization.
-func (kp *KeyPair) SetPrivateKey(skPtr unsafe.Pointer) {
-	if skPtr != nil {
-		C.SetPrivateKey(kp.ptr, skPtr)
+func (kp *KeyPair) SetPrivateKey(skPtr unsafe.Pointer) error { // ADDED error
+	if kp.ptr == nil {
+		return errors.New("KeyPair is closed or invalid")
 	}
+	if skPtr == nil {
+		return errors.New("Input private key pointer is nil")
+	}
+	status := C.SetPrivateKey(kp.ptr, skPtr)
+	if status != PKE_OK {
+		return lastPKEError()
+	}
+	return nil
 }

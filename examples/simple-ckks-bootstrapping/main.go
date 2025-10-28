@@ -29,60 +29,73 @@ func approxEqual(a, b []float64, tol float64) bool {
 func main() {
 	fmt.Println("--- Go simple-ckks-bootstrapping (simple setup) ---")
 
-	// === 1) Params (match Python) ===
-	params := openfhe.NewParamsCKKSRNS()
-	params.SetSecretKeyDist(openfhe.SecretKeyUniformTernary)
-	params.SetSecurityLevel(openfhe.HEStdNotSet) // important with small N
-	params.SetRingDim(uint64(1 << 12))           // 4096
+	params, err := openfhe.NewParamsCKKSRNS()
+	must(err, "NewParamsCKKSRNS")
+	defer params.Close()
+
+	must(params.SetSecretKeyDist(openfhe.SecretKeyUniformTernary), "SetSecretKeyDist")
+	must(params.SetSecurityLevel(openfhe.HEStdNotSet), "SetSecurityLevel") // important with small N
+	must(params.SetRingDim(uint64(1<<12)), "SetRingDim")                   // 4096
 
 	// 64-bit typical path (Python does FLEXIBLEAUTO / 59 / 60)
-	params.SetScalingTechnique(openfhe.FLEXIBLEAUTO)
-	params.SetScalingModSize(59)
-	params.SetFirstModSize(60)
+	must(params.SetScalingTechnique(openfhe.FLEXIBLEAUTO), "SetScalingTechnique")
+	must(params.SetScalingModSize(59), "SetScalingModSize")
+	must(params.SetFirstModSize(60), "SetFirstModSize")
 
 	// depth = levelsAfter + GetBootstrapDepth(levelBudget, skd)
 	levelBudget := []uint32{4, 4}
 	bootstrapDepth := openfhe.GetBootstrapDepth(levelBudget, openfhe.SecretKeyUniformTernary) // tiny helper wrapper
 	levelsAfter := uint32(10)
-	params.SetMultiplicativeDepth(int(levelsAfter + bootstrapDepth))
+	must(params.SetMultiplicativeDepth(int(levelsAfter+bootstrapDepth)), "SetMultiplicativeDepth")
 
 	// === 2) Context & enable ===
-	cc := openfhe.NewCryptoContextCKKS(params)
-	cc.Enable(openfhe.PKE)
-	cc.Enable(openfhe.KEYSWITCH)
-	cc.Enable(openfhe.LEVELEDSHE)
-	cc.Enable(openfhe.ADVANCEDSHE)
-	cc.Enable(openfhe.FHE)
+	cc, err := openfhe.NewCryptoContextCKKS(params)
+	must(err, "NewCryptoContextCKKS")
+	defer cc.Close()
+
+	must(cc.Enable(openfhe.PKE), "Enable PKE")
+	must(cc.Enable(openfhe.KEYSWITCH), "Enable KEYSWITCH")
+	must(cc.Enable(openfhe.LEVELEDSHE), "Enable LEVELEDSHE")
+	must(cc.Enable(openfhe.ADVANCEDSHE), "Enable ADVANCEDSHE")
+	must(cc.Enable(openfhe.FHE), "Enable FHE")
 
 	N := cc.GetRingDimension()
 	slots := uint32(N / 2)
 	fmt.Printf("CKKS ring dimension %d (slots=%d)\n", N, slots)
 
-	// === 3) SIMPLE bootstrap setup (like Python) ===
-	// NOTE: if your wrapper is named differently, adjust the call accordingly.
 	must(cc.EvalBootstrapSetupSimple(levelBudget), "bootstrap setup")
 
-	// === 4) Keys and bootstrap keys ===
-	kp := cc.KeyGen()
-	cc.EvalMultKeyGen(kp) // relinearization keys
+	kp, err := cc.KeyGen()
+	must(err, "KeyGen")
+	defer kp.Close()
+
+	must(cc.EvalMultKeyGen(kp), "EvalMultKeyGen") // relinearization keys
 	must(cc.EvalBootstrapKeyGen(kp, slots), "bootstrap keygen")
 
 	// === 5) Encode, encrypt, bootstrap ===
 	x := []float64{0.25, 0.5, 0.75, 1.0, 2.0, 3.0, 4.0, 5.0}
-	pt := cc.MakeCKKSPackedPlaintext(x)
-	pt.SetLength(len(x))
+	pt, err := cc.MakeCKKSPackedPlaintext(x)
+	must(err, "MakeCKKSPackedPlaintext")
+	defer pt.Close()
 
-	ct := cc.Encrypt(kp, pt)
+	must(pt.SetLength(len(x)), "SetLength")
 
-	// No manual “burning levels” needed; the Python sample bootstraps directly.
-	ctB, err := cc.EvalBootstrap(ct) // assuming your wrapper returns (*Ciphertext, error)
+	ct, err := cc.Encrypt(kp, pt)
+	must(err, "Encrypt")
+	defer ct.Close()
+
+	ctB, err := cc.EvalBootstrap(ct)
 	must(err, "bootstrap")
+	defer ctB.Close()
 
-	out := cc.Decrypt(kp, ctB)
-	out.SetLength(len(x))
-	got := out.GetRealPackedValue()
+	out, err := cc.Decrypt(kp, ctB)
+	must(err, "Decrypt")
+	defer out.Close()
 
-	// Python prints the result; we can quick-check it stayed near input (since we didn't do math before bootstrap).
+	must(out.SetLength(len(x)), "SetLength")
+	got, err := out.GetRealPackedValue()
+	must(err, "GetRealPackedValue")
+
 	if approxEqual(got[:len(x)], x, 0.02) {
 		fmt.Println("Bootstrap OK (values ~ input).")
 	} else {

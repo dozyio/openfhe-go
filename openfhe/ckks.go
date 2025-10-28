@@ -9,54 +9,125 @@ package openfhe
 import "C"
 
 import (
-	"fmt"
+	"errors"
 	"unsafe"
 )
 
 // --- CKKS Params Functions ---
-func NewParamsCKKSRNS() *ParamsCKKS {
-	p := &ParamsCKKS{ptr: C.NewParamsCKKS()}
-	return p
+func NewParamsCKKSRNS() (*ParamsCKKS, error) {
+	var pH C.ParamsCKKSPtr
+	status := C.NewParamsCKKS(&pH)
+	if status != PKE_OK {
+		return nil, lastPKEError()
+	}
+	if pH == nil {
+		return nil, errors.New("NewParamsCKKS returned OK but null handle")
+	}
+	p := &ParamsCKKS{ptr: pH}
+	return p, nil
 }
 
-func (p *ParamsCKKS) SetScalingModSize(modSize int) {
-	C.ParamsCKKS_SetScalingModSize(p.ptr, C.int(modSize))
+func (p *ParamsCKKS) SetScalingModSize(modSize int) error {
+	if p.ptr == nil {
+		return errors.New("ParamsCKKS is closed or invalid")
+	}
+	status := C.ParamsCKKS_SetScalingModSize(p.ptr, C.int(modSize))
+	if status != PKE_OK {
+		return lastPKEError()
+	}
+	return nil
 }
 
-func (p *ParamsCKKS) SetBatchSize(batchSize int) {
-	C.ParamsCKKS_SetBatchSize(p.ptr, C.int(batchSize))
+func (p *ParamsCKKS) SetBatchSize(batchSize int) error {
+	if p.ptr == nil {
+		return errors.New("ParamsCKKS is closed or invalid")
+	}
+	status := C.ParamsCKKS_SetBatchSize(p.ptr, C.int(batchSize))
+	if status != PKE_OK {
+		return lastPKEError()
+	}
+	return nil
 }
 
-func (p *ParamsCKKS) SetMultiplicativeDepth(depth int) {
-	C.ParamsCKKS_SetMultiplicativeDepth(p.ptr, C.int(depth))
+func (p *ParamsCKKS) SetMultiplicativeDepth(depth int) error {
+	if p.ptr == nil {
+		return errors.New("ParamsCKKS is closed or invalid")
+	}
+	status := C.ParamsCKKS_SetMultiplicativeDepth(p.ptr, C.int(depth))
+	if status != PKE_OK {
+		return lastPKEError()
+	}
+	return nil
 }
 
-func (p *ParamsCKKS) SetSecurityLevel(level SecurityLevel) {
-	C.ParamsCKKS_SetSecurityLevel(p.ptr, C.OFHESecurityLevel(level))
+func (p *ParamsCKKS) SetSecurityLevel(level SecurityLevel) error {
+	if p.ptr == nil {
+		return errors.New("ParamsCKKS is closed or invalid")
+	}
+	status := C.ParamsCKKS_SetSecurityLevel(p.ptr, C.OFHESecurityLevel(level))
+	if status != PKE_OK {
+		return lastPKEError()
+	}
+	return nil
 }
 
-func (p *ParamsCKKS) SetRingDim(ringDim uint64) {
-	C.ParamsCKKS_SetRingDim(p.ptr, C.uint64_t(ringDim))
+func (p *ParamsCKKS) SetRingDim(ringDim uint64) error {
+	if p.ptr == nil {
+		return errors.New("ParamsCKKS is closed or invalid")
+	}
+	status := C.ParamsCKKS_SetRingDim(p.ptr, C.uint64_t(ringDim))
+	if status != PKE_OK {
+		return lastPKEError()
+	}
+	return nil
 }
 
-func (p *ParamsCKKS) SetScalingTechnique(technique int) {
-	C.ParamsCKKS_SetScalingTechnique(p.ptr, C.int(technique))
+func (p *ParamsCKKS) SetScalingTechnique(technique int) error {
+	if p.ptr == nil {
+		return errors.New("ParamsCKKS is closed or invalid")
+	}
+	status := C.ParamsCKKS_SetScalingTechnique(p.ptr, C.int(technique))
+	if status != PKE_OK {
+		return lastPKEError()
+	}
+	return nil
 }
 
-func (p *ParamsCKKS) SetFirstModSize(modSize int) {
-	C.ParamsCKKS_SetFirstModSize(p.ptr, C.int(modSize))
+func (p *ParamsCKKS) SetFirstModSize(modSize int) error {
+	if p.ptr == nil {
+		return errors.New("ParamsCKKS is closed or invalid")
+	}
+	status := C.ParamsCKKS_SetFirstModSize(p.ptr, C.int(modSize))
+	if status != PKE_OK {
+		return lastPKEError()
+	}
+	return nil
 }
 
-func (p *ParamsCKKS) SetNumLargeDigits(numDigits int) {
-	C.ParamsCKKS_SetNumLargeDigits(p.ptr, C.int(numDigits))
+func (p *ParamsCKKS) SetNumLargeDigits(numDigits int) error {
+	if p.ptr == nil {
+		return errors.New("ParamsCKKS is closed or invalid")
+	}
+	status := C.ParamsCKKS_SetNumLargeDigits(p.ptr, C.int(numDigits))
+	if status != PKE_OK {
+		return lastPKEError()
+	}
+	return nil
 }
 
-func (p *ParamsCKKS) SetSecretKeyDist(d SecretKeyDist) {
-	C.ParamsCKKS_SetSecretKeyDist(p.ptr, C.OFHESecretKeyDist(d))
+func (p *ParamsCKKS) SetSecretKeyDist(d SecretKeyDist) error {
+	if p.ptr == nil {
+		return errors.New("ParamsCKKS is closed or invalid")
+	}
+	status := C.ParamsCKKS_SetSecretKeyDist(p.ptr, C.OFHESecretKeyDist(d))
+	if status != PKE_OK {
+		return lastPKEError()
+	}
+	return nil
 }
 
-// Release method for ParamsCKKS
-func (p *ParamsCKKS) Release() {
+// Close method for ParamsCKKS
+func (p *ParamsCKKS) Close() {
 	if p.ptr != nil {
 		C.DestroyParamsCKKS(p.ptr)
 		p.ptr = nil
@@ -65,42 +136,94 @@ func (p *ParamsCKKS) Release() {
 
 // Expose ring dimension
 func (cc *CryptoContext) GetRingDimension() uint64 {
+	if cc.ptr == nil {
+		return 0
+	}
 	return uint64(C.CryptoContext_GetRingDimension(cc.ptr))
 }
 
 // --- CKKS CryptoContext ---
-func NewCryptoContextCKKS(p *ParamsCKKS) *CryptoContext {
-	cc := &CryptoContext{ptr: C.NewCryptoContextCKKS(p.ptr)}
-	return cc
+func NewCryptoContextCKKS(p *ParamsCKKS) (*CryptoContext, error) {
+	if p == nil || p.ptr == nil {
+		return nil, errors.New("ParamsCKKS is closed or invalid")
+	}
+	var ccH C.CryptoContextPtr
+	status := C.NewCryptoContextCKKS(p.ptr, &ccH)
+	if status != PKE_OK {
+		return nil, lastPKEError()
+	}
+	if ccH == nil {
+		return nil, errors.New("NewCryptoContextCKKS returned OK but null handle")
+	}
+	cc := &CryptoContext{ptr: ccH}
+	return cc, nil
 }
 
 // --- CKKS Plaintext ---
-func (cc *CryptoContext) MakeCKKSPackedPlaintext(vec []float64) *Plaintext {
+func (cc *CryptoContext) MakeCKKSPackedPlaintext(vec []float64) (*Plaintext, error) {
+	if cc.ptr == nil {
+		return nil, errors.New("CryptoContext is closed or invalid")
+	}
 	if len(vec) == 0 {
-		return nil
+		return nil, errors.New("MakeCKKSPackedPlaintext: input vector is empty")
 	}
 	cVec := (*C.double)(unsafe.Pointer(&vec[0]))
 	cLen := C.int(len(vec))
-	pt := &Plaintext{ptr: C.CryptoContext_MakeCKKSPackedPlaintext(cc.ptr, cVec, cLen)}
-	return pt
+	var ptH C.PlaintextPtr
+	status := C.CryptoContext_MakeCKKSPackedPlaintext(cc.ptr, cVec, cLen, &ptH)
+	if status != PKE_OK {
+		return nil, lastPKEError()
+	}
+	if ptH == nil {
+		return nil, errors.New("MakeCKKSPackedPlaintext returned OK but null handle")
+	}
+	pt := &Plaintext{ptr: ptH}
+	return pt, nil
 }
 
-func (pt *Plaintext) GetRealPackedValue() []float64 {
-	length := int(C.Plaintext_GetRealPackedValueLength(pt.ptr))
+func (pt *Plaintext) GetRealPackedValue() ([]float64, error) {
+	if pt.ptr == nil {
+		return nil, errors.New("Plaintext is closed or invalid")
+	}
+	var lengthC C.int
+	status := C.Plaintext_GetRealPackedValueLength(pt.ptr, &lengthC)
+	if status != PKE_OK {
+		return nil, lastPKEError()
+	}
+	length := int(lengthC)
 	if length == 0 {
-		return nil
+		return nil, nil // Empty vector
 	}
 	goSlice := make([]float64, length)
 	for i := 0; i < length; i++ {
-		goSlice[i] = float64(C.Plaintext_GetRealPackedValueAt(pt.ptr, C.int(i)))
+		var valC C.double
+		status = C.Plaintext_GetRealPackedValueAt(pt.ptr, C.int(i), &valC)
+		if status != PKE_OK {
+			return nil, lastPKEError()
+		}
+		goSlice[i] = float64(valC)
 	}
-	return goSlice
+	return goSlice, nil
 }
 
 // --- CKKS Operations ---
-func (cc *CryptoContext) Rescale(ct *Ciphertext) *Ciphertext {
-	resCt := &Ciphertext{ptr: C.CryptoContext_Rescale(cc.ptr, ct.ptr)}
-	return resCt
+func (cc *CryptoContext) Rescale(ct *Ciphertext) (*Ciphertext, error) { // CHANGED signature
+	if cc.ptr == nil {
+		return nil, errors.New("CryptoContext is closed or invalid")
+	}
+	if ct == nil || ct.ptr == nil {
+		return nil, errors.New("Input Ciphertext is closed or invalid")
+	}
+	var ctH C.CiphertextPtr
+	status := C.CryptoContext_Rescale(cc.ptr, ct.ptr, &ctH)
+	if status != PKE_OK {
+		return nil, lastPKEError()
+	}
+	if ctH == nil {
+		return nil, errors.New("Rescale returned OK but null handle")
+	}
+	resCt := &Ciphertext{ptr: ctH}
+	return resCt, nil
 }
 
 func GetBootstrapDepth(levelBudget []uint32, skd SecretKeyDist) uint32 {
@@ -112,25 +235,4 @@ func GetBootstrapDepth(levelBudget []uint32, skd SecretKeyDist) uint32 {
 	}
 	d := C.CKKS_GetBootstrapDepth(ptr, n, C.int(skd))
 	return uint32(d)
-}
-
-func (cc *CryptoContext) EvalBootstrapSetupSimple(levelBudget []uint32) error {
-	var ptr *C.uint32_t
-	var n C.int
-	if len(levelBudget) > 0 {
-		ptr = (*C.uint32_t)(unsafe.Pointer(&levelBudget[0]))
-		n = C.int(len(levelBudget))
-	}
-
-	var cerr *C.char
-	ok := C.CryptoContext_EvalBootstrapSetup_Simple(cc.ptr, ptr, n, &cerr)
-	if ok == 0 {
-		if cerr != nil {
-			msg := C.GoString(cerr)
-			C.FreeString(cerr) // free C-side string
-			return fmt.Errorf("%s", msg)
-		}
-		return fmt.Errorf("EvalBootstrapSetupSimple failed")
-	}
-	return nil
 }

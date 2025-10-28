@@ -9,7 +9,16 @@
 extern "C" {
 #endif
 
-// Opaque pointers to hide C++ implementation details
+// --- PKE Error Handling (NEW) ---
+typedef enum {
+  PKE_OK = 0,
+  PKE_ERR = 1 // Indicates an error occurred, check PKE_LastError()
+} PKE_Err;
+
+// Get last error message (thread-local, no need to free)
+const char *PKE_LastError();
+
+// Opaque pointers
 typedef void *CryptoContextPtr;
 typedef void *KeyPairPtr;
 typedef void *PlaintextPtr;
@@ -45,43 +54,44 @@ typedef enum {
 } OFHESecretKeyDist;
 
 // --- CCParams ---
-ParamsBFVPtr NewParamsBFV();
-void ParamsBFV_SetPlaintextModulus(ParamsBFVPtr p, uint64_t mod);
-void ParamsBFV_SetMultiplicativeDepth(ParamsBFVPtr p, int depth);
+PKE_Err NewParamsBFV(ParamsBFVPtr *out);
+PKE_Err ParamsBFV_SetPlaintextModulus(ParamsBFVPtr p, uint64_t mod);
+PKE_Err ParamsBFV_SetMultiplicativeDepth(ParamsBFVPtr p, int depth);
 void DestroyParamsBFV(ParamsBFVPtr p);
 
-ParamsBGVPtr NewParamsBGV();
-void ParamsBGV_SetPlaintextModulus(ParamsBGVPtr p, uint64_t mod);
-void ParamsBGV_SetMultiplicativeDepth(ParamsBGVPtr p, int depth);
+PKE_Err NewParamsBGV(ParamsBGVPtr *out);
+PKE_Err ParamsBGV_SetPlaintextModulus(ParamsBGVPtr p, uint64_t mod);
+PKE_Err ParamsBGV_SetMultiplicativeDepth(ParamsBGVPtr p, int depth);
 void DestroyParamsBGV(ParamsBGVPtr p);
 
-ParamsCKKSPtr NewParamsCKKS();
-void ParamsCKKS_SetScalingModSize(ParamsCKKSPtr p, int modSize);
-void ParamsCKKS_SetBatchSize(ParamsCKKSPtr p, int batchSize);
-void ParamsCKKS_SetMultiplicativeDepth(ParamsCKKSPtr p, int depth);
-void ParamsCKKS_SetSecurityLevel(ParamsCKKSPtr p, OFHESecurityLevel level);
-void ParamsCKKS_SetRingDim(ParamsCKKSPtr p, uint64_t ringDim);
-void ParamsCKKS_SetScalingTechnique(ParamsCKKSPtr p, int technique);
-void ParamsCKKS_SetFirstModSize(ParamsCKKSPtr p, int modSize);
-void ParamsCKKS_SetNumLargeDigits(ParamsCKKSPtr p, int numDigits);
-void ParamsCKKS_SetSecretKeyDist(ParamsCKKSPtr p, OFHESecretKeyDist dist);
+PKE_Err NewParamsCKKS(ParamsCKKSPtr *out);
+PKE_Err ParamsCKKS_SetScalingModSize(ParamsCKKSPtr p, int modSize);
+PKE_Err ParamsCKKS_SetBatchSize(ParamsCKKSPtr p, int batchSize);
+PKE_Err ParamsCKKS_SetMultiplicativeDepth(ParamsCKKSPtr p, int depth);
+PKE_Err ParamsCKKS_SetSecurityLevel(ParamsCKKSPtr p, OFHESecurityLevel level);
+PKE_Err ParamsCKKS_SetRingDim(ParamsCKKSPtr p, uint64_t ringDim);
+PKE_Err ParamsCKKS_SetScalingTechnique(ParamsCKKSPtr p, int technique);
+PKE_Err ParamsCKKS_SetFirstModSize(ParamsCKKSPtr p, int modSize);
+PKE_Err ParamsCKKS_SetNumLargeDigits(ParamsCKKSPtr p, int numDigits);
+PKE_Err ParamsCKKS_SetSecretKeyDist(ParamsCKKSPtr p, OFHESecretKeyDist dist);
 void DestroyParamsCKKS(ParamsCKKSPtr p);
 
 // --- CryptoContext ---
-CryptoContextPtr NewCryptoContextBFV(ParamsBFVPtr p);
-CryptoContextPtr NewCryptoContextBGV(ParamsBGVPtr p);
-CryptoContextPtr NewCryptoContextCKKS(ParamsCKKSPtr p);
+PKE_Err NewCryptoContextBFV(ParamsBFVPtr p, CryptoContextPtr *out);
+PKE_Err NewCryptoContextBGV(ParamsBGVPtr p, CryptoContextPtr *out);
+PKE_Err NewCryptoContextCKKS(ParamsCKKSPtr p, CryptoContextPtr *out);
 
-void CryptoContext_Enable(CryptoContextPtr cc, int feature);
-KeyPairPtr CryptoContext_KeyGen(CryptoContextPtr cc);
-void CryptoContext_EvalMultKeyGen(CryptoContextPtr cc, KeyPairPtr keys);
-void CryptoContext_EvalRotateKeyGen(CryptoContextPtr cc, KeyPairPtr keys,
-                                    int32_t *indices, int len);
+PKE_Err CryptoContext_Enable(CryptoContextPtr cc, int feature);
+PKE_Err CryptoContext_KeyGen(CryptoContextPtr cc, KeyPairPtr *out);
+PKE_Err CryptoContext_EvalMultKeyGen(CryptoContextPtr cc, KeyPairPtr keys);
+PKE_Err CryptoContext_EvalRotateKeyGen(CryptoContextPtr cc, KeyPairPtr keys,
+                                       int32_t *indices, int len);
 uint64_t CryptoContext_GetRingDimension(CryptoContextPtr cc);
+void DestroyCryptoContext(CryptoContextPtr cc);
 
-// BFV specific
-PlaintextPtr CryptoContext_MakePackedPlaintext(CryptoContextPtr cc,
-                                               int64_t *values, int len);
+// BFV/BGV specific
+PKE_Err CryptoContext_MakePackedPlaintext(CryptoContextPtr cc, int64_t *values,
+                                          int len, PlaintextPtr *out);
 
 // CKKS specific
 // PlaintextPtr CryptoContext_MakeCKKSPackedPlaintext(CryptoContextPtr cc,
@@ -89,9 +99,11 @@ PlaintextPtr CryptoContext_MakePackedPlaintext(CryptoContextPtr cc,
 //                                                    uint32_t depth,
 //                                                    uint32_t level,
 //                                                    double scale);
-PlaintextPtr CryptoContext_MakeCKKSPackedPlaintext(CryptoContextPtr cc,
-                                                   double *values, int len);
-CiphertextPtr CryptoContext_Rescale(CryptoContextPtr cc, CiphertextPtr ct);
+PKE_Err CryptoContext_MakeCKKSPackedPlaintext(CryptoContextPtr cc,
+                                              double *values, int len,
+                                              PlaintextPtr *out);
+PKE_Err CryptoContext_Rescale(CryptoContextPtr cc, CiphertextPtr ct,
+                              CiphertextPtr *out);
 
 // Bootstrapping (CKKS)
 
@@ -108,35 +120,36 @@ CiphertextPtr CryptoContext_Rescale(CryptoContextPtr cc, CiphertextPtr ct);
 
 // New API: returns 1 on success, 0 on error; errOut (malloc'ed) holds
 // message on error.
-int CryptoContext_EvalBootstrapSetup(CryptoContextPtr cc, uint32_t slots,
-                                     char **errOut);
+// int CryptoContext_EvalBootstrapSetup(CryptoContextPtr cc, uint32_t slots,
+//                                      char **errOut);
 
-int CryptoContext_EvalBootstrapSetup_Simple(CryptoContextPtr cc,
-                                            const uint32_t *levelBudget,
-                                            int len, char **errOut);
+PKE_Err CryptoContext_EvalBootstrapSetup_Simple(CryptoContextPtr cc,
+                                                const uint32_t *levelBudget,
+                                                int len);
 
-int CryptoContext_EvalBootstrapPrecompute(CryptoContextPtr cc, uint32_t slots,
-                                          char **errOut);
-int CryptoContext_EvalBootstrapKeyGen(CryptoContextPtr cc, KeyPairPtr keys,
-                                      uint32_t slots, char **errOut);
-CiphertextPtr CryptoContext_EvalBootstrap(CryptoContextPtr cc, CiphertextPtr ct,
-                                          char **errOut);
+// int CryptoContext_EvalBootstrapPrecompute(CryptoContextPtr cc, uint32_t
+// slots,
+//                                           char **errOut);
+PKE_Err CryptoContext_EvalBootstrapKeyGen(CryptoContextPtr cc, KeyPairPtr keys,
+                                          uint32_t slots);
+PKE_Err CryptoContext_EvalBootstrap(CryptoContextPtr cc, CiphertextPtr ct,
+                                    CiphertextPtr *out);
 uint32_t CKKS_GetBootstrapDepth(const uint32_t *levelBudget, int len,
                                 int secretKeyDist);
 
 // Common Operations
-CiphertextPtr CryptoContext_Encrypt(CryptoContextPtr cc, KeyPairPtr keys,
-                                    PlaintextPtr pt);
-CiphertextPtr CryptoContext_EvalAdd(CryptoContextPtr cc, CiphertextPtr ct1,
-                                    CiphertextPtr ct2);
-CiphertextPtr CryptoContext_EvalSub(CryptoContextPtr cc, CiphertextPtr ct1,
-                                    CiphertextPtr ct2);
-CiphertextPtr CryptoContext_EvalMult(CryptoContextPtr cc, CiphertextPtr ct1,
-                                     CiphertextPtr ct2);
-CiphertextPtr CryptoContext_EvalRotate(CryptoContextPtr cc, CiphertextPtr ct,
-                                       int32_t index);
-PlaintextPtr CryptoContext_Decrypt(CryptoContextPtr cc, KeyPairPtr keys,
-                                   CiphertextPtr ct);
+PKE_Err CryptoContext_Encrypt(CryptoContextPtr cc, KeyPairPtr keys,
+                              PlaintextPtr pt, CiphertextPtr *out);
+PKE_Err CryptoContext_Decrypt(CryptoContextPtr cc, KeyPairPtr keys,
+                              CiphertextPtr ct, PlaintextPtr *out);
+PKE_Err CryptoContext_EvalAdd(CryptoContextPtr cc, CiphertextPtr ct1,
+                              CiphertextPtr ct2, CiphertextPtr *out);
+PKE_Err CryptoContext_EvalSub(CryptoContextPtr cc, CiphertextPtr ct1,
+                              CiphertextPtr ct2, CiphertextPtr *out);
+PKE_Err CryptoContext_EvalMult(CryptoContextPtr cc, CiphertextPtr ct1,
+                               CiphertextPtr ct2, CiphertextPtr *out);
+PKE_Err CryptoContext_EvalRotate(CryptoContextPtr cc, CiphertextPtr ct,
+                                 int32_t index, CiphertextPtr *out);
 
 void FreeString(char *s);
 
@@ -164,29 +177,27 @@ void DeserializeEvalMultKeyFromString(CryptoContextPtr cc,
 size_t SerializeCiphertextToString(CiphertextPtr ct, char **outString);
 CiphertextPtr DeserializeCiphertextFromString(const char *inString);
 
-void DestroyCryptoContext(CryptoContextPtr cc);
-
 // --- KeyPair ---
 // Need functions to access individual keys for deserialization reconstruction
-void *GetPublicKey(KeyPairPtr kp);
-void *GetPrivateKey(KeyPairPtr kp);
-KeyPairPtr
-NewKeyPair(); // Function to create an empty KeyPair for reconstruction
-void SetPublicKey(KeyPairPtr kp, void *pk);
-void SetPrivateKey(KeyPairPtr kp, void *sk);
+PKE_Err GetPublicKey(KeyPairPtr kp, void **out_pk_sptr_wrapper);
+PKE_Err GetPrivateKey(KeyPairPtr kp, void **out_sk_sptr_wrapper);
+PKE_Err NewKeyPair(KeyPairPtr *out);
+PKE_Err SetPublicKey(KeyPairPtr kp, void *pk);
+PKE_Err SetPrivateKey(KeyPairPtr kp, void *sk);
 void DestroyKeyPair(KeyPairPtr kp);
 
 // --- Plaintext ---
 // BFV/BGV Packed Value Access
-int Plaintext_GetPackedValueLength(PlaintextPtr pt);
-int64_t Plaintext_GetPackedValueAt(PlaintextPtr pt, int i);
+PKE_Err Plaintext_GetPackedValueLength(PlaintextPtr pt, int *out_len);
+PKE_Err Plaintext_GetPackedValueAt(PlaintextPtr pt, int i, int64_t *out_val);
 
 // BGV specific
-void Plaintext_SetLength(PlaintextPtr pt, int len);
+PKE_Err Plaintext_SetLength(PlaintextPtr pt, int len);
 
 // CKKS Packed Value Access
-int Plaintext_GetRealPackedValueLength(PlaintextPtr pt);
-double Plaintext_GetRealPackedValueAt(PlaintextPtr pt, int i);
+PKE_Err Plaintext_GetRealPackedValueLength(PlaintextPtr pt,
+                                           int *out_len); // Get data
+PKE_Err Plaintext_GetRealPackedValueAt(PlaintextPtr pt, int i, double *out_val);
 
 void DestroyPlaintext(PlaintextPtr pt);
 

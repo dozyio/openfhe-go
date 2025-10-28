@@ -10,6 +10,7 @@ package openfhe
 #include "bridge.h"
 */
 import "C"
+import "errors"
 
 // --- Structs ---
 type (
@@ -25,6 +26,11 @@ type (
 	DistributionType C.DistributionType
 	SecurityLevel    C.OFHESecurityLevel
 	SecretKeyDist    C.OFHESecretKeyDist
+	PKE_Err          C.PKE_Err
+)
+
+const (
+	PKE_OK C.PKE_Err = C.PKE_OK
 )
 
 const (
@@ -49,3 +55,11 @@ const (
 	SecretKeySparseTernary      SecretKeyDist = C.SPARSE_TERNARY
 	SecretKeySparseEncapsulated SecretKeyDist = C.SPARSE_ENCAPSULATED
 )
+
+func lastPKEError() error {
+	cErr := C.PKE_LastError()
+	if cErr != nil {
+		return errors.New(C.GoString(cErr))
+	}
+	return errors.New("unknown PKE C++ error") // Fallback
+}

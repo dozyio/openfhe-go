@@ -98,7 +98,7 @@ run-ckks-example: $(OPENFHE_INSTALL_MARKER)
 	@go run ./examples/simple-real-numbers/main.go
 
 run-examples: ${OPENFHE_INSTALL_MARKER}
-	find ./examples -type f -name 'main.go' -execdir sh -c 'echo "▶ running $$(pwd)/$$1"; go run . ' _ {} \;
+	find ./examples -type f -name 'main.go' -execdir sh -c 'echo "\n▶ running $$(pwd)/$$1"; go run . ' _ {} \;
 
 # Target to clean Go build artifacts
 clean:
