@@ -1,169 +1,292 @@
 package openfhe
 
 // #cgo CXXFLAGS: -std=c++17 -I${SRCDIR}/include -I${SRCDIR}/openfhe/include -I${SRCDIR}/openfhe/include/pke -I${SRCDIR}/openfhe/include/core -I${SRCDIR}/openfhe/include/binfhe -I${SRCDIR}/openfhe/include/core/include -I${SRCDIR}/openfhe/include/pke/include
-// #include "binfhe.h"
+// #include "binfhe_c.h"
 import "C"
 
-// BinFHEParamset maps to BINFHE_PARAMSET enum
-type BinFHEParamset int
-
-const (
-	//  NAME                                // Description                                                     : Approximate Probability of Failure
-	TOY                 BinFHEParamset = 0  // no security                                                     : 2^(-360)
-	MEDIUM              BinFHEParamset = 1  // 108 bits of security for classical and 100 bits for quantum     : 2^(-70)
-	STD128_AP           BinFHEParamset = 2  // more than 128 bits of security for classical computer attacks   : 2^(-50)
-	STD128              BinFHEParamset = 3  // more than 128 bits of security for classical computer attacks   : 2^(-40)
-	STD128_3            BinFHEParamset = 4  // STD128 for 3 binary inputs                                      : 2^(-50)
-	STD128_4            BinFHEParamset = 5  // STD128 for 4 binary inputs                                      : 2^(-50)
-	STD128Q             BinFHEParamset = 6  // more than 128 bits of security for quantum attacks              : 2^(-40)
-	STD128Q_3           BinFHEParamset = 7  // STD128Q for 3 binary inputs                                     : 2^(-50)
-	STD128Q_4           BinFHEParamset = 8  // STD128Q for 4 binary inputs                                     : 2^(-50)
-	STD192              BinFHEParamset = 9  // more than 192 bits of security for classical computer attacks   : 2^(-40)
-	STD192_3            BinFHEParamset = 10 // STD192 for 3 binary inputs                                      : 2^(-60)
-	STD192_4            BinFHEParamset = 11 // STD192 for 4 binary inputs                                      : 2^(-70)
-	STD192Q             BinFHEParamset = 12 // more than 192 bits of security for quantum attacks              : 2^(-80)
-	STD192Q_3           BinFHEParamset = 13 // STD192Q for 3 binary inputs                                     : 2^(-80)
-	STD192Q_4           BinFHEParamset = 14 // STD192Q for 4 binary inputs                                     : 2^(-50)
-	STD256              BinFHEParamset = 15 // more than 256 bits of security for classical computer attacks   : 2^(-80)
-	STD256_3            BinFHEParamset = 16 // STD256 for 3 binary inputs                                      : 2^(-70)
-	STD256_4            BinFHEParamset = 17 // STD256 for 4 binary inputs                                      : 2^(-50)
-	STD256Q             BinFHEParamset = 18 // more than 256 bits of security for quantum attacks              : 2^(-60)
-	STD256Q_3           BinFHEParamset = 19 // STD256Q for 3 binary inputs                                     : 2^(-80)
-	STD256Q_4           BinFHEParamset = 20 // STD256Q for 4 binary inputs                                     : 2^(-50)
-	STD128_LMKCDEY      BinFHEParamset = 21 // STD128 optimized for LMKCDEY (using Gaussian secrets)           : 2^(-55)
-	STD128_3_LMKCDEY    BinFHEParamset = 22 // STD128_LMKCDEY for 3 binary inputs                              : 2^(-40)
-	STD128_4_LMKCDEY    BinFHEParamset = 23 // STD128_LMKCDEY for 4 binary inputs                              : 2^(-60)
-	STD128Q_LMKCDEY     BinFHEParamset = 24 // STD128Q optimized for LMKCDEY (using Gaussian secrets)          : 2^(-50)
-	STD128Q_3_LMKCDEY   BinFHEParamset = 25 // STD128Q_LMKCDEY for 3 binary inputs                             : 2^(-45)
-	STD128Q_4_LMKCDEY   BinFHEParamset = 26 // STD128Q_LMKCDEY for 4 binary inputs                             : 2^(-80)
-	STD192_LMKCDEY      BinFHEParamset = 27 // STD192 optimized for LMKCDEY (using Gaussian secrets)           : 2^(-60)
-	STD192_3_LMKCDEY    BinFHEParamset = 28 // STD192_LMKCDEY for 3 binary inputs                              : 2^(-60)
-	STD192_4_LMKCDEY    BinFHEParamset = 29 // STD192_LMKCDEY for 4 binary inputs                              : 2^(-70)
-	STD192Q_LMKCDEY     BinFHEParamset = 30 // STD192Q optimized for LMKCDEY (using Gaussian secrets)          : 2^(-70)
-	STD192Q_3_LMKCDEY   BinFHEParamset = 31 // STD192Q_LMKCDEY for 3 binary inputs                             : 2^(-55)
-	STD192Q_4_LMKCDEY   BinFHEParamset = 32 // STD192Q_LMKCDEY for 4 binary inputs                             : 2^(-70)
-	STD256_LMKCDEY      BinFHEParamset = 33 // STD256 optimized for LMKCDEY (using Gaussian secrets)           : 2^(-50)
-	STD256_3_LMKCDEY    BinFHEParamset = 34 // STD256_LMKCDEY for 3 binary inputs                              : 2^(-50)
-	STD256_4_LMKCDEY    BinFHEParamset = 35 // STD256_LMKCDEY for 4 binary inputs                              : 2^(-60)
-	STD256Q_LMKCDEY     BinFHEParamset = 36 // STD256Q optimized for LMKCDEY (using Gaussian secrets)          : 2^(-60)
-	STD256Q_3_LMKCDEY   BinFHEParamset = 37 // STD256Q_LMKCDEY for 3 binary inputs                             : 2^(-50)
-	STD256Q_4_LMKCDEY   BinFHEParamset = 38 // STD256Q_LMKCDEY for 4 binary inputs                             : 2^(-45)
-	LPF_STD128          BinFHEParamset = 39 // STD128 configured with lower probability of failures            : 2^(-220)
-	LPF_STD128Q         BinFHEParamset = 40 // STD128Q configured with lower probability of failures           : 2^(-75)
-	LPF_STD128_LMKCDEY  BinFHEParamset = 41 // LPF_STD128 optimized for LMKCDEY                                : 2^(-120)
-	LPF_STD128Q_LMKCDEY BinFHEParamset = 42 // LPF_STD128Q optimized for LMKCDEY                               : 2^(-120)
-	SIGNED_MOD_TEST     BinFHEParamset = 43 // special parameter set for confirming the signed modular reduction in the accumulator updates works correctly : 2^(-40)
+import (
+	"errors"
+	"fmt"
 )
 
-// BinFHEMethod maps to BINFHE_METHOD enum
-type BinFHEMethod int
+func lastBinFHEError() error {
+	cErr := C.BinFHE_LastError()
+	if cErr != nil {
+		return errors.New(C.GoString(cErr))
+	}
+	return errors.New("unknown BinFHE C++ error") // Fallback
+}
+
+type BinFHEParamset C.BINFHE_PARAMSET_C
 
 const (
-	INVALID_METHOD BinFHEMethod = 0
-	AP             BinFHEMethod = 1 // Ducas-Micciancio variant
-	GINX           BinFHEMethod = 2 // Chillotti-Gama-Georgieva-Izabachene variant
-	LMKCDEY        BinFHEMethod = 3 // Lee-Micciancio-Kim-Choi-Deryabin-Eom-Yoo variant, ia.cr/2022/198
+	TOY                 BinFHEParamset = C.BINFHE_PARAMSET_TOY
+	MEDIUM              BinFHEParamset = C.BINFHE_PARAMSET_MEDIUM
+	STD128_AP           BinFHEParamset = C.BINFHE_PARAMSET_STD128_AP
+	STD128              BinFHEParamset = C.BINFHE_PARAMSET_STD128
+	STD128_3            BinFHEParamset = C.BINFHE_PARAMSET_STD128_3
+	STD128_4            BinFHEParamset = C.BINFHE_PARAMSET_STD128_4
+	STD128Q             BinFHEParamset = C.BINFHE_PARAMSET_STD128Q
+	STD128Q_3           BinFHEParamset = C.BINFHE_PARAMSET_STD128Q_4
+	STD128Q_4           BinFHEParamset = C.BINFHE_PARAMSET_STD128Q_3
+	STD192              BinFHEParamset = C.BINFHE_PARAMSET_STD192
+	STD192_3            BinFHEParamset = C.BINFHE_PARAMSET_STD192_3
+	STD192_4            BinFHEParamset = C.BINFHE_PARAMSET_STD192_4
+	STD192Q             BinFHEParamset = C.BINFHE_PARAMSET_STD192Q
+	STD192Q_3           BinFHEParamset = C.BINFHE_PARAMSET_STD192Q_3
+	STD192Q_4           BinFHEParamset = C.BINFHE_PARAMSET_STD192Q_4
+	STD256              BinFHEParamset = C.BINFHE_PARAMSET_STD256
+	STD256_3            BinFHEParamset = C.BINFHE_PARAMSET_STD256_3
+	STD256_4            BinFHEParamset = C.BINFHE_PARAMSET_STD256_4
+	STD256Q             BinFHEParamset = C.BINFHE_PARAMSET_STD256Q
+	STD256Q_3           BinFHEParamset = C.BINFHE_PARAMSET_STD256_3
+	STD256Q_4           BinFHEParamset = C.BINFHE_PARAMSET_STD256_4
+	STD128_LMKCDEY      BinFHEParamset = C.BINFHE_PARAMSET_STD128_LMKCDEY
+	STD128_3_LMKCDEY    BinFHEParamset = C.BINFHE_PARAMSET_STD128_3_LMKCDEY
+	STD128_4_LMKCDEY    BinFHEParamset = C.BINFHE_PARAMSET_STD128_4_LMKCDEY
+	STD128Q_LMKCDEY     BinFHEParamset = C.BINFHE_PARAMSET_STD128Q_LMKCDEY
+	STD128Q_3_LMKCDEY   BinFHEParamset = C.BINFHE_PARAMSET_STD128Q_3_LMKCDEY
+	STD128Q_4_LMKCDEY   BinFHEParamset = C.BINFHE_PARAMSET_STD128Q_4_LMKCDEY
+	STD192_LMKCDEY      BinFHEParamset = C.BINFHE_PARAMSET_STD192_LMKCDEY
+	STD192_3_LMKCDEY    BinFHEParamset = C.BINFHE_PARAMSET_STD192_3_LMKCDEY
+	STD192_4_LMKCDEY    BinFHEParamset = C.BINFHE_PARAMSET_STD192_4_LMKCDEY
+	STD192Q_LMKCDEY     BinFHEParamset = C.BINFHE_PARAMSET_STD192Q_LMKCDEY
+	STD192Q_3_LMKCDEY   BinFHEParamset = C.BINFHE_PARAMSET_STD192Q_3_LMKCDEY
+	STD192Q_4_LMKCDEY   BinFHEParamset = C.BINFHE_PARAMSET_STD192Q_4_LMKCDEY
+	STD256_LMKCDEY      BinFHEParamset = C.BINFHE_PARAMSET_STD256_LMKCDEY
+	STD256_3_LMKCDEY    BinFHEParamset = C.BINFHE_PARAMSET_STD256_3_LMKCDEY
+	STD256_4_LMKCDEY    BinFHEParamset = C.BINFHE_PARAMSET_STD256_4_LMKCDEY
+	STD256Q_LMKCDEY     BinFHEParamset = C.BINFHE_PARAMSET_STD256Q_LMKCDEY
+	STD256Q_3_LMKCDEY   BinFHEParamset = C.BINFHE_PARAMSET_STD256Q_3_LMKCDEY
+	STD256Q_4_LMKCDEY   BinFHEParamset = C.BINFHE_PARAMSET_STD256Q_4_LMKCDEY
+	LPF_STD128          BinFHEParamset = C.BINFHE_PARAMSET_LPF_STD128
+	LPF_STD128Q         BinFHEParamset = C.BINFHE_PARAMSET_LPF_STD128Q
+	LPF_STD128_LMKCDEY  BinFHEParamset = C.BINFHE_PARAMSET_LPF_STD128_LMKCDEY
+	LPF_STD128Q_LMKCDEY BinFHEParamset = C.BINFHE_PARAMSET_LPF_STD128Q_LMKCDEY
+	SIGNED_MOD_TEST     BinFHEParamset = C.BINFHE_PARAMSET_SIGNED_MOD_TEST
 )
 
-// BinFHEGate maps to BINGATE enum
-type BinFHEGate int
+type BinFHEMethod C.BINFHE_METHOD_C
 
 const (
-	OR        BinFHEGate = 0
-	AND       BinFHEGate = 1
-	NOR       BinFHEGate = 2
-	NAND      BinFHEGate = 3
-	XOR       BinFHEGate = 4
-	XNOR      BinFHEGate = 5
-	MAJORITY  BinFHEGate = 6
-	AND3      BinFHEGate = 7
-	OR3       BinFHEGate = 8
-	AND4      BinFHEGate = 9
-	OR4       BinFHEGate = 10
-	XOR_FAST  BinFHEGate = 11
-	XNOR_FAST BinFHEGate = 12
-	CMUX      BinFHEGate = 13
+	INVALID_METHOD BinFHEMethod = C.BINFHE_METHOD_INVALID
+	AP             BinFHEMethod = C.BINFHE_METHOD_AP
+	GINX           BinFHEMethod = C.BINFHE_METHOD_GINX
+	LMKCDEY        BinFHEMethod = C.BINFHE_METHOD_LMKCDEY
 )
 
-// BinFHEContext is a Go wrapper for the C++ BinFHEContext
-type BinFHEContext struct {
-	id C.BINFHE_CONTEXT_ID
+type BinFHEGate C.BINFHE_GATE_C
+
+const (
+	OR        BinFHEGate = C.BINGATE_OR
+	AND       BinFHEGate = C.BINGATE_AND
+	NOR       BinFHEGate = C.BINGATE_NOR
+	NAND      BinFHEGate = C.BINGATE_NAND
+	XOR       BinFHEGate = C.BINGATE_XOR
+	XNOR      BinFHEGate = C.BINGATE_XNOR
+	MAJORITY  BinFHEGate = C.BINGATE_MAJORITY
+	AND3      BinFHEGate = C.BINGATE_AND3
+	OR3       BinFHEGate = C.BINGATE_OR3
+	AND4      BinFHEGate = C.BINGATE_AND4
+	OR4       BinFHEGate = C.BINGATE_OR4
+	XOR_FAST  BinFHEGate = C.BINGATE_XOR_FAST
+	XNOR_FAST BinFHEGate = C.BINGATE_XNOR_FAST
+	CMUX      BinFHEGate = C.BINGATE_CMUX
+)
+
+// --- Wrapper Structs (Use Handles) ---
+type (
+	BinFHEContext    struct{ h C.BinFHEContextH }
+	BinFHESecretKey  struct{ h C.LWESecretKeyH }
+	BinFHECiphertext struct{ h C.LWECiphertextH }
+)
+
+// --- Context ---
+func NewBinFHEContext() (*BinFHEContext, error) {
+	cH := C.BinFHEContext_New()
+	if cH == nil {
+		return nil, lastBinFHEError()
+	}
+
+	ctx := &BinFHEContext{h: cH}
+
+	return ctx, nil
 }
 
-// BinFHESecretKey is a Go wrapper for the C++ LWEPrivateKey
-type BinFHESecretKey struct {
-	id C.BINFHE_SECRETKEY_ID
+func (cc *BinFHEContext) Close() {
+	if cc.h != nil {
+		C.BinFHEContext_Delete(cc.h)
+		cc.h = nil
+	}
 }
 
-// BinFHECiphertext is a Go wrapper for the C++ LWECiphertext
-type BinFHECiphertext struct {
-	id C.BINFHE_CIPHERTEXT_ID
+func (cc *BinFHEContext) Release() { cc.Close() }
+
+func (cc *BinFHEContext) GenerateBinFHEContext(paramset BinFHEParamset, method BinFHEMethod) error {
+	if cc.h == nil {
+		return errors.New("BinFHEContext is closed or invalid")
+	}
+
+	res := C.BinFHEContext_Generate(cc.h, C.BINFHE_PARAMSET_C(paramset), C.BINFHE_METHOD_C(method))
+	if res != C.BIN_OK {
+		return lastBinFHEError()
+	}
+
+	return nil
 }
 
-// NewBinFHEContext creates a new BinFHEContext.
-func NewBinFHEContext() BinFHEContext {
-	id := C.BinFHEContext_Create()
-	ctx := BinFHEContext{id: id}
-	releaseQueue = append(releaseQueue, ctx)
-	return ctx
+// --- Keys ---
+func (cc *BinFHEContext) KeyGen() (*BinFHESecretKey, error) {
+	if cc.h == nil {
+		return nil, errors.New("BinFHEContext is closed or invalid")
+	}
+
+	var skH C.LWESecretKeyH
+
+	res := C.BinFHEContext_KeyGen(cc.h, &skH)
+	if res != C.BIN_OK {
+		return nil, lastBinFHEError()
+	}
+
+	if skH == nil { // Should not happen if BIN_OK, but check defensively
+		return nil, fmt.Errorf("KeyGen returned OK but null handle")
+	}
+
+	sk := &BinFHESecretKey{h: skH}
+	return sk, nil
 }
 
-// GenerateBinFHEContext sets the parameters for the context.
-func (cc *BinFHEContext) GenerateBinFHEContext(paramset BinFHEParamset, method BinFHEMethod) {
-	C.BinFHEContext_GenerateBinFHEContext(cc.id, C.BINFHE_PARAMSET_C(paramset), C.BINFHE_METHOD_C(method))
+func (sk *BinFHESecretKey) Close() {
+	if sk.h != nil {
+		C.LWESecretKey_Delete(sk.h)
+		sk.h = nil
+	}
+}
+func (sk *BinFHESecretKey) Release() { sk.Close() }
+
+func (cc *BinFHEContext) BTKeyGen(sk *BinFHESecretKey) error {
+	if cc.h == nil {
+		return errors.New("BinFHEContext is closed or invalid")
+	}
+
+	if sk == nil || sk.h == nil {
+		return errors.New("BinFHESecretKey is closed or invalid")
+	}
+
+	res := C.BinFHEContext_BTKeyGen(cc.h, sk.h)
+	if res != C.BIN_OK {
+		return lastBinFHEError()
+	}
+
+	return nil
 }
 
-// KeyGen generates a new secret key.
-func (cc *BinFHEContext) KeyGen() BinFHESecretKey {
-	id := C.BinFHEContext_KeyGen(cc.id)
-	sk := BinFHESecretKey{id: id}
-	releaseQueue = append(releaseQueue, sk)
-	return sk
+// --- Operations ---
+func (cc *BinFHEContext) Encrypt(sk *BinFHESecretKey, message int) (*BinFHECiphertext, error) {
+	if cc.h == nil {
+		return nil, errors.New("BinFHEContext is closed or invalid")
+	}
+
+	if sk == nil || sk.h == nil {
+		return nil, errors.New("BinFHESecretKey is closed or invalid")
+	}
+
+	var ctH C.LWECiphertextH
+
+	res := C.BinFHEContext_Encrypt(cc.h, sk.h, C.int(message), &ctH)
+	if res != C.BIN_OK {
+		return nil, lastBinFHEError()
+	}
+
+	if ctH == nil {
+		return nil, fmt.Errorf("Encrypt returned OK but null handle")
+	}
+
+	ct := &BinFHECiphertext{h: ctH}
+
+	return ct, nil
 }
 
-// BTKeyGen generates the bootstrapping keys.
-func (cc *BinFHEContext) BTKeyGen(sk BinFHESecretKey) {
-	C.BinFHEContext_BTKeyGen(cc.id, sk.id)
+func (ct *BinFHECiphertext) Close() {
+	if ct.h != nil {
+		C.LWECiphertext_Delete(ct.h)
+		ct.h = nil
+	}
+}
+func (ct *BinFHECiphertext) Release() { ct.Close() }
+
+func (cc *BinFHEContext) EvalBinGate(gate BinFHEGate, ct1, ct2 *BinFHECiphertext) (*BinFHECiphertext, error) {
+	if cc.h == nil {
+		return nil, errors.New("BinFHEContext is closed or invalid")
+	}
+
+	if ct1 == nil || ct1.h == nil {
+		return nil, errors.New("first BinFHECiphertext is closed or invalid")
+	}
+
+	if ct2 == nil || ct2.h == nil {
+		return nil, errors.New("second BinFHECiphertext is closed or invalid")
+	}
+
+	var ctOutH C.LWECiphertextH
+
+	res := C.BinFHEContext_EvalBinGate(cc.h, C.BINFHE_GATE_C(gate), ct1.h, ct2.h, &ctOutH)
+	if res != C.BIN_OK {
+		return nil, lastBinFHEError()
+	}
+
+	if ctOutH == nil {
+		return nil, fmt.Errorf("EvalBinGate returned OK but null handle")
+	}
+
+	ct := &BinFHECiphertext{h: ctOutH}
+	return ct, nil
 }
 
-// Encrypt encrypts a single bit (0 or 1).
-func (cc *BinFHEContext) Encrypt(sk BinFHESecretKey, message int) BinFHECiphertext {
-	id := C.BinFHEContext_Encrypt(cc.id, sk.id, C.int(message))
-	ct := BinFHECiphertext{id: id}
-	releaseQueue = append(releaseQueue, ct)
-	return ct
+func (cc *BinFHEContext) Bootstrap(ctIn *BinFHECiphertext) (*BinFHECiphertext, error) {
+	if cc.h == nil {
+		return nil, errors.New("BinFHEContext is closed or invalid")
+	}
+
+	if ctIn == nil || ctIn.h == nil {
+		return nil, errors.New("input BinFHECiphertext is closed or invalid")
+	}
+
+	var ctOutH C.LWECiphertextH
+
+	res := C.BinFHEContext_Bootstrap(cc.h, ctIn.h, &ctOutH)
+	if res != C.BIN_OK {
+		return nil, lastBinFHEError()
+	}
+
+	if ctOutH == nil {
+		return nil, fmt.Errorf("Bootstrap returned OK but null handle")
+	}
+
+	ct := &BinFHECiphertext{h: ctOutH}
+
+	return ct, nil
 }
 
-// EvalBinGate evaluates a binary homomorphic gate.
-func (cc *BinFHEContext) EvalBinGate(gate BinFHEGate, ct1, ct2 BinFHECiphertext) BinFHECiphertext {
-	id := C.BinFHEContext_EvalBinGate(cc.id, C.BINFHE_GATE_C(gate), ct1.id, ct2.id)
-	ct := BinFHECiphertext{id: id}
-	releaseQueue = append(releaseQueue, ct)
-	return ct
-}
+func (cc *BinFHEContext) Decrypt(sk *BinFHESecretKey, ct *BinFHECiphertext) (int, error) {
+	if cc.h == nil {
+		return 0, errors.New("BinFHEContext is closed or invalid")
+	}
 
-// Bootstrap refreshes a ciphertext.
-func (cc *BinFHEContext) Bootstrap(ct BinFHECiphertext) BinFHECiphertext {
-	id := C.BinFHEContext_Bootstrap(cc.id, ct.id)
-	newCt := BinFHECiphertext{id: id}
-	releaseQueue = append(releaseQueue, newCt)
-	return newCt
-}
+	if sk == nil || sk.h == nil {
+		return 0, errors.New("BinFHESecretKey is closed or invalid")
+	}
 
-// Decrypt decrypts a ciphertext to a single bit (0 or 1).
-func (cc *BinFHEContext) Decrypt(sk BinFHESecretKey, ct BinFHECiphertext) int {
-	return int(C.BinFHEContext_Decrypt(cc.id, sk.id, ct.id))
-}
+	if ct == nil || ct.h == nil {
+		return 0, errors.New("BinFHECiphertext is closed or invalid")
+	}
 
-// Release methods for memory management
-func (cc BinFHEContext) Release() {
-	C.ReleaseBinFHEContext(cc.id)
-}
+	var resultBit C.int
 
-func (sk BinFHESecretKey) Release() {
-	C.ReleaseBinFHESecretKey(sk.id)
-}
+	res := C.BinFHEContext_Decrypt(cc.h, sk.h, ct.h, &resultBit)
+	if res != C.BIN_OK {
+		return 0, lastBinFHEError()
+	}
 
-func (ct BinFHECiphertext) Release() {
-	C.ReleaseBinFHECiphertext(ct.id)
+	return int(resultBit), nil
 }

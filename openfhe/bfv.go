@@ -9,14 +9,12 @@ package openfhe
 import "C"
 
 import (
-	"runtime"
 	"unsafe"
 )
 
 // --- BFV Params Functions ---
 func NewParamsBFVrns() *ParamsBFV {
 	p := &ParamsBFV{ptr: C.NewParamsBFV()}
-	runtime.SetFinalizer(p, func(obj *ParamsBFV) { C.DestroyParamsBFV(obj.ptr) })
 	return p
 }
 
@@ -28,12 +26,16 @@ func (p *ParamsBFV) SetMultiplicativeDepth(depth int) {
 	C.ParamsBFV_SetMultiplicativeDepth(p.ptr, C.int(depth))
 }
 
+func (p *ParamsBFV) Release() {
+	if p.ptr != nil {
+		C.DestroyParamsBFV(p.ptr)
+		p.ptr = nil
+	}
+}
+
 // --- BFV CryptoContext ---
 func NewCryptoContextBFV(p *ParamsBFV) *CryptoContext {
 	cc := &CryptoContext{ptr: C.NewCryptoContextBFV(p.ptr)}
-	runtime.SetFinalizer(cc, func(obj *CryptoContext) {
-		C.DestroyCryptoContext(obj.ptr)
-	})
 	return cc
 }
 
@@ -45,9 +47,6 @@ func (cc *CryptoContext) MakePackedPlaintext(vec []int64) *Plaintext {
 	cVec := (*C.int64_t)(unsafe.Pointer(&vec[0]))
 	cLen := C.int(len(vec))
 	pt := &Plaintext{ptr: C.CryptoContext_MakePackedPlaintext(cc.ptr, cVec, cLen)}
-	runtime.SetFinalizer(pt, func(obj *Plaintext) {
-		C.DestroyPlaintext(obj.ptr)
-	})
 	return pt
 }
 

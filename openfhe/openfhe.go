@@ -11,7 +11,6 @@ import "C"
 
 import (
 	"fmt"
-	"runtime"
 	"unsafe"
 )
 
@@ -19,8 +18,6 @@ import (
 type Releasable interface {
 	Release()
 }
-
-var releaseQueue []Releasable
 
 // --- Feature Flags ---
 const (
@@ -53,9 +50,6 @@ func (cc *CryptoContext) Enable(feature int) {
 
 func (cc *CryptoContext) KeyGen() *KeyPair {
 	kp := &KeyPair{ptr: C.CryptoContext_KeyGen(cc.ptr)}
-	runtime.SetFinalizer(kp, func(obj *KeyPair) {
-		C.DestroyKeyPair(obj.ptr)
-	})
 	return kp
 }
 
@@ -74,9 +68,6 @@ func (cc *CryptoContext) EvalRotateKeyGen(keys *KeyPair, indices []int32) {
 
 func (cc *CryptoContext) Encrypt(keys *KeyPair, pt *Plaintext) *Ciphertext {
 	ct := &Ciphertext{ptr: C.CryptoContext_Encrypt(cc.ptr, keys.ptr, pt.ptr)}
-	runtime.SetFinalizer(ct, func(obj *Ciphertext) {
-		C.DestroyCiphertext(obj.ptr)
-	})
 	return ct
 }
 
@@ -86,42 +77,27 @@ func (cc *CryptoContext) Decrypt(keys *KeyPair, ct *Ciphertext) *Plaintext {
 		// Decrypt can fail and return null
 		return nil
 	}
-	runtime.SetFinalizer(pt, func(obj *Plaintext) {
-		C.DestroyPlaintext(obj.ptr)
-	})
 	return pt
 }
 
 // --- Common Homomorphic Operations ---
 func (cc *CryptoContext) EvalAdd(ct1, ct2 *Ciphertext) *Ciphertext {
 	ct := &Ciphertext{ptr: C.CryptoContext_EvalAdd(cc.ptr, ct1.ptr, ct2.ptr)}
-	runtime.SetFinalizer(ct, func(obj *Ciphertext) {
-		C.DestroyCiphertext(obj.ptr)
-	})
 	return ct
 }
 
 func (cc *CryptoContext) EvalSub(ct1, ct2 *Ciphertext) *Ciphertext {
 	ct := &Ciphertext{ptr: C.CryptoContext_EvalSub(cc.ptr, ct1.ptr, ct2.ptr)}
-	runtime.SetFinalizer(ct, func(obj *Ciphertext) {
-		C.DestroyCiphertext(obj.ptr)
-	})
 	return ct
 }
 
 func (cc *CryptoContext) EvalMult(ct1, ct2 *Ciphertext) *Ciphertext {
 	ct := &Ciphertext{ptr: C.CryptoContext_EvalMult(cc.ptr, ct1.ptr, ct2.ptr)}
-	runtime.SetFinalizer(ct, func(obj *Ciphertext) {
-		C.DestroyCiphertext(obj.ptr)
-	})
 	return ct
 }
 
 func (cc *CryptoContext) EvalRotate(ct *Ciphertext, index int32) *Ciphertext {
 	resCt := &Ciphertext{ptr: C.CryptoContext_EvalRotate(cc.ptr, ct.ptr, C.int32_t(index))}
-	runtime.SetFinalizer(resCt, func(obj *Ciphertext) {
-		C.DestroyCiphertext(obj.ptr)
-	})
 	return resCt
 }
 
@@ -148,7 +124,6 @@ func (cc *CryptoContext) EvalBootstrap(ct *Ciphertext) (*Ciphertext, error) {
 	out := C.CryptoContext_EvalBootstrap(cc.ptr, ct.ptr, &cErr)
 	if out != nil {
 		res := &Ciphertext{ptr: out}
-		runtime.SetFinalizer(res, func(obj *Ciphertext) { C.DestroyCiphertext(obj.ptr) })
 		return res, nil
 	}
 	defer func() {
@@ -196,82 +171,58 @@ func (cc *CryptoContext) EvalBootstrapPrecompute(slots uint32) error {
 	return fmt.Errorf("EvalBootstrapPrecompute failed")
 }
 
-// Cleanup releases all tracked C++ objects.
-// Call this function typically at the end of your main function or when
-// you are sure you no longer need any OpenFHE objects.
+// --- Global Cleanup ---
+
+// Cleanup releases all C++ objects created by the wrapper.
+// Call this function typically via `defer openfhe.Cleanup()` at the start of main.
 func Cleanup() {
-	fmt.Println("TODO Running OpenFHE Cleanup...") // Optional: for debugging
-	//
-	// // Release BinFHE C++ objects first (using the map-clearing C function)
+	fmt.Println("TODO!!! Running OpenFHE Global Cleanup...") // Optional: for debugging
+
+	// Call C++ functions to clear internal object maps
 	// C.ReleaseAllBinFHE()
-	//
-	// // Release PKE C++ objects (using the map-clearing C function)
 	// C.ReleaseAllPKE()
-	//
-	// // Double-check: Iterate through the Go queue to ensure Release() was called
-	// // Although the C++ maps are cleared above, this ensures Go wrappers
-	// // also run their specific Release() logic if any were added beyond just
-	// // calling the C function (currently they don't, but it's safer).
-	// // It also helps catch potential errors if an object wasn't properly released C-side.
-	// if len(releaseQueue) > 0 {
-	// 	fmt.Printf("  Releasing %d Go wrapper objects from queue...\n", len(releaseQueue)) // Optional: Debugging
-	// 	for i, obj := range releaseQueue {
-	// 		// fmt.Printf("  Releasing object %d: Type %T\n", i, obj) // Optional: More debugging
-	// 		switch t := obj.(type) {
-	// 		// PKE Types
-	// 		case CryptoContext:
-	// 			t.Release()
-	// 		case Plaintext:
-	// 			t.Release()
-	// 		case KeyPair:
-	// 			t.Release()
-	// 		case PublicKey:
-	// 			t.Release()
-	// 		case PrivateKey:
-	// 			t.Release()
-	// 		case Ciphertext:
-	// 			t.Release()
-	// 		// BinFHE Types
-	// 		case BinFHEContext:
-	// 			t.Release()
-	// 		case BinFHESecretKey:
-	// 			t.Release()
-	// 		case BinFHECiphertext:
-	// 			t.Release()
-	// 		default:
-	// 			fmt.Printf("Warning: Unknown type in releaseQueue: %T\n", t)
-	// 		}
-	// 	}
-	// } else {
-	// 	fmt.Println("  Go wrapper release queue is empty.") // Optional: Debugging
-	// }
-	//
-	// // Clear the Go queue itself
-	// releaseQueue = nil
-	// fmt.Println("OpenFHE Cleanup finished.") // Optional: Debugging
+
+	fmt.Println("OpenFHE Global Cleanup finished.") // Optional
 }
 
-// Add the Release methods for existing types if they aren't exactly like this:
-// func (cc CryptoContext) Release() {
-// 	C.ReleaseCryptoContext(cc.id)
-// }
-//
-// func (pt Plaintext) Release() {
-// 	C.ReleasePlaintext(pt.id)
-// }
-//
-// func (kp KeyPair) Release() {
-// 	C.ReleaseKeyPair(kp.id)
-// }
-//
-// func (pk PublicKey) Release() {
-// 	C.ReleasePublicKey(pk.id)
-// }
-//
-// func (sk PrivateKey) Release() {
-// 	C.ReleasePrivateKey(sk.id)
-// }
-//
-// func (ct Ciphertext) Release() {
-// 	C.ReleaseCiphertext(ct.id)
-// }
+// --- Release Methods for Go Wrappers ---
+
+// Release frees the underlying C++ CryptoContext object.
+// Call this manually if you need fine-grained control, otherwise rely on Cleanup().
+func (cc *CryptoContext) Release() {
+	if cc.ptr != nil {
+		// fmt.Println("Releasing CryptoContext:", cc.ptr) // Debug
+		C.DestroyCryptoContext(cc.ptr)
+		cc.ptr = nil // Prevent double-free
+	}
+}
+
+// Release frees the underlying C++ Plaintext object.
+func (pt *Plaintext) Release() {
+	if pt.ptr != nil {
+		// fmt.Println("Releasing Plaintext:", pt.ptr) // Debug
+		C.DestroyPlaintext(pt.ptr)
+		pt.ptr = nil
+	}
+}
+
+// Release frees the underlying C++ KeyPair object.
+func (kp *KeyPair) Release() {
+	if kp.ptr != nil {
+		// fmt.Println("Releasing KeyPair:", kp.ptr) // Debug
+		C.DestroyKeyPair(kp.ptr)
+		kp.ptr = nil
+	}
+}
+
+// Release frees the underlying C++ Ciphertext object.
+func (ct *Ciphertext) Release() {
+	if ct.ptr != nil {
+		// fmt.Println("Releasing Ciphertext:", ct.ptr) // Debug
+		C.DestroyCiphertext(ct.ptr)
+		ct.ptr = nil
+	}
+}
+
+// Note: Ensure BinFHE types have Release methods defined in binfhe.go
+// Note: Ensure Params types have Release methods defined in respective files (bfv.go, bgv.go, ckks.go)

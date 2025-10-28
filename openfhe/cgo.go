@@ -4,7 +4,7 @@ package openfhe
 #cgo CPPFLAGS: -I${SRCDIR}/../openfhe-install/include -I${SRCDIR}/../openfhe-install/include/openfhe -I${SRCDIR}/../openfhe-install/include/openfhe/core -I${SRCDIR}/../openfhe-install/include/openfhe/pke -I${SRCDIR}/../openfhe-install/include/openfhe/binfhe -I${SRCDIR}/../openfhe-install/include/openfhe/cereal
 #cgo CXXFLAGS: -std=c++17
 #cgo LDFLAGS: ${SRCDIR}/../openfhe-install/lib/libOPENFHEpke_static.a ${SRCDIR}/../openfhe-install/lib/libOPENFHEcore_static.a ${SRCDIR}/../openfhe-install/lib/libOPENFHEbinfhe_static.a
-//CGO_SOURCES: bridge.cpp bfv.cpp bgv.cpp ckks.cpp serial.cpp binfhe.cpp
+//CGO_SOURCES: bridge.cpp bfv.cpp bgv.cpp ckks.cpp serial.cpp binfhe_c.cpp
 
 #include <stdint.h>
 #include "bridge.h"

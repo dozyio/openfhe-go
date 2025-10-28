@@ -1,7 +1,7 @@
 #ifndef BRIDGE_H
 #define BRIDGE_H
 
-#include "binfhe.h"
+#include "binfhe_c.h"
 #include <stddef.h>
 #include <stdint.h>
 

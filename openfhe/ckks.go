@@ -10,16 +10,12 @@ import "C"
 
 import (
 	"fmt"
-	"runtime"
 	"unsafe"
 )
 
 // --- CKKS Params Functions ---
 func NewParamsCKKSRNS() *ParamsCKKS {
 	p := &ParamsCKKS{ptr: C.NewParamsCKKS()}
-	runtime.SetFinalizer(p, func(obj *ParamsCKKS) {
-		C.DestroyParamsCKKS(obj.ptr)
-	})
 	return p
 }
 
@@ -59,6 +55,14 @@ func (p *ParamsCKKS) SetSecretKeyDist(d SecretKeyDist) {
 	C.ParamsCKKS_SetSecretKeyDist(p.ptr, C.OFHESecretKeyDist(d))
 }
 
+// Release method for ParamsCKKS
+func (p *ParamsCKKS) Release() {
+	if p.ptr != nil {
+		C.DestroyParamsCKKS(p.ptr)
+		p.ptr = nil
+	}
+}
+
 // Expose ring dimension
 func (cc *CryptoContext) GetRingDimension() uint64 {
 	return uint64(C.CryptoContext_GetRingDimension(cc.ptr))
@@ -67,9 +71,6 @@ func (cc *CryptoContext) GetRingDimension() uint64 {
 // --- CKKS CryptoContext ---
 func NewCryptoContextCKKS(p *ParamsCKKS) *CryptoContext {
 	cc := &CryptoContext{ptr: C.NewCryptoContextCKKS(p.ptr)}
-	runtime.SetFinalizer(cc, func(obj *CryptoContext) {
-		C.DestroyCryptoContext(obj.ptr)
-	})
 	return cc
 }
 
@@ -80,11 +81,7 @@ func (cc *CryptoContext) MakeCKKSPackedPlaintext(vec []float64) *Plaintext {
 	}
 	cVec := (*C.double)(unsafe.Pointer(&vec[0]))
 	cLen := C.int(len(vec))
-	// pt := &Plaintext{ptr: C.CryptoContext_MakeCKKSPackedPlaintext(cc.ptr, cVec, cLen, 1, 0, 0)}
-	pt := &Plaintext{ptr: C.CryptoContext_MakeCKKSPackedPlaintext(cc.ptr, cVec, cLen)} // NEW 3-argument call
-	runtime.SetFinalizer(pt, func(obj *Plaintext) {
-		C.DestroyPlaintext(obj.ptr)
-	})
+	pt := &Plaintext{ptr: C.CryptoContext_MakeCKKSPackedPlaintext(cc.ptr, cVec, cLen)}
 	return pt
 }
 
@@ -103,9 +100,6 @@ func (pt *Plaintext) GetRealPackedValue() []float64 {
 // --- CKKS Operations ---
 func (cc *CryptoContext) Rescale(ct *Ciphertext) *Ciphertext {
 	resCt := &Ciphertext{ptr: C.CryptoContext_Rescale(cc.ptr, ct.ptr)}
-	runtime.SetFinalizer(resCt, func(obj *Ciphertext) {
-		C.DestroyCiphertext(obj.ptr)
-	})
 	return resCt
 }
 

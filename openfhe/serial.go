@@ -10,7 +10,6 @@ import "C"
 
 import (
 	"fmt"
-	"runtime"
 	"unsafe"
 )
 
@@ -37,9 +36,6 @@ func DeserializeCryptoContextFromString(s string) *CryptoContext {
 	}
 
 	cc := &CryptoContext{ptr: ccPtr}
-	runtime.SetFinalizer(cc, func(obj *CryptoContext) {
-		C.DestroyCryptoContext(obj.ptr)
-	})
 	return cc
 }
 
@@ -67,9 +63,7 @@ func DeserializePublicKeyFromString(s string) *KeyPair {
 	}
 
 	kp := &KeyPair{ptr: kpPtr}
-	runtime.SetFinalizer(kp, func(obj *KeyPair) {
-		C.DestroyKeyPair(obj.ptr)
-	})
+	// No finalizer
 	return kp
 }
 
@@ -97,9 +91,7 @@ func DeserializePrivateKeyFromString(s string) *KeyPair {
 	}
 
 	kp := &KeyPair{ptr: kpPtr}
-	runtime.SetFinalizer(kp, func(obj *KeyPair) {
-		C.DestroyKeyPair(obj.ptr)
-	})
+	// No finalizer
 	return kp
 }
 
@@ -154,9 +146,7 @@ func DeserializeCiphertextFromString(s string) *Ciphertext {
 	}
 
 	ct := &Ciphertext{ptr: ctPtr}
-	runtime.SetFinalizer(ct, func(obj *Ciphertext) {
-		C.DestroyCiphertext(obj.ptr)
-	})
+	// No finalizer
 	return ct
 }
 
@@ -165,9 +155,7 @@ func DeserializeCiphertextFromString(s string) *Ciphertext {
 // NewKeyPair creates an empty KeyPair struct. Useful for combining deserialized keys.
 func NewKeyPair() *KeyPair {
 	kp := &KeyPair{ptr: C.NewKeyPair()}
-	runtime.SetFinalizer(kp, func(obj *KeyPair) {
-		C.DestroyKeyPair(obj.ptr)
-	})
+	// No finalizer
 	return kp
 }
 

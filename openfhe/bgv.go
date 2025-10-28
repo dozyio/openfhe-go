@@ -7,7 +7,6 @@ package openfhe
 #include "bridge.h"
 */
 import "C"
-import "runtime"
 
 // --- BGV Params Type ---
 // Opaque struct to hold the C pointer for BGV Params
@@ -18,7 +17,6 @@ type ParamsBGV struct {
 // --- BGV Params Functions ---
 func NewParamsBGVrns() *ParamsBGV {
 	p := &ParamsBGV{ptr: C.NewParamsBGV()}
-	runtime.SetFinalizer(p, func(obj *ParamsBGV) { C.DestroyParamsBGV(obj.ptr) })
 	return p
 }
 
@@ -30,12 +28,17 @@ func (p *ParamsBGV) SetMultiplicativeDepth(depth int) {
 	C.ParamsBGV_SetMultiplicativeDepth(p.ptr, C.int(depth))
 }
 
+// Release method for ParamsBGV
+func (p *ParamsBGV) Release() {
+	if p.ptr != nil {
+		C.DestroyParamsBGV(p.ptr)
+		p.ptr = nil
+	}
+}
+
 // --- BGV CryptoContext ---
 func NewCryptoContextBGV(p *ParamsBGV) *CryptoContext {
 	cc := &CryptoContext{ptr: C.NewCryptoContextBGV(p.ptr)}
-	runtime.SetFinalizer(cc, func(obj *CryptoContext) {
-		C.DestroyCryptoContext(obj.ptr)
-	})
 	return cc
 }
 
