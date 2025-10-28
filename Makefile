@@ -88,15 +88,6 @@ build: openfhe/bridge.o
 test: $(OPENFHE_INSTALL_MARKER)
 	@go test -v -count 1 ./openfhe
 
-# Targets to run the examples
-run-bfv-example: $(OPENFHE_INSTALL_MARKER)
-	@echo "--- Running BFV (Integers) Example ---"
-	@go run ./examples/simple-integers/main.go
-
-run-ckks-example: $(OPENFHE_INSTALL_MARKER)
-	@echo "--- Running CKKS (Real Numbers) Example ---"
-	@go run ./examples/simple-real-numbers/main.go
-
 run-examples: ${OPENFHE_INSTALL_MARKER}
 	find ./examples -type f -name 'main.go' -execdir sh -c 'echo "\n▶ running $$(pwd)/$$1"; go run . ' _ {} \;
 
