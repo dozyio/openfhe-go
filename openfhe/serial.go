@@ -16,22 +16,25 @@ import (
 
 // --- CryptoContext Serialization ---
 
-func SerializeCryptoContextToString(cc *CryptoContext) (string, error) {
-	var cStr *C.char
-	size := C.SerializeCryptoContextToString(cc.ptr, &cStr)
-	if size == 0 || cStr == nil {
-		return "", fmt.Errorf("cryptocontext serialization failed")
+func SerializeCryptoContextToBytes(cc *CryptoContext) ([]byte, error) {
+	var cBytes *C.char
+	size := C.SerializeCryptoContextToBytes(cc.ptr, &cBytes)
+	if size == 0 || cBytes == nil {
+		return nil, fmt.Errorf("cryptocontext serialization failed")
 	}
-	goStr := C.GoStringN(cStr, C.int(size))
-	C.FreeString(cStr) // Free memory allocated by C++
-	return goStr, nil
+	goBytes := C.GoBytes(unsafe.Pointer(cBytes), C.int(size))
+	C.FreeString(cBytes) // Free memory allocated by C++
+	return goBytes, nil
 }
 
-func DeserializeCryptoContextFromString(s string) *CryptoContext {
-	cStr := C.CString(s)
-	defer C.free(unsafe.Pointer(cStr))
+func DeserializeCryptoContextFromBytes(data []byte) *CryptoContext {
+	if len(data) == 0 {
+		return nil // Indicate failure
+	}
+	cData := (*C.char)(unsafe.Pointer(&data[0]))
+	cLen := C.int(len(data))
 
-	ccPtr := C.DeserializeCryptoContextFromString(cStr)
+	ccPtr := C.DeserializeCryptoContextFromBytes(cData, cLen)
 	if ccPtr == nil {
 		return nil // Indicate failure
 	}
@@ -42,112 +45,119 @@ func DeserializeCryptoContextFromString(s string) *CryptoContext {
 
 // --- PublicKey Serialization ---
 
-func SerializePublicKeyToString(kp *KeyPair) (string, error) {
-	var cStr *C.char
-	size := C.SerializePublicKeyToString(kp.ptr, &cStr)
-	if size == 0 || cStr == nil {
-		return "", fmt.Errorf("public key serialization failed")
+func SerializePublicKeyToBytes(kp *KeyPair) ([]byte, error) {
+	var cBytes *C.char
+	size := C.SerializePublicKeyToBytes(kp.ptr, &cBytes)
+	if size == 0 || cBytes == nil {
+		return nil, fmt.Errorf("public key serialization failed")
 	}
-	goStr := C.GoStringN(cStr, C.int(size))
-	C.FreeString(cStr)
-	return goStr, nil
+	goBytes := C.GoBytes(unsafe.Pointer(cBytes), C.int(size))
+	C.FreeString(cBytes)
+	return goBytes, nil
 }
 
-// DeserializePublicKeyFromString returns a *new* KeyPair containing *only* the public key.
-func DeserializePublicKeyFromString(s string) *KeyPair {
-	cStr := C.CString(s)
-	defer C.free(unsafe.Pointer(cStr))
+// DeserializePublicKeyFromBytes returns a *new* KeyPair containing *only* the public key.
+func DeserializePublicKeyFromBytes(data []byte) *KeyPair {
+	if len(data) == 0 {
+		return nil // Indicate failure
+	}
+	cData := (*C.char)(unsafe.Pointer(&data[0]))
+	cLen := C.int(len(data))
 
-	kpPtr := C.DeserializePublicKeyFromString(cStr)
+	kpPtr := C.DeserializePublicKeyFromBytes(cData, cLen)
 	if kpPtr == nil {
 		return nil
 	}
 
 	kp := &KeyPair{ptr: kpPtr}
-	// No finalizer
 	return kp
 }
 
 // --- PrivateKey Serialization ---
 
-func SerializePrivateKeyToString(kp *KeyPair) (string, error) {
-	var cStr *C.char
-	size := C.SerializePrivateKeyToString(kp.ptr, &cStr)
-	if size == 0 || cStr == nil {
-		return "", fmt.Errorf("private key serialization failed")
+func SerializePrivateKeyToBytes(kp *KeyPair) ([]byte, error) {
+	var cBytes *C.char
+	size := C.SerializePrivateKeyToBytes(kp.ptr, &cBytes)
+	if size == 0 || cBytes == nil {
+		return nil, fmt.Errorf("private key serialization failed")
 	}
-	goStr := C.GoStringN(cStr, C.int(size))
-	C.FreeString(cStr)
-	return goStr, nil
+	goBytes := C.GoBytes(unsafe.Pointer(cBytes), C.int(size))
+	C.FreeString(cBytes)
+	return goBytes, nil
 }
 
-// DeserializePrivateKeyFromString returns a *new* KeyPair containing *only* the private key.
-func DeserializePrivateKeyFromString(s string) *KeyPair {
-	cStr := C.CString(s)
-	defer C.free(unsafe.Pointer(cStr))
-
-	kpPtr := C.DeserializePrivateKeyFromString(cStr)
+// DeserializePrivateKeyFromBytes returns a *new* KeyPair containing *only* the private key.
+func DeserializePrivateKeyFromBytes(data []byte) *KeyPair {
+	if len(data) == 0 {
+		return nil
+	}
+	cData := (*C.char)(unsafe.Pointer(&data[0]))
+	cLen := C.int(len(data))
+	kpPtr := C.DeserializePrivateKeyFromBytes(cData, cLen)
 	if kpPtr == nil {
 		return nil
 	}
-
 	kp := &KeyPair{ptr: kpPtr}
-	// No finalizer
 	return kp
 }
 
 // --- EvalMultKey Serialization ---
 
-// SerializeEvalMultKeyToString serializes the relin/evalmult keys stored *within* the CryptoContext.
-// Assumes EvalMultKeyGen has been called. The keyId is typically the secret key ID.
-func SerializeEvalMultKeyToString(cc *CryptoContext, keyId string) (string, error) {
+// SerializeEvalMultKeyToBytes serializes the relin/evalmult keys stored *within* the CryptoContext.
+func SerializeEvalMultKeyToBytes(cc *CryptoContext, keyId string) ([]byte, error) {
 	cKeyId := C.CString(keyId)
 	defer C.free(unsafe.Pointer(cKeyId))
 
-	var cStr *C.char
-	size := C.SerializeEvalMultKeyToString(cc.ptr, cKeyId, &cStr)
-	if size == 0 || cStr == nil {
-		return "", fmt.Errorf("eval mult key serialization failed (keyId: %s)", keyId)
+	var cBytes *C.char
+	size := C.SerializeEvalMultKeyToBytes(cc.ptr, cKeyId, &cBytes)
+	if size == 0 || cBytes == nil {
+		return nil, fmt.Errorf("eval mult key serialization failed (keyId: %s)", keyId)
 	}
-	goStr := C.GoStringN(cStr, C.int(size))
-	C.FreeString(cStr)
-	return goStr, nil
+	goBytes := C.GoBytes(unsafe.Pointer(cBytes), C.int(size))
+	C.FreeString(cBytes)
+	return goBytes, nil
 }
 
-// DeserializeEvalMultKeyFromString loads the relin/evalmult keys *into* the provided CryptoContext.
-func DeserializeEvalMultKeyFromString(cc *CryptoContext, s string) error {
-	cStr := C.CString(s)
-	defer C.free(unsafe.Pointer(cStr))
+// DeserializeEvalMultKeyFromBytes loads the relin/evalmult keys *into* the provided CryptoContext.
+func DeserializeEvalMultKeyFromBytes(cc *CryptoContext, data []byte) error {
+	if len(data) == 0 {
+		return fmt.Errorf("cannot deserialize eval mult key from empty data")
+	}
+	cData := (*C.char)(unsafe.Pointer(&data[0]))
+	cLen := C.int(len(data))
 
-	C.DeserializeEvalMultKeyFromString(cc.ptr, cStr)
-	// NOTE: C++ side doesn't easily return error status here. Assume success if no crash.
+	C.DeserializeEvalMultKeyFromBytes(cc.ptr, cData, cLen)
+	// NOTE: C++ side doesn't easily return error status here.
+	// The C++ side now catches exceptions, so we assume success if no crash.
 	return nil
 }
 
 // --- Ciphertext Serialization ---
 
-func SerializeCiphertextToString(ct *Ciphertext) (string, error) {
-	var cStr *C.char
-	size := C.SerializeCiphertextToString(ct.ptr, &cStr)
-	if size == 0 || cStr == nil {
-		return "", fmt.Errorf("ciphertext serialization failed")
+func SerializeCiphertextToBytes(ct *Ciphertext) ([]byte, error) {
+	var cBytes *C.char
+	size := C.SerializeCiphertextToBytes(ct.ptr, &cBytes)
+	if size == 0 || cBytes == nil {
+		return nil, fmt.Errorf("ciphertext serialization failed")
 	}
-	goStr := C.GoStringN(cStr, C.int(size))
-	C.FreeString(cStr)
-	return goStr, nil
+	goBytes := C.GoBytes(unsafe.Pointer(cBytes), C.int(size))
+	C.FreeString(cBytes)
+	return goBytes, nil
 }
 
-func DeserializeCiphertextFromString(s string) *Ciphertext {
-	cStr := C.CString(s)
-	defer C.free(unsafe.Pointer(cStr))
+func DeserializeCiphertextFromBytes(data []byte) *Ciphertext {
+	if len(data) == 0 {
+		return nil // Indicate failure
+	}
+	cData := (*C.char)(unsafe.Pointer(&data[0]))
+	cLen := C.int(len(data))
 
-	ctPtr := C.DeserializeCiphertextFromString(cStr)
+	ctPtr := C.DeserializeCiphertextFromBytes(cData, cLen)
 	if ctPtr == nil {
 		return nil
 	}
 
 	ct := &Ciphertext{ptr: ctPtr}
-	// No finalizer
 	return ct
 }
 

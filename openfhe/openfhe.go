@@ -356,6 +356,30 @@ func (ct *Ciphertext) GetLevel() (int, bool) {
 	return int(level), true
 }
 
+func (cc *CryptoContext) GetParameterElementString() (string, error) {
+	fmt.Println("Go: Calling GetParameterElementString...")
+	if cc.ptr == nil {
+		return "", errors.New("CryptoContext is closed or invalid")
+	}
+	var cStr *C.char
+	status := C.CryptoContext_GetParameterElementString(cc.ptr, &cStr)
+	err := checkPKEErrorMsg(status) // Check for errors returned by the C function
+	if err != nil {
+		if cStr != nil {
+			C.FreeString(cStr)
+		} // Free if allocated before error
+		return "", fmt.Errorf("GetParameterElementString failed in C++: %w", err)
+	}
+	if cStr == nil {
+		// Should not happen if status is OK, but check defensively
+		return "", fmt.Errorf("GetParameterElementString returned OK but null string")
+	}
+	goStr := C.GoString(cStr)
+	C.FreeString(cStr) // Use FreeString which calls C.free
+	fmt.Printf("Go: Parameter Element String: %s\n", goStr)
+	return goStr, nil
+}
+
 // --- Release Methods for Go Wrappers ---
 
 // Close frees the underlying C++ CryptoContext object.

@@ -99,24 +99,26 @@ void DestroyCiphertext(CiphertextPtr ct);
 // This helper must be defined here as it's used by serial.go
 void FreeString(char *s);
 
-// All serialization functions operate on the common types
-size_t SerializeCryptoContextToString(CryptoContextPtr cc, char **outString);
-CryptoContextPtr DeserializeCryptoContextFromString(const char *inString);
+size_t SerializeCryptoContextToBytes(CryptoContextPtr cc, char **outBytes);
+CryptoContextPtr DeserializeCryptoContextFromBytes(const char *inData,
+                                                   int inLen);
 
-size_t SerializePublicKeyToString(KeyPairPtr kp, char **outString);
-KeyPairPtr DeserializePublicKeyFromString(const char *inString);
+size_t SerializePublicKeyToBytes(KeyPairPtr kp, char **outBytes);
+KeyPairPtr DeserializePublicKeyFromBytes(const char *inData, int inLen);
 
-size_t SerializePrivateKeyToString(KeyPairPtr kp, char **outString);
-KeyPairPtr DeserializePrivateKeyFromString(const char *inString);
+size_t SerializePrivateKeyToBytes(KeyPairPtr kp, char **outBytes);
+KeyPairPtr DeserializePrivateKeyFromBytes(const char *inData, int inLen);
 
-size_t SerializeEvalMultKeyToString(CryptoContextPtr cc, const char *keyId,
-                                    char **outString);
-void DeserializeEvalMultKeyFromString(CryptoContextPtr cc,
-                                      const char *inString);
+size_t SerializeEvalMultKeyToBytes(CryptoContextPtr cc, const char *keyId,
+                                   char **outBytes);
+void DeserializeEvalMultKeyFromBytes(CryptoContextPtr cc, const char *inData,
+                                     int inLen);
 
-size_t SerializeCiphertextToString(CiphertextPtr ct, char **outString);
-CiphertextPtr DeserializeCiphertextFromString(const char *inString);
+size_t SerializeCiphertextToBytes(CiphertextPtr ct, char **outBytes);
+CiphertextPtr DeserializeCiphertextFromBytes(const char *inData, int inLen);
 
+PKE_Err CryptoContext_GetParameterElementString(CryptoContextPtr cc,
+                                                char **outString);
 #ifdef __cplusplus
 }
 #endif

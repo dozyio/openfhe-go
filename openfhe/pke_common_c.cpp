@@ -497,120 +497,211 @@ void FreeString(char *s) {
 }
 
 // CryptoContext Serialization
-size_t SerializeCryptoContextToString(CryptoContextPtr cc_ptr_to_sptr,
-                                      char **outString) {
-  auto &cc = GetCCSharedPtr(cc_ptr_to_sptr);
-  std::stringstream ss;
-  Serial::Serialize(cc, ss, SerType::JSON);
-  std::string s = ss.str();
-  *outString = CopyStringToC(s);
-  if (!*outString)
-    return 0; // Handle malloc failure
-  return s.length();
+size_t SerializeCryptoContextToBytes(CryptoContextPtr cc_ptr_to_sptr,
+                                     char **outBytes) {
+  try {
+    auto &cc = GetCCSharedPtr(cc_ptr_to_sptr);
+    std::stringstream ss;
+    Serial::Serialize(cc, ss, SerType::BINARY);
+    std::string s = ss.str();
+    size_t len = s.length();
+    *outBytes = CopyStringToC(s);
+    if (!*outBytes)
+      return 0; // Handle malloc failure
+    return len;
+  } catch (...) {
+    *outBytes = nullptr;
+    return 0;
+  }
 }
 
-CryptoContextPtr DeserializeCryptoContextFromString(const char *inString) {
-  CryptoContext<DCRTPoly> cc;
-  std::stringstream ss(inString);
-  Serial::Deserialize(cc, ss, SerType::JSON);
-  if (!cc)
+CryptoContextPtr DeserializeCryptoContextFromBytes(const char *inData,
+                                                   int inLen) {
+  try {
+    CryptoContext<DCRTPoly> cc;
+    std::string s(inData, inLen);
+    std::stringstream ss(s);
+    Serial::Deserialize(cc, ss, SerType::BINARY);
+    if (!cc)
+      return nullptr;
+    auto *heap_sptr_ptr = new CryptoContextSharedPtr(cc);
+    return reinterpret_cast<CryptoContextPtr>(heap_sptr_ptr);
+  } catch (...) {
     return nullptr;
-  auto *heap_sptr_ptr = new CryptoContextSharedPtr(cc);
-  return reinterpret_cast<CryptoContextPtr>(heap_sptr_ptr);
+  }
 }
 
 // PublicKey Serialization
-size_t SerializePublicKeyToString(KeyPairPtr kp_raw_ptr, char **outString) {
-  auto kp = reinterpret_cast<KeyPairRawPtr>(kp_raw_ptr);
-  if (!kp || !kp->publicKey)
+size_t SerializePublicKeyToBytes(KeyPairPtr kp_raw_ptr, char **outBytes) {
+  try {
+    auto kp = reinterpret_cast<KeyPairRawPtr>(kp_raw_ptr);
+    if (!kp || !kp->publicKey)
+      return 0;
+    std::stringstream ss;
+    Serial::Serialize(kp->publicKey, ss, SerType::BINARY);
+    std::string s = ss.str();
+    *outBytes = CopyStringToC(s);
+    if (!*outBytes)
+      return 0;
+    return s.length();
+  } catch (...) {
+    *outBytes = nullptr;
     return 0;
-  std::stringstream ss;
-  Serial::Serialize(kp->publicKey, ss, SerType::JSON);
-  std::string s = ss.str();
-  *outString = CopyStringToC(s);
-  if (!*outString)
-    return 0;
-  return s.length();
+  }
 }
 
-KeyPairPtr DeserializePublicKeyFromString(const char *inString) {
-  PublicKey<DCRTPoly> pk;
-  std::stringstream ss(inString);
-  Serial::Deserialize(pk, ss, SerType::JSON);
-  if (!pk)
+KeyPairPtr DeserializePublicKeyFromBytes(const char *inData, int inLen) {
+  try {
+    PublicKey<DCRTPoly> pk;
+    std::string s(inData, inLen);
+    std::stringstream ss(s);
+    Serial::Deserialize(pk, ss, SerType::BINARY);
+    if (!pk)
+      return nullptr;
+    KeyPairRawPtr kp = new KeyPair<DCRTPoly>();
+    kp->publicKey = pk;
+    return reinterpret_cast<KeyPairPtr>(kp);
+  } catch (...) {
     return nullptr;
-  KeyPairRawPtr kp = new KeyPair<DCRTPoly>();
-  kp->publicKey = pk;
-  return reinterpret_cast<KeyPairPtr>(kp);
+  }
 }
 
 // PrivateKey Serialization
-size_t SerializePrivateKeyToString(KeyPairPtr kp_raw_ptr, char **outString) {
-  auto kp = reinterpret_cast<KeyPairRawPtr>(kp_raw_ptr);
-  if (!kp || !kp->secretKey)
+size_t SerializePrivateKeyToBytes(KeyPairPtr kp_raw_ptr, char **outBytes) {
+  try {
+    auto kp = reinterpret_cast<KeyPairRawPtr>(kp_raw_ptr);
+    if (!kp || !kp->secretKey)
+      return 0;
+    std::stringstream ss;
+    Serial::Serialize(kp->secretKey, ss, SerType::BINARY);
+    std::string s = ss.str();
+    *outBytes = CopyStringToC(s);
+    if (!*outBytes)
+      return 0;
+    return s.length();
+  } catch (...) {
+    *outBytes = nullptr;
     return 0;
-  std::stringstream ss;
-  Serial::Serialize(kp->secretKey, ss, SerType::JSON);
-  std::string s = ss.str();
-  *outString = CopyStringToC(s);
-  if (!*outString)
-    return 0;
-  return s.length();
+  }
 }
 
-KeyPairPtr DeserializePrivateKeyFromString(const char *inString) {
-  PrivateKey<DCRTPoly> sk;
-  std::stringstream ss(inString);
-  Serial::Deserialize(sk, ss, SerType::JSON);
-  if (!sk)
+KeyPairPtr DeserializePrivateKeyFromBytes(const char *inData, int inLen) {
+  try {
+    PrivateKey<DCRTPoly> sk;
+    std::string s(inData, inLen);
+    std::stringstream ss(s);
+    Serial::Deserialize(sk, ss, SerType::BINARY);
+    if (!sk)
+      return nullptr;
+    KeyPairRawPtr kp = new KeyPair<DCRTPoly>();
+    kp->secretKey = sk;
+    return reinterpret_cast<KeyPairPtr>(kp);
+  } catch (...) {
     return nullptr;
-  KeyPairRawPtr kp = new KeyPair<DCRTPoly>();
-  kp->secretKey = sk;
-  return reinterpret_cast<KeyPairPtr>(kp);
+  }
 }
 
 // EvalMultKey (Relinearization Key) Serialization
-size_t SerializeEvalMultKeyToString(CryptoContextPtr cc_ptr_to_sptr,
-                                    const char *keyId, char **outString) {
-  auto &cc = GetCCSharedPtr(cc_ptr_to_sptr);
-  std::stringstream ss;
-  if (!cc->SerializeEvalMultKey(ss, SerType::JSON, std::string(keyId)))
+size_t SerializeEvalMultKeyToBytes(CryptoContextPtr cc_ptr_to_sptr,
+                                   const char *keyId, char **outBytes) {
+  try {
+    auto &cc = GetCCSharedPtr(cc_ptr_to_sptr);
+    std::stringstream ss;
+    if (!cc->SerializeEvalMultKey(ss, SerType::BINARY, std::string(keyId)))
+      return 0;
+    std::string s = ss.str();
+    *outBytes = CopyStringToC(s);
+    if (!*outBytes)
+      return 0;
+    return s.length();
+  } catch (...) {
+    *outBytes = nullptr;
     return 0;
-  std::string s = ss.str();
-  *outString = CopyStringToC(s);
-  if (!*outString)
-    return 0;
-  return s.length();
+  }
 }
 
-void DeserializeEvalMultKeyFromString(CryptoContextPtr cc_ptr_to_sptr,
-                                      const char *inString) {
-  auto &cc = GetCCSharedPtr(cc_ptr_to_sptr);
-  std::stringstream ss(inString);
-  cc->DeserializeEvalMultKey(ss, SerType::JSON);
+void DeserializeEvalMultKeyFromBytes(CryptoContextPtr cc_ptr_to_sptr,
+                                     const char *inData, int inLen) {
+  try {
+    auto &cc = GetCCSharedPtr(cc_ptr_to_sptr);
+    std::string s(inData, inLen);
+    std::stringstream ss(s);
+    cc->DeserializeEvalMultKey(ss, SerType::BINARY);
+  } catch (...) {
+    // C-API function is void, cannot report error
+  }
 }
 
 // Ciphertext Serialization
-size_t SerializeCiphertextToString(CiphertextPtr ct_ptr_to_sptr,
-                                   char **outString) {
-  auto &ct = GetCTSharedPtr(ct_ptr_to_sptr);
-  std::stringstream ss;
-  Serial::Serialize(ct, ss, SerType::JSON);
-  std::string s = ss.str();
-  *outString = CopyStringToC(s);
-  if (!*outString)
+size_t SerializeCiphertextToBytes(CiphertextPtr ct_ptr_to_sptr,
+                                  char **outBytes) {
+  try {
+    auto &ct = GetCTSharedPtr(ct_ptr_to_sptr);
+    std::stringstream ss;
+    Serial::Serialize(ct, ss, SerType::BINARY);
+    std::string s = ss.str();
+    *outBytes = CopyStringToC(s);
+    if (!*outBytes)
+      return 0;
+    return s.length();
+  } catch (...) {
+    *outBytes = nullptr;
     return 0;
-  return s.length();
+  }
 }
 
-CiphertextPtr DeserializeCiphertextFromString(const char *inString) {
-  Ciphertext<DCRTPoly> ct;
-  std::stringstream ss(inString);
-  Serial::Deserialize(ct, ss, SerType::JSON);
-  if (!ct)
+CiphertextPtr DeserializeCiphertextFromBytes(const char *inData, int inLen) {
+  try {
+    Ciphertext<DCRTPoly> ct;
+    std::string s(inData, inLen);
+    std::stringstream ss(s);
+    Serial::Deserialize(ct, ss, SerType::BINARY);
+    if (!ct)
+      return nullptr;
+    auto *heap_sptr_ptr = new CiphertextSharedPtr(ct);
+    return reinterpret_cast<CiphertextPtr>(heap_sptr_ptr);
+  } catch (...) {
     return nullptr;
-  auto *heap_sptr_ptr = new CiphertextSharedPtr(ct);
-  return reinterpret_cast<CiphertextPtr>(heap_sptr_ptr);
+  }
 }
 
+// --- Debugging Function ---
+PKE_Err CryptoContext_GetParameterElementString(CryptoContextPtr cc_ptr_to_sptr,
+                                                char **outString) {
+  try {
+    if (!cc_ptr_to_sptr) {
+      *outString = nullptr;
+      return MakePKEError("Null context pointer");
+    }
+    auto &cc = GetCCSharedPtr(cc_ptr_to_sptr);
+    if (!cc) {
+      *outString = nullptr;
+      return MakePKEError("Dereferenced context is null");
+    }
+    auto params = cc->GetCryptoParameters();
+    if (!params) {
+      *outString = nullptr;
+      return MakePKEError("Failed to get crypto parameters");
+    }
+    auto elementParams = params->GetElementParams();
+    if (!elementParams) {
+      *outString = nullptr;
+      return MakePKEError("Failed to get element parameters");
+    }
+    std::stringstream ss;
+    ss << *elementParams;
+    std::string s = ss.str();
+    *outString = CopyStringToC(s);
+    if (!*outString) {
+      return MakePKEError("Failed to copy param string");
+    }
+    return MakePKEOk();
+  } catch (const std::exception &e) {
+    *outString = nullptr;
+    return MakePKEError(e.what());
+  } catch (...) {
+    *outString = nullptr;
+    return MakePKEError("Unknown C++ exception");
+  }
+}
 } // extern "C"
