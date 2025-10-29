@@ -1,40 +1,33 @@
 #include "binfhe_c.h"
 #include "binfhecontext.h"
+#include "helpers_c.h"
 #include <exception>
-#include <string>
 #include <utility>
 
-// Thread-local storage for the last error message
-static thread_local std::string g_last_error_message;
-
-// Helper to set the last error message
-static inline void set_last_error(const std::exception &e) {
-  g_last_error_message = e.what();
-}
-static inline void set_last_error_str(const std::string &msg) {
-  g_last_error_message = msg;
-}
-static inline void clear_last_error() { g_last_error_message.clear(); }
-
-// Function to retrieve the last error message
-extern "C" const char *BinFHE_LastError() {
-  return g_last_error_message.c_str();
-}
-
 // Helper macros for try/catch blocks
-#define BINFHE_TRY                                                             \
-  clear_last_error();                                                          \
-  try
-
-#define BINFHE_CATCH_RETURN(retval_on_error)                                   \
+#define BINFHE_CATCH_RETURN()                                                  \
   catch (const std::exception &e) {                                            \
-    set_last_error(e);                                                         \
-    return retval_on_error;                                                    \
+    return MakeBinFHEError(e.what());                                          \
   }                                                                            \
   catch (...) {                                                                \
-    set_last_error_str("Unknown C++ exception caught.");                       \
-    return retval_on_error;                                                    \
+    return MakeBinFHEError("Unknown C++ exception caught in PKE.");            \
   }
+
+void FreeBinFHE_ErrMsg(char *msg) {
+  if (msg) {
+    // Use free() because DupString uses malloc/strdup
+    free(msg);
+  }
+}
+
+// --- Error Handling ---
+static inline BinFHEErr MakeBinFHEOk() {
+  return (BinFHEErr){BINFHE_OK_CODE, NULL};
+}
+
+static inline BinFHEErr MakeBinFHEError(const std::string &msg) {
+  return (BinFHEErr){BINFHE_ERR_CODE, DupString(msg)};
+}
 
 // Cast void* handles back to C++ pointers
 inline lbcrypto::BinFHEContext *AsBinFHEContext(BinFHEContextH h) {
@@ -50,9 +43,15 @@ inline lbcrypto::LWECiphertext *AsLWECiphertext(LWECiphertextH h) {
 extern "C" {
 
 // --- Context ---
-BinFHEContextH BinFHEContext_New() {
-  BINFHE_TRY { return new lbcrypto::BinFHEContext(); }
-  BINFHE_CATCH_RETURN(nullptr)
+BinFHEErr BinFHEContext_New(BinFHEContextH *out) {
+  try {
+    if (!out) {
+      return MakeBinFHEError("Null output pointer for BinFHEContext_New");
+    }
+    *out = new lbcrypto::BinFHEContext();
+    return MakeBinFHEOk();
+  }
+  BINFHE_CATCH_RETURN()
 }
 
 void BinFHEContext_Delete(BinFHEContextH h) {
@@ -60,147 +59,137 @@ void BinFHEContext_Delete(BinFHEContextH h) {
   delete AsBinFHEContext(h);
 }
 
-BinErr BinFHEContext_Generate(BinFHEContextH h, BINFHE_PARAMSET_C p,
-                              BINFHE_METHOD_C m){
-    BINFHE_TRY{if (!h){set_last_error_str("Null BinFHEContext handle");
-return BIN_ERR;
-}
-AsBinFHEContext(h)->GenerateBinFHEContext(
-    static_cast<lbcrypto::BINFHE_PARAMSET>(p),
-    static_cast<lbcrypto::BINFHE_METHOD>(m));
-return BIN_OK;
-}
-BINFHE_CATCH_RETURN(BIN_ERR)
+BinFHEErr BinFHEContext_Generate(BinFHEContextH h, BINFHE_PARAMSET_C p,
+                                 BINFHE_METHOD_C m) {
+  try {
+    if (!h) {
+      return MakeBinFHEError("Null BinFHEContext handle");
+    }
+
+    AsBinFHEContext(h)->GenerateBinFHEContext(
+        static_cast<lbcrypto::BINFHE_PARAMSET>(p),
+        static_cast<lbcrypto::BINFHE_METHOD>(m));
+    return MakeBinFHEOk();
+  }
+  BINFHE_CATCH_RETURN()
 }
 
 // --- Keys ---
-BinErr BinFHEContext_KeyGen(BinFHEContextH h, LWESecretKeyH *out) {
-  BINFHE_TRY {
+BinFHEErr BinFHEContext_KeyGen(BinFHEContextH h, LWESecretKeyH *out) {
+  try {
     if (!h) {
-      set_last_error_str("Null BinFHEContext handle");
-      return BIN_ERR;
+      return MakeBinFHEError("Null BinFHEContext handle");
     }
     if (!out) {
-      set_last_error_str("Null output pointer for KeyGen");
-      return BIN_ERR;
+      return MakeBinFHEError("Null output pointer for KeyGen");
     }
     // KeyGen returns by value, allocate new and move into it
     auto sk_val = AsBinFHEContext(h)->KeyGen();
     *out = new lbcrypto::LWEPrivateKey(std::move(sk_val));
-    return BIN_OK;
+    return MakeBinFHEOk();
   }
-  BINFHE_CATCH_RETURN(BIN_ERR)
+  BINFHE_CATCH_RETURN()
 }
 
 void LWESecretKey_Delete(LWESecretKeyH h) { delete AsLWESecretKey(h); }
 
-BinErr BinFHEContext_BTKeyGen(BinFHEContextH h, LWESecretKeyH skh){
-    BINFHE_TRY{if (!h){set_last_error_str("Null BinFHEContext handle");
-return BIN_ERR;
-}
-if (!skh) {
-  set_last_error_str("Null LWESecretKey handle");
-  return BIN_ERR;
-}
-AsBinFHEContext(h)->BTKeyGen(*AsLWESecretKey(skh));
-return BIN_OK;
-}
-BINFHE_CATCH_RETURN(BIN_ERR)
+BinFHEErr BinFHEContext_BTKeyGen(BinFHEContextH h, LWESecretKeyH skh) {
+  try {
+    if (!h) {
+      return MakeBinFHEError("Null BinFHEContext handle");
+    }
+    if (!skh) {
+      return MakeBinFHEError("Null LWESecretKey handle");
+    }
+    AsBinFHEContext(h)->BTKeyGen(*AsLWESecretKey(skh));
+    return MakeBinFHEOk();
+  }
+  BINFHE_CATCH_RETURN()
 }
 
 // --- Operations ---
-BinErr BinFHEContext_Encrypt(BinFHEContextH h, LWESecretKeyH skh, int bit,
-                             LWECiphertextH *out) {
-  BINFHE_TRY {
+BinFHEErr BinFHEContext_Encrypt(BinFHEContextH h, LWESecretKeyH skh, int bit,
+                                LWECiphertextH *out) {
+  try {
     if (!h) {
-      set_last_error_str("Null BinFHEContext handle");
-      return BIN_ERR;
+      return MakeBinFHEError("Null BinFHEContext handle");
     }
     if (!skh) {
-      set_last_error_str("Null LWESecretKey handle");
-      return BIN_ERR;
+      return MakeBinFHEError("Null LWESecretKey handle");
     }
     if (!out) {
-      set_last_error_str("Null output pointer for Encrypt");
-      return BIN_ERR;
+      return MakeBinFHEError("Null output pointer for Encrypt");
     }
     // Encrypt returns by value
     auto ct_val = AsBinFHEContext(h)->Encrypt(*AsLWESecretKey(skh), bit);
     *out = new lbcrypto::LWECiphertext(std::move(ct_val));
-    return BIN_OK;
+    return MakeBinFHEOk();
   }
-  BINFHE_CATCH_RETURN(BIN_ERR)
+  BINFHE_CATCH_RETURN()
 }
 
 void LWECiphertext_Delete(LWECiphertextH h) { delete AsLWECiphertext(h); }
 
-BinErr BinFHEContext_EvalBinGate(BinFHEContextH h, BINFHE_GATE_C gate,
-                                 LWECiphertextH ah, LWECiphertextH bh,
-                                 LWECiphertextH *out){
-    BINFHE_TRY{if (!h){set_last_error_str("Null BinFHEContext handle");
-return BIN_ERR;
-}
-if (!ah) {
-  set_last_error_str("Null first LWECiphertext handle");
-  return BIN_ERR;
-}
-if (!bh) {
-  set_last_error_str("Null second LWECiphertext handle");
-  return BIN_ERR;
-}
-if (!out) {
-  set_last_error_str("Null output pointer for EvalBinGate");
-  return BIN_ERR;
-}
-// EvalBinGate returns by value
-auto ct_val =
-    AsBinFHEContext(h)->EvalBinGate(static_cast<lbcrypto::BINGATE>(gate),
-                                    *AsLWECiphertext(ah), *AsLWECiphertext(bh));
-*out = new lbcrypto::LWECiphertext(std::move(ct_val));
-return BIN_OK;
-}
-BINFHE_CATCH_RETURN(BIN_ERR)
-}
-
-BinErr BinFHEContext_Bootstrap(BinFHEContextH h, LWECiphertextH inh,
-                               LWECiphertextH *out){
-    BINFHE_TRY{if (!h){set_last_error_str("Null BinFHEContext handle");
-return BIN_ERR;
-}
-if (!inh) {
-  set_last_error_str("Null input LWECiphertext handle");
-  return BIN_ERR;
-}
-if (!out) {
-  set_last_error_str("Null output pointer for Bootstrap");
-  return BIN_ERR;
-}
-// Bootstrap returns by value
-auto ct_val = AsBinFHEContext(h)->Bootstrap(*AsLWECiphertext(inh));
-*out = new lbcrypto::LWECiphertext(std::move(ct_val));
-return BIN_OK;
-}
-BINFHE_CATCH_RETURN(BIN_ERR)
-}
-
-BinErr BinFHEContext_Decrypt(BinFHEContextH h, LWESecretKeyH skh,
-                             LWECiphertextH cth, int *out_bit) {
-  BINFHE_TRY {
+BinFHEErr BinFHEContext_EvalBinGate(BinFHEContextH h, BINFHE_GATE_C gate,
+                                    LWECiphertextH ah, LWECiphertextH bh,
+                                    LWECiphertextH *out) {
+  try {
     if (!h) {
-      set_last_error_str("Null BinFHEContext handle");
-      return BIN_ERR;
+      return MakeBinFHEError("Null BinFHEContext handle");
+    }
+    if (!ah) {
+      return MakeBinFHEError("Null first LWECiphertext handle");
+    }
+    if (!bh) {
+      return MakeBinFHEError("Null second LWECiphertext handle");
+    }
+    if (!out) {
+      return MakeBinFHEError("Null output pointer for EvalBinGate");
+    }
+    // EvalBinGate returns by value
+    auto ct_val = AsBinFHEContext(h)->EvalBinGate(
+        static_cast<lbcrypto::BINGATE>(gate), *AsLWECiphertext(ah),
+        *AsLWECiphertext(bh));
+    *out = new lbcrypto::LWECiphertext(std::move(ct_val));
+    return MakeBinFHEOk();
+  }
+  BINFHE_CATCH_RETURN()
+}
+
+BinFHEErr BinFHEContext_Bootstrap(BinFHEContextH h, LWECiphertextH inh,
+                                  LWECiphertextH *out) {
+  try {
+    if (!h) {
+      return MakeBinFHEError("Null BinFHEContext handle");
+    }
+    if (!inh) {
+      return MakeBinFHEError("Null input LWECiphertext handle");
+    }
+    if (!out) {
+      return MakeBinFHEError("Null output pointer for Bootstrap");
+    }
+    // Bootstrap returns by value
+    auto ct_val = AsBinFHEContext(h)->Bootstrap(*AsLWECiphertext(inh));
+    *out = new lbcrypto::LWECiphertext(std::move(ct_val));
+    return MakeBinFHEOk();
+  }
+  BINFHE_CATCH_RETURN()
+}
+
+BinFHEErr BinFHEContext_Decrypt(BinFHEContextH h, LWESecretKeyH skh,
+                                LWECiphertextH cth, int *out_bit) {
+  try {
+    if (!h) {
+      return MakeBinFHEError("Null BinFHEContext handle");
     }
     if (!skh) {
-      set_last_error_str("Null LWESecretKey handle");
-      return BIN_ERR;
+      return MakeBinFHEError("Null LWESecretKey handle");
     }
     if (!cth) {
-      set_last_error_str("Null LWECiphertext handle");
-      return BIN_ERR;
+      return MakeBinFHEError("Null LWECiphertext handle");
     }
     if (!out_bit) {
-      set_last_error_str("Null output pointer for Decrypt");
-      return BIN_ERR;
+      return MakeBinFHEError("Null output pointer for Decrypt");
     }
 
     lbcrypto::LWEPlaintext pt_result = 0; // Initialize
@@ -209,9 +198,9 @@ BinErr BinFHEContext_Decrypt(BinFHEContextH h, LWESecretKeyH skh,
     *out_bit =
         static_cast<int>(pt_result); // Convert result LWEPlaintext (usually
                                      // NativeInteger::SignedDigit) to int
-    return BIN_OK;
+    return MakeBinFHEOk();
   }
-  BINFHE_CATCH_RETURN(BIN_ERR)
+  BINFHE_CATCH_RETURN()
 }
 
 } // extern "C"

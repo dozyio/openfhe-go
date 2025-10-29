@@ -5,7 +5,9 @@
 // It is included by pke_common_c.cpp, bfv_c.cpp, bgv_c.cpp, and ckks_c.cpp
 // to share C++ helper functions, using declarations, and error macros.
 
-#include "pke_common_c.h" // For PKE_Err, PKE_OK, PKE_ERR, and C types
+#include "helpers_c.h"
+#include "pke_common_c.h"
+#include <cstdlib>
 #include <cstring>
 #include <memory>
 #include <openfhe/core/lattice/hal/default/dcrtpoly.h>
@@ -51,40 +53,19 @@ inline PrivateKeySharedPtr &GetSKSharedPtr(void *sk_ptr_to_sptr) {
 }
 
 // --- PKE Error Handling ---
-static thread_local std::string g_pke_last_error_message;
-
-static inline void set_last_error_pke(const std::exception &e) {
-  g_pke_last_error_message = e.what();
-}
-static inline void set_last_error_pke_str(const std::string &msg) {
-  g_pke_last_error_message = msg;
-}
-static inline void clear_last_error_pke() { g_pke_last_error_message.clear(); }
-
-// Helper macros for try/catch blocks
-#define PKE_TRY                                                                \
-  clear_last_error_pke();                                                      \
-  try
-
-#define PKE_CATCH_RETURN(retval_on_error)                                      \
+// Helper macro for try/catch blocks
+#define PKE_CATCH_RETURN()                                                     \
   catch (const std::exception &e) {                                            \
-    set_last_error_pke(e);                                                     \
-    return retval_on_error;                                                    \
+    return MakePKEError(e.what());                                             \
   }                                                                            \
   catch (...) {                                                                \
-    set_last_error_pke_str("Unknown C++ exception caught in PKE.");            \
-    return retval_on_error;                                                    \
+    return MakePKEError("Unknown C++ exception caught in PKE.");               \
   }
 
-// --- String Helper ---
-// Helper to copy std::string to C string (caller must free using C.free or
-// FreeString)
-static inline char *CopyStringToC(const std::string &s) {
-  char *cstr = (char *)malloc(s.length() + 1);
-  if (!cstr)
-    return nullptr; // Handle malloc failure
-  std::strcpy(cstr, s.c_str());
-  return cstr;
+static inline PKE_Err MakePKEOk() { return (PKE_Err){PKE_OK_CODE, NULL}; }
+
+static inline PKE_Err MakePKEError(const std::string &msg) {
+  return (PKE_Err){PKE_ERR_CODE, DupString(msg)};
 }
 
 #endif // PKE_HELPERS_C_H

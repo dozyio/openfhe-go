@@ -17,8 +17,9 @@ import (
 func NewParamsBFVrns() (*ParamsBFV, error) {
 	var pH C.ParamsBFVPtr
 	status := C.NewParamsBFV(&pH)
-	if status != PKE_OK {
-		return nil, lastPKEError()
+	err := checkPKEErrorMsg(status)
+	if err != nil {
+		return nil, err
 	}
 	if pH == nil {
 		return nil, errors.New("NewParamsBFV returned OK but null handle")
@@ -32,8 +33,9 @@ func (p *ParamsBFV) SetPlaintextModulus(mod uint64) error {
 		return errors.New("ParamsBFV is closed or invalid")
 	}
 	status := C.ParamsBFV_SetPlaintextModulus(p.ptr, C.uint64_t(mod))
-	if status != PKE_OK {
-		return lastPKEError()
+	err := checkPKEErrorMsg(status)
+	if err != nil {
+		return err
 	}
 	return nil
 }
@@ -43,8 +45,9 @@ func (p *ParamsBFV) SetMultiplicativeDepth(depth int) error {
 		return errors.New("ParamsBFV is closed or invalid")
 	}
 	status := C.ParamsBFV_SetMultiplicativeDepth(p.ptr, C.int(depth))
-	if status != PKE_OK {
-		return lastPKEError()
+	err := checkPKEErrorMsg(status)
+	if err != nil {
+		return err
 	}
 	return nil
 }
@@ -63,8 +66,9 @@ func NewCryptoContextBFV(p *ParamsBFV) (*CryptoContext, error) {
 	}
 	var ccH C.CryptoContextPtr
 	status := C.NewCryptoContextBFV(p.ptr, &ccH)
-	if status != PKE_OK {
-		return nil, lastPKEError()
+	err := checkPKEErrorMsg(status)
+	if err != nil {
+		return nil, err
 	}
 	if ccH == nil {
 		return nil, errors.New("NewCryptoContextBFV returned OK but null handle")
@@ -87,8 +91,9 @@ func (cc *CryptoContext) MakePackedPlaintext(vec []int64) (*Plaintext, error) {
 	cLen := C.int(len(vec))
 	var ptH C.PlaintextPtr
 	status := C.CryptoContext_MakePackedPlaintext(cc.ptr, cVec, cLen, &ptH)
-	if status != PKE_OK {
-		return nil, lastPKEError()
+	err := checkPKEErrorMsg(status)
+	if err != nil {
+		return nil, err
 	}
 	if ptH == nil {
 		return nil, errors.New("MakePackedPlaintext returned OK but null handle")

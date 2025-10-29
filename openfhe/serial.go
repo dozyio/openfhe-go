@@ -157,8 +157,9 @@ func DeserializeCiphertextFromString(s string) *Ciphertext {
 func NewKeyPair() (*KeyPair, error) {
 	var kpH C.KeyPairPtr
 	status := C.NewKeyPair(&kpH)
-	if status != PKE_OK {
-		return nil, lastPKEError()
+	err := checkPKEErrorMsg(status)
+	if err != nil {
+		return nil, err
 	}
 	if kpH == nil {
 		return nil, errors.New("NewKeyPair returned OK but null handle")
@@ -174,8 +175,9 @@ func (kp *KeyPair) GetPublicKey() (unsafe.Pointer, error) {
 	}
 	var pkH unsafe.Pointer
 	status := C.GetPublicKey(kp.ptr, &pkH)
-	if status != PKE_OK {
-		return nil, lastPKEError()
+	err := checkPKEErrorMsg(status)
+	if err != nil {
+		return nil, err
 	}
 	if pkH == nil {
 		return nil, errors.New("GetPublicKey returned OK but null handle")
@@ -190,8 +192,9 @@ func (kp *KeyPair) GetPrivateKey() (unsafe.Pointer, error) {
 	}
 	var skH unsafe.Pointer
 	status := C.GetPrivateKey(kp.ptr, &skH)
-	if status != PKE_OK {
-		return nil, lastPKEError()
+	err := checkPKEErrorMsg(status)
+	if err != nil {
+		return nil, err
 	}
 	if skH == nil {
 		return nil, errors.New("GetPrivateKey returned OK but null handle")
@@ -209,8 +212,9 @@ func (kp *KeyPair) SetPublicKey(pkPtr unsafe.Pointer) error { // ADDED error
 		return errors.New("Input public key pointer is nil")
 	}
 	status := C.SetPublicKey(kp.ptr, pkPtr)
-	if status != PKE_OK {
-		return lastPKEError()
+	err := checkPKEErrorMsg(status)
+	if err != nil {
+		return err
 	}
 	return nil
 }
@@ -225,8 +229,9 @@ func (kp *KeyPair) SetPrivateKey(skPtr unsafe.Pointer) error { // ADDED error
 		return errors.New("Input private key pointer is nil")
 	}
 	status := C.SetPrivateKey(kp.ptr, skPtr)
-	if status != PKE_OK {
-		return lastPKEError()
+	err := checkPKEErrorMsg(status)
+	if err != nil {
+		return err
 	}
 	return nil
 }

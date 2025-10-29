@@ -15,9 +15,17 @@ typedef void *LWECiphertextH;
 
 // Error Codes
 typedef enum {
-  BIN_OK = 0,
-  BIN_ERR = 1 // Indicates an error occurred, check LastError
-} BinErr;
+  BINFHE_OK_CODE = 0,
+  BINFHE_ERR_CODE = 1 // Indicates an error occurred, check LastError
+} BinFHEErrCode;
+
+typedef struct {
+  BinFHEErrCode code; // 0 for OK, non-zero for error (e.g., 1)
+  char *msg; // Allocated error string if code != 0, NULL otherwise. Go side
+             // MUST call FreeBin_ErrMsg on this if not NULL.
+} BinFHEErr;
+
+void FreeBinFHE_ErrMsg(char *msg);
 
 typedef enum {
   BINFHE_PARAMSET_TOY = 0,
@@ -92,32 +100,30 @@ typedef enum {
 } BINFHE_GATE_C;
 
 // --- Context ---
-BinFHEContextH BinFHEContext_New();
+BinFHEErr BinFHEContext_New(BinFHEContextH *out);
 void BinFHEContext_Delete(BinFHEContextH h);
-BinErr BinFHEContext_Generate(BinFHEContextH h, BINFHE_PARAMSET_C paramset,
-                              BINFHE_METHOD_C method);
+BinFHEErr BinFHEContext_Generate(BinFHEContextH h, BINFHE_PARAMSET_C paramset,
+                                 BINFHE_METHOD_C method);
 
 // --- Keys ---
-BinErr
+BinFHEErr
 BinFHEContext_KeyGen(BinFHEContextH h,
                      LWESecretKeyH *out); // Output param for new key handle
 void LWESecretKey_Delete(LWESecretKeyH h);
-BinErr BinFHEContext_BTKeyGen(BinFHEContextH h, LWESecretKeyH sk);
+BinFHEErr BinFHEContext_BTKeyGen(BinFHEContextH h, LWESecretKeyH sk);
 
 // --- Operations ---
-BinErr BinFHEContext_Encrypt(BinFHEContextH h, LWESecretKeyH sk, int bit,
-                             LWECiphertextH *out); // Output param
+BinFHEErr BinFHEContext_Encrypt(BinFHEContextH h, LWESecretKeyH sk, int bit,
+                                LWECiphertextH *out); // Output param
 void LWECiphertext_Delete(LWECiphertextH h);
-BinErr BinFHEContext_EvalBinGate(BinFHEContextH h, BINFHE_GATE_C gate,
-                                 LWECiphertextH a, LWECiphertextH b,
-                                 LWECiphertextH *out); // Output param
-BinErr BinFHEContext_Bootstrap(BinFHEContextH h, LWECiphertextH in,
-                               LWECiphertextH *out); // Output param
-BinErr BinFHEContext_Decrypt(BinFHEContextH h, LWESecretKeyH sk,
-                             LWECiphertextH ct, int *out_bit); // Output param
-
-// --- Error Handling ---
-const char *BinFHE_LastError(); // Get last error message (thread-local)
+BinFHEErr BinFHEContext_EvalBinGate(BinFHEContextH h, BINFHE_GATE_C gate,
+                                    LWECiphertextH a, LWECiphertextH b,
+                                    LWECiphertextH *out); // Output param
+BinFHEErr BinFHEContext_Bootstrap(BinFHEContextH h, LWECiphertextH in,
+                                  LWECiphertextH *out); // Output param
+BinFHEErr BinFHEContext_Decrypt(BinFHEContextH h, LWESecretKeyH sk,
+                                LWECiphertextH ct,
+                                int *out_bit); // Output param
 
 #ifdef __cplusplus
 }

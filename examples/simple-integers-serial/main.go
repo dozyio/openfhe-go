@@ -138,8 +138,6 @@ func main() {
 	checkErr(err)
 	checkErr(keysLoaded.SetPrivateKey(skPtr)) // Set pointer
 
-	// ... (EvalMultKey deserialization logic unchanged) ...
-
 	// Deserialize Ciphertext
 	ctLoaded := openfhe.DeserializeCiphertextFromString(ctSerial)
 	if ctLoaded == nil {
