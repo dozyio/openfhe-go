@@ -1,4 +1,5 @@
 #include "pke_common_c.h"
+#include "helpers_c.h"
 #include "pke_helpers_c.h"
 
 using namespace lbcrypto;

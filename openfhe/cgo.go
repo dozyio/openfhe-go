@@ -36,11 +36,15 @@ type (
 	SecurityLevel    C.OFHESecurityLevel
 	SecretKeyDist    C.OFHESecretKeyDist
 	PKE_Err          C.PKE_Err
+	BinFHEErr        C.BinFHEErr
 )
 
 const (
 	PKE_OK  C.PKE_Err_Code = C.PKE_OK_CODE
 	PKE_ERR C.PKE_Err_Code = C.PKE_ERR_CODE
+
+	BINFHE_OK  C.BinFHEErrCode = C.BINFHE_OK_CODE
+	BINFHE_ERR C.BinFHEErrCode = C.BINFHE_ERR_CODE
 )
 
 const (
@@ -93,6 +97,43 @@ func checkPKEErrorMsg(cErr C.PKE_Err) error {
 
 		// *** CRITICAL: Free the C string memory ***
 		C.FreePKE_ErrMsg(cErr.msg)
+	}
+
+	// Fallback message if manual read failed somehow
+	if goMsg == "" {
+		goMsg = fmt.Sprintf("Unknown PKE C++ error (code %d, error message retrieval failed)", int(cErr.code))
+	}
+
+	return errors.New(goMsg)
+}
+
+func checkBinFHEErrorMsg(cErr C.BinFHEErr) error {
+	// Check the error code first
+	if cErr.code == BINFHE_OK {
+		if cErr.msg != nil {
+			C.FreeBinFHE_ErrMsg(cErr.msg) // Should be NULL on success, free anyway
+		}
+		return nil // Success
+	}
+
+	// An error occurred
+	var goMsg string
+	if cErr.msg != nil {
+		// Use manual read first as GoString might still be problematic
+		var goBytes []byte
+		ptr := uintptr(unsafe.Pointer(cErr.msg))
+		for {
+			b := *(*byte)(unsafe.Pointer(ptr))
+			if b == 0 {
+				break
+			}
+			goBytes = append(goBytes, b)
+			ptr++
+		}
+		goMsg = string(goBytes)
+
+		// *** CRITICAL: Free the C string memory ***
+		C.FreeBinFHE_ErrMsg(cErr.msg)
 	}
 
 	// Fallback message if manual read failed somehow

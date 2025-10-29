@@ -5,6 +5,7 @@
 // It is included by pke_common_c.cpp, bfv_c.cpp, bgv_c.cpp, and ckks_c.cpp
 // to share C++ helper functions, using declarations, and error macros.
 
+#include "helpers_c.h"
 #include "pke_common_c.h"
 #include <cstdlib>
 #include <cstring>
@@ -61,33 +62,10 @@ inline PrivateKeySharedPtr &GetSKSharedPtr(void *sk_ptr_to_sptr) {
     return MakePKEError("Unknown C++ exception caught in PKE.");               \
   }
 
-static inline char *DupString(const std::string &s) {
-#ifdef _WIN32
-  char *cstr = _strdup(s.c_str());
-  // Add error checking if needed: if (!cstr) { /* handle */ }
-  return cstr;
-#else
-  char *cstr = strdup(s.c_str());
-  // Add error checking if needed: if (!cstr) { /* handle */ }
-  return cstr;
-#endif
-}
-
 static inline PKE_Err MakePKEOk() { return (PKE_Err){PKE_OK_CODE, NULL}; }
 
 static inline PKE_Err MakePKEError(const std::string &msg) {
   return (PKE_Err){PKE_ERR_CODE, DupString(msg)};
-}
-
-// --- String Helper ---
-// Helper to copy std::string to C string (caller must free using C.free or
-// FreeString)
-static inline char *CopyStringToC(const std::string &s) {
-  char *cstr = (char *)malloc(s.length() + 1);
-  if (!cstr)
-    return nullptr; // Handle malloc failure
-  std::strcpy(cstr, s.c_str());
-  return cstr;
 }
 
 #endif // PKE_HELPERS_C_H

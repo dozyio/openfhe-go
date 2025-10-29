@@ -9,14 +9,6 @@ import (
 	"fmt"
 )
 
-func lastBinFHEError() error {
-	cErr := C.BinFHE_LastError()
-	if cErr != nil {
-		return errors.New(C.GoString(cErr))
-	}
-	return errors.New("unknown BinFHE C++ error") // Fallback
-}
-
 type BinFHEParamset C.BINFHE_PARAMSET_C
 
 const (
@@ -103,13 +95,23 @@ type (
 
 // --- Context ---
 func NewBinFHEContext() (*BinFHEContext, error) {
-	cH := C.BinFHEContext_New()
+	// cH := C.BinFHEContext_New() // OLD Call
+	// if cH == nil {
+	//     return nil, lastBinFHEError() // Old error check
+	// }
+
+	// NEW Call using output parameter
+	var cH C.BinFHEContextH
+	status := C.BinFHEContext_New(&cH) // Pass address of cH
+	err := checkBinFHEErrorMsg(status) // Use the new error checker
+	if err != nil {
+		return nil, err // Return error if creation failed
+	}
 	if cH == nil {
-		return nil, lastBinFHEError()
+		return nil, errors.New("BinFHEContext_New returned OK but null handle")
 	}
 
 	ctx := &BinFHEContext{h: cH}
-
 	return ctx, nil
 }
 
@@ -127,9 +129,10 @@ func (cc *BinFHEContext) GenerateBinFHEContext(paramset BinFHEParamset, method B
 		return errors.New("BinFHEContext is closed or invalid")
 	}
 
-	res := C.BinFHEContext_Generate(cc.h, C.BINFHE_PARAMSET_C(paramset), C.BINFHE_METHOD_C(method))
-	if res != C.BIN_OK {
-		return lastBinFHEError()
+	status := C.BinFHEContext_Generate(cc.h, C.BINFHE_PARAMSET_C(paramset), C.BINFHE_METHOD_C(method))
+	err := checkBinFHEErrorMsg(status)
+	if err != nil {
+		return err
 	}
 
 	return nil
@@ -143,9 +146,10 @@ func (cc *BinFHEContext) KeyGen() (*BinFHESecretKey, error) {
 
 	var skH C.LWESecretKeyH
 
-	res := C.BinFHEContext_KeyGen(cc.h, &skH)
-	if res != C.BIN_OK {
-		return nil, lastBinFHEError()
+	status := C.BinFHEContext_KeyGen(cc.h, &skH)
+	err := checkBinFHEErrorMsg(status)
+	if err != nil {
+		return nil, err
 	}
 
 	if skH == nil { // Should not happen if BIN_OK, but check defensively
@@ -173,9 +177,10 @@ func (cc *BinFHEContext) BTKeyGen(sk *BinFHESecretKey) error {
 		return errors.New("BinFHESecretKey is closed or invalid")
 	}
 
-	res := C.BinFHEContext_BTKeyGen(cc.h, sk.h)
-	if res != C.BIN_OK {
-		return lastBinFHEError()
+	status := C.BinFHEContext_BTKeyGen(cc.h, sk.h)
+	err := checkBinFHEErrorMsg(status)
+	if err != nil {
+		return err
 	}
 
 	return nil
@@ -193,9 +198,10 @@ func (cc *BinFHEContext) Encrypt(sk *BinFHESecretKey, message int) (*BinFHECiphe
 
 	var ctH C.LWECiphertextH
 
-	res := C.BinFHEContext_Encrypt(cc.h, sk.h, C.int(message), &ctH)
-	if res != C.BIN_OK {
-		return nil, lastBinFHEError()
+	status := C.BinFHEContext_Encrypt(cc.h, sk.h, C.int(message), &ctH)
+	err := checkBinFHEErrorMsg(status)
+	if err != nil {
+		return nil, err
 	}
 
 	if ctH == nil {
@@ -230,9 +236,10 @@ func (cc *BinFHEContext) EvalBinGate(gate BinFHEGate, ct1, ct2 *BinFHECiphertext
 
 	var ctOutH C.LWECiphertextH
 
-	res := C.BinFHEContext_EvalBinGate(cc.h, C.BINFHE_GATE_C(gate), ct1.h, ct2.h, &ctOutH)
-	if res != C.BIN_OK {
-		return nil, lastBinFHEError()
+	status := C.BinFHEContext_EvalBinGate(cc.h, C.BINFHE_GATE_C(gate), ct1.h, ct2.h, &ctOutH)
+	err := checkBinFHEErrorMsg(status)
+	if err != nil {
+		return nil, err
 	}
 
 	if ctOutH == nil {
@@ -254,9 +261,10 @@ func (cc *BinFHEContext) Bootstrap(ctIn *BinFHECiphertext) (*BinFHECiphertext, e
 
 	var ctOutH C.LWECiphertextH
 
-	res := C.BinFHEContext_Bootstrap(cc.h, ctIn.h, &ctOutH)
-	if res != C.BIN_OK {
-		return nil, lastBinFHEError()
+	status := C.BinFHEContext_Bootstrap(cc.h, ctIn.h, &ctOutH)
+	err := checkBinFHEErrorMsg(status)
+	if err != nil {
+		return nil, err
 	}
 
 	if ctOutH == nil {
@@ -283,9 +291,10 @@ func (cc *BinFHEContext) Decrypt(sk *BinFHESecretKey, ct *BinFHECiphertext) (int
 
 	var resultBit C.int
 
-	res := C.BinFHEContext_Decrypt(cc.h, sk.h, ct.h, &resultBit)
-	if res != C.BIN_OK {
-		return 0, lastBinFHEError()
+	status := C.BinFHEContext_Decrypt(cc.h, sk.h, ct.h, &resultBit)
+	err := checkBinFHEErrorMsg(status)
+	if err != nil {
+		return 0, err
 	}
 
 	return int(resultBit), nil
