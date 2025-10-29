@@ -578,7 +578,6 @@ func TestCKKSPackedMult(t *testing.T) {
 }
 
 // --- Serialization Tests ---
-
 func TestSerializationRoundTrip(t *testing.T) {
 	// 1. Setup Original
 	ccOrig, keysOrig := setupBFVContextAndKeys(t)
@@ -588,20 +587,20 @@ func TestSerializationRoundTrip(t *testing.T) {
 	ciphertextOrig, err := ccOrig.Encrypt(keysOrig, plaintextOrig)
 	mustT(t, err, "Encrypt orig")
 
-	// 2. Serialize
-	ccSerial, err := SerializeCryptoContextToString(ccOrig)
+	// 2. Serialize (CHANGING to ...ToBytes)
+	ccSerial, err := SerializeCryptoContextToBytes(ccOrig)
 	if err != nil {
 		t.Fatalf("CryptoContext serialization failed: %v", err)
 	}
-	pkSerial, err := SerializePublicKeyToString(keysOrig)
+	pkSerial, err := SerializePublicKeyToBytes(keysOrig)
 	if err != nil {
 		t.Fatalf("PublicKey serialization failed: %v", err)
 	}
-	skSerial, err := SerializePrivateKeyToString(keysOrig)
+	skSerial, err := SerializePrivateKeyToBytes(keysOrig)
 	if err != nil {
 		t.Fatalf("PrivateKey serialization failed: %v", err)
 	}
-	ctSerial, err := SerializeCiphertextToString(ciphertextOrig)
+	ctSerial, err := SerializeCiphertextToBytes(ciphertextOrig)
 	if err != nil {
 		t.Fatalf("Ciphertext serialization failed: %v", err)
 	}
@@ -616,25 +615,33 @@ func TestSerializationRoundTrip(t *testing.T) {
 	plaintextOrig = nil
 	ciphertextOrig = nil
 
-	// 3. Deserialize
-	ccLoaded := DeserializeCryptoContextFromString(ccSerial)
+	// 3. Deserialize (CHANGING to ...FromBytes)
+	ccLoaded := DeserializeCryptoContextFromBytes(ccSerial)
 	if ccLoaded == nil {
 		t.Fatalf("CryptoContext deserialization failed")
 	}
 	defer ccLoaded.Close()
 
-	kpPublic := DeserializePublicKeyFromString(pkSerial)
+	// <<< ADDED: Re-enable features >>>
+	mustT(t, ccLoaded.Enable(PKE), "Enable PKE loaded")
+	mustT(t, ccLoaded.Enable(KEYSWITCH), "Enable KEYSWITCH loaded")
+	mustT(t, ccLoaded.Enable(LEVELEDSHE), "Enable LEVELEDSHE loaded")
+	// Note: We don't need to deserialize EvalMultKey separately,
+	// it should be in the CryptoContext serialization.
+
+	kpPublic := DeserializePublicKeyFromBytes(pkSerial)
 	if kpPublic == nil {
 		t.Fatalf("PublicKey deserialization failed")
 	}
 	defer kpPublic.Close()
 
-	kpPrivate := DeserializePrivateKeyFromString(skSerial)
+	kpPrivate := DeserializePrivateKeyFromBytes(skSerial)
 	if kpPrivate == nil {
 		t.Fatalf("PrivateKey deserialization failed")
 	}
 	defer kpPrivate.Close()
 
+	// <<< ADDED: Reconstruct KeyPair >>>
 	keysLoaded, err := NewKeyPair()
 	mustT(t, err, "NewKeyPair loaded")
 	defer keysLoaded.Close()
@@ -647,7 +654,7 @@ func TestSerializationRoundTrip(t *testing.T) {
 	mustT(t, err, "GetPrivateKey")
 	mustT(t, keysLoaded.SetPrivateKey(skPtr), "SetPrivateKey")
 
-	ctLoaded := DeserializeCiphertextFromString(ctSerial)
+	ctLoaded := DeserializeCiphertextFromBytes(ctSerial)
 	if ctLoaded == nil {
 		t.Fatalf("Ciphertext deserialization failed")
 	}

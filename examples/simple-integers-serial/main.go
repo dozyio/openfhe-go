@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 	"log"
+	"os"
+	"path/filepath"
 
 	"github.com/dozyio/openfhe-go/openfhe"
 )
@@ -10,7 +12,7 @@ import (
 // Helper to check errors
 func checkErr(err error) {
 	if err != nil {
-		log.Fatalf("Error: %v", err) // Use log.Fatalf
+		log.Fatalf("Error: %v", err)
 	}
 }
 
@@ -22,8 +24,30 @@ func truncateVector(vec []int64, maxLen int) []int64 {
 	return vec
 }
 
+// Helper to compare integer slices
+func slicesEqual(a, b []int64) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for i, v := range a {
+		if v != b[i] {
+			return false
+		}
+	}
+	return true
+}
+
 func main() {
 	fmt.Println("--- Go simple-integers-serial (BFV) example starting ---")
+
+	dataDir := "demoData"
+	os.Mkdir(dataDir, 0o755) // Ignore error if exists
+
+	// Define file paths
+	ccPath := filepath.Join(dataDir, "cryptocontext-bfv.bin")
+	pkPath := filepath.Join(dataDir, "key-public-bfv.bin")
+	skPath := filepath.Join(dataDir, "key-secret-bfv.bin")
+	ctPath := filepath.Join(dataDir, "ciphertext-bfv.bin")
 
 	// --- Step 1: Setup CryptoContext ---
 	parameters, err := openfhe.NewParamsBFVrns()
@@ -35,7 +59,7 @@ func main() {
 
 	cc, err := openfhe.NewCryptoContextBFV(parameters)
 	checkErr(err)
-	// defer cc.Close() // We will close this later before loading
+	// We will close this later before loading
 
 	checkErr(cc.Enable(openfhe.PKE))
 	checkErr(cc.Enable(openfhe.KEYSWITCH))
@@ -45,7 +69,7 @@ func main() {
 	// --- Step 2: Key Generation ---
 	keys, err := cc.KeyGen()
 	checkErr(err)
-	// defer keys.Close() // We will close this later before loading
+	// We will close this later before loading
 
 	checkErr(cc.EvalMultKeyGen(keys)) // Generate relinearization key
 	fmt.Println("Keys generated.")
@@ -54,34 +78,38 @@ func main() {
 	vectorOfInts := []int64{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12}
 	plaintext, err := cc.MakePackedPlaintext(vectorOfInts)
 	checkErr(err)
-	// defer plaintext.Close() // We will close this later before loading
+	// We will close this later before loading
 
 	ciphertext, err := cc.Encrypt(keys, plaintext)
 	checkErr(err)
-	// defer ciphertext.Close() // We will close this later before loading
+	// We will close this later before loading
 	fmt.Println("Plaintext encrypted.")
 
 	// --- Step 4: Serialization ---
 	fmt.Println("\nSerializing objects...")
 
 	// Serialize CryptoContext
-	ccSerial, err := openfhe.SerializeCryptoContextToString(cc)
+	ccBytes, err := openfhe.SerializeCryptoContextToBytes(cc) // CHANGED
 	checkErr(err)
+	checkErr(os.WriteFile(ccPath, ccBytes, 0o644))
 	fmt.Println(" - CryptoContext serialized.")
 
 	// Serialize Public Key
-	pkSerial, err := openfhe.SerializePublicKeyToString(keys)
+	pkBytes, err := openfhe.SerializePublicKeyToBytes(keys) // CHANGED
 	checkErr(err)
+	checkErr(os.WriteFile(pkPath, pkBytes, 0o644))
 	fmt.Println(" - Public Key serialized.")
 
 	// Serialize Private Key
-	skSerial, err := openfhe.SerializePrivateKeyToString(keys)
+	skBytes, err := openfhe.SerializePrivateKeyToBytes(keys) // CHANGED
 	checkErr(err)
+	checkErr(os.WriteFile(skPath, skBytes, 0o644))
 	fmt.Println(" - Private Key serialized.")
 
 	// Serialize Ciphertext
-	ctSerial, err := openfhe.SerializeCiphertextToString(ciphertext)
+	ctBytes, err := openfhe.SerializeCiphertextToBytes(ciphertext) // CHANGED
 	checkErr(err)
+	checkErr(os.WriteFile(ctPath, ctBytes, 0o644))
 	fmt.Println(" - Ciphertext serialized.")
 
 	// --- Clear objects (demonstrate loading) ---
@@ -102,15 +130,25 @@ func main() {
 	fmt.Println("\nDeserializing objects...")
 
 	// Deserialize CryptoContext
-	ccLoaded := openfhe.DeserializeCryptoContextFromString(ccSerial)
+	ccBytes, err = os.ReadFile(ccPath)
+	checkErr(err)
+	ccLoaded := openfhe.DeserializeCryptoContextFromBytes(ccBytes) // CHANGED
 	if ccLoaded == nil {
 		panic("Failed to deserialize CryptoContext")
 	}
 	defer ccLoaded.Close() // Defer close for loaded object
 	fmt.Println(" - CryptoContext deserialized.")
 
+	// Re-enable features
+	checkErr(ccLoaded.Enable(openfhe.PKE))
+	checkErr(ccLoaded.Enable(openfhe.KEYSWITCH))
+	checkErr(ccLoaded.Enable(openfhe.LEVELEDSHE))
+	fmt.Println(" - Features re-enabled.")
+
 	// Deserialize Public Key
-	kpPublic := openfhe.DeserializePublicKeyFromString(pkSerial)
+	pkBytes, err = os.ReadFile(pkPath)
+	checkErr(err)
+	kpPublic := openfhe.DeserializePublicKeyFromBytes(pkBytes) // CHANGED
 	if kpPublic == nil {
 		panic("Failed to deserialize Public Key")
 	}
@@ -118,7 +156,9 @@ func main() {
 	fmt.Println(" - Public Key deserialized.")
 
 	// Deserialize Private Key
-	kpPrivate := openfhe.DeserializePrivateKeyFromString(skSerial)
+	skBytes, err = os.ReadFile(skPath)
+	checkErr(err)
+	kpPrivate := openfhe.DeserializePrivateKeyFromBytes(skBytes) // CHANGED
 	if kpPrivate == nil {
 		panic("Failed to deserialize Private Key")
 	}
@@ -137,9 +177,12 @@ func main() {
 	skPtr, err := kpPrivate.GetPrivateKey() // Get pointer
 	checkErr(err)
 	checkErr(keysLoaded.SetPrivateKey(skPtr)) // Set pointer
+	fmt.Println(" - KeyPair reconstructed.")
 
 	// Deserialize Ciphertext
-	ctLoaded := openfhe.DeserializeCiphertextFromString(ctSerial)
+	ctBytes, err = os.ReadFile(ctPath)
+	checkErr(err)
+	ctLoaded := openfhe.DeserializeCiphertextFromBytes(ctBytes) // CHANGED
 	if ctLoaded == nil {
 		panic("Failed to deserialize Ciphertext")
 	}
@@ -155,7 +198,15 @@ func main() {
 	resultVec, err := plaintextLoaded.GetPackedValue()
 	checkErr(err)
 
+	// --- Verification ---
 	fmt.Println("\n--- Results ---")
 	fmt.Printf("Original vector: %v\n", truncateVector(vectorOfInts, 12))
 	fmt.Printf("Decrypted vector:%v\n", truncateVector(resultVec, 12))
+
+	// Check for match
+	if !slicesEqual(vectorOfInts, resultVec[:len(vectorOfInts)]) {
+		log.Fatal("Decryption FAILED: vectors do not match.")
+	}
+	fmt.Println("Decryption SUCCESS: vectors match.")
+	fmt.Println("--- Go simple-integers-serial (BFV) example finished ---")
 }
