@@ -10,12 +10,17 @@ extern "C" {
 
 // --- PKE Error Handling ---
 typedef enum {
-  PKE_OK = 0,
-  PKE_ERR = 1 // Indicates an error occurred, check PKE_LastError()
+  PKE_OK_CODE = 0,
+  PKE_ERR_CODE = 1 // Indicates an error occurred
+} PKE_Err_Code;
+
+typedef struct {
+  PKE_Err_Code code; // 0 for OK, non-zero for error (e.g., 1)
+  char *msg; // Allocated error string if code != 0, NULL otherwise. Go side
+             // MUST call FreePKE_ErrMsg on this if not NULL.
 } PKE_Err;
 
-// Get last error message (thread-local, no need to free)
-const char *PKE_LastError();
+void FreePKE_ErrMsg(char *msg);
 
 // --- Opaque Pointers ---
 typedef void *CryptoContextPtr;

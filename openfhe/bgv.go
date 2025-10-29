@@ -19,8 +19,9 @@ type ParamsBGV struct {
 func NewParamsBGVrns() (*ParamsBGV, error) {
 	var pH C.ParamsBGVPtr
 	status := C.NewParamsBGV(&pH)
-	if status != PKE_OK {
-		return nil, lastPKEError()
+	err := checkPKEErrorMsg(status)
+	if err != nil {
+		return nil, err
 	}
 	if pH == nil {
 		return nil, errors.New("NewParamsBGV returned OK but null handle")
@@ -34,8 +35,9 @@ func (p *ParamsBGV) SetPlaintextModulus(mod uint64) error {
 		return errors.New("ParamsBGV is closed or invalid")
 	}
 	status := C.ParamsBGV_SetPlaintextModulus(p.ptr, C.uint64_t(mod))
-	if status != PKE_OK {
-		return lastPKEError()
+	err := checkPKEErrorMsg(status)
+	if err != nil {
+		return err
 	}
 	return nil
 }
@@ -45,8 +47,9 @@ func (p *ParamsBGV) SetMultiplicativeDepth(depth int) error {
 		return errors.New("ParamsBGV is closed or invalid")
 	}
 	status := C.ParamsBGV_SetMultiplicativeDepth(p.ptr, C.int(depth))
-	if status != PKE_OK {
-		return lastPKEError()
+	err := checkPKEErrorMsg(status)
+	if err != nil {
+		return err
 	}
 	return nil
 }
@@ -66,8 +69,9 @@ func NewCryptoContextBGV(p *ParamsBGV) (*CryptoContext, error) {
 	}
 	var ccH C.CryptoContextPtr
 	status := C.NewCryptoContextBGV(p.ptr, &ccH)
-	if status != PKE_OK {
-		return nil, lastPKEError()
+	err := checkPKEErrorMsg(status)
+	if err != nil {
+		return nil, err
 	}
 	if ccH == nil {
 		return nil, errors.New("NewCryptoContextBGV returned OK but null handle")

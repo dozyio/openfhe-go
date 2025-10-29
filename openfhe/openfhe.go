@@ -51,8 +51,9 @@ func (cc *CryptoContext) Enable(feature int) error {
 		return errors.New("CryptoContext is closed or invalid")
 	}
 	status := C.CryptoContext_Enable(cc.ptr, C.int(feature))
-	if status != PKE_OK {
-		return lastPKEError()
+	err := checkPKEErrorMsg(status)
+	if err != nil {
+		return err
 	}
 	return nil
 }
@@ -63,13 +64,17 @@ func (cc *CryptoContext) KeyGen() (*KeyPair, error) {
 	}
 	var kpH C.KeyPairPtr
 	status := C.CryptoContext_KeyGen(cc.ptr, &kpH)
-	if status != PKE_OK {
-		return nil, lastPKEError()
+	err := checkPKEErrorMsg(status)
+	if err != nil {
+		return nil, err
 	}
+
 	if kpH == nil {
 		return nil, errors.New("KeyGen returned OK but null handle")
 	}
+
 	kp := &KeyPair{ptr: kpH}
+
 	return kp, nil
 }
 
@@ -81,8 +86,9 @@ func (cc *CryptoContext) EvalMultKeyGen(keys *KeyPair) error {
 		return errors.New("KeyPair is closed or invalid")
 	}
 	status := C.CryptoContext_EvalMultKeyGen(cc.ptr, keys.ptr)
-	if status != PKE_OK {
-		return lastPKEError()
+	err := checkPKEErrorMsg(status)
+	if err != nil {
+		return err
 	}
 	return nil
 }
@@ -100,8 +106,9 @@ func (cc *CryptoContext) EvalRotateKeyGen(keys *KeyPair, indices []int32) error 
 	cIndices := (*C.int32_t)(unsafe.Pointer(&indices[0]))
 	cLen := C.int(len(indices))
 	status := C.CryptoContext_EvalRotateKeyGen(cc.ptr, keys.ptr, cIndices, cLen)
-	if status != PKE_OK {
-		return lastPKEError()
+	err := checkPKEErrorMsg(status)
+	if err != nil {
+		return err
 	}
 	return nil
 }
@@ -118,8 +125,9 @@ func (cc *CryptoContext) Encrypt(keys *KeyPair, pt *Plaintext) (*Ciphertext, err
 	}
 	var ctH C.CiphertextPtr
 	status := C.CryptoContext_Encrypt(cc.ptr, keys.ptr, pt.ptr, &ctH)
-	if status != PKE_OK {
-		return nil, lastPKEError()
+	err := checkPKEErrorMsg(status)
+	if err != nil {
+		return nil, err
 	}
 	if ctH == nil {
 		return nil, errors.New("Encrypt returned OK but null handle")
@@ -140,8 +148,9 @@ func (cc *CryptoContext) Decrypt(keys *KeyPair, ct *Ciphertext) (*Plaintext, err
 	}
 	var ptH C.PlaintextPtr
 	status := C.CryptoContext_Decrypt(cc.ptr, keys.ptr, ct.ptr, &ptH)
-	if status != PKE_OK {
-		return nil, lastPKEError()
+	err := checkPKEErrorMsg(status)
+	if err != nil {
+		return nil, err
 	}
 	if ptH == nil {
 		// Decrypt can fail and return null
@@ -161,8 +170,9 @@ func (cc *CryptoContext) EvalAdd(ct1, ct2 *Ciphertext) (*Ciphertext, error) {
 	}
 	var ctH C.CiphertextPtr
 	status := C.CryptoContext_EvalAdd(cc.ptr, ct1.ptr, ct2.ptr, &ctH)
-	if status != PKE_OK {
-		return nil, lastPKEError()
+	err := checkPKEErrorMsg(status)
+	if err != nil {
+		return nil, err
 	}
 	if ctH == nil {
 		return nil, errors.New("EvalAdd returned OK but null handle")
@@ -180,8 +190,9 @@ func (cc *CryptoContext) EvalSub(ct1, ct2 *Ciphertext) (*Ciphertext, error) {
 	}
 	var ctH C.CiphertextPtr
 	status := C.CryptoContext_EvalSub(cc.ptr, ct1.ptr, ct2.ptr, &ctH)
-	if status != PKE_OK {
-		return nil, lastPKEError()
+	err := checkPKEErrorMsg(status)
+	if err != nil {
+		return nil, err
 	}
 	if ctH == nil {
 		return nil, errors.New("EvalSub returned OK but null handle")
@@ -199,8 +210,9 @@ func (cc *CryptoContext) EvalMult(ct1, ct2 *Ciphertext) (*Ciphertext, error) {
 	}
 	var ctH C.CiphertextPtr
 	status := C.CryptoContext_EvalMult(cc.ptr, ct1.ptr, ct2.ptr, &ctH)
-	if status != PKE_OK {
-		return nil, lastPKEError()
+	err := checkPKEErrorMsg(status)
+	if err != nil {
+		return nil, err
 	}
 	if ctH == nil {
 		return nil, errors.New("EvalMult returned OK but null handle")
@@ -218,8 +230,9 @@ func (cc *CryptoContext) EvalRotate(ct *Ciphertext, index int32) (*Ciphertext, e
 	}
 	var ctH C.CiphertextPtr
 	status := C.CryptoContext_EvalRotate(cc.ptr, ct.ptr, C.int32_t(index), &ctH)
-	if status != PKE_OK {
-		return nil, lastPKEError()
+	err := checkPKEErrorMsg(status)
+	if err != nil {
+		return nil, err
 	}
 	if ctH == nil {
 		return nil, errors.New("EvalRotate returned OK but null handle")
@@ -237,8 +250,9 @@ func (cc *CryptoContext) EvalBootstrapKeyGen(keys *KeyPair, slots uint32) error 
 		return errors.New("KeyPair is closed or invalid")
 	}
 	status := C.CryptoContext_EvalBootstrapKeyGen(cc.ptr, keys.ptr, C.uint32_t(slots))
-	if status != PKE_OK {
-		return lastPKEError()
+	err := checkPKEErrorMsg(status)
+	if err != nil {
+		return err
 	}
 	return nil
 }
@@ -252,8 +266,9 @@ func (cc *CryptoContext) EvalBootstrap(ct *Ciphertext) (*Ciphertext, error) {
 	}
 	var ctH C.CiphertextPtr
 	status := C.CryptoContext_EvalBootstrap(cc.ptr, ct.ptr, &ctH)
-	if status != PKE_OK {
-		return nil, lastPKEError()
+	err := checkPKEErrorMsg(status)
+	if err != nil {
+		return nil, err
 	}
 	if ctH == nil {
 		return nil, errors.New("EvalBootstrap returned OK but null handle")
@@ -274,8 +289,9 @@ func (cc *CryptoContext) EvalBootstrapSetupSimple(levelBudget []uint32) error {
 	}
 
 	status := C.CryptoContext_EvalBootstrapSetup_Simple(cc.ptr, ptr, n)
-	if status != PKE_OK {
-		return lastPKEError()
+	err := checkPKEErrorMsg(status)
+	if err != nil {
+		return err
 	}
 	return nil
 }

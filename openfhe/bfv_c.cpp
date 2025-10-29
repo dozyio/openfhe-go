@@ -6,84 +6,91 @@ using namespace lbcrypto;
 extern "C" {
 
 // --- BFV Params Functions ---
-PKE_Err NewParamsBFV(ParamsBFVPtr *out){PKE_TRY{
-    if (!out){set_last_error_pke_str("NewParamsBFV: null output pointer");
-return PKE_ERR;
+PKE_Err NewParamsBFV(ParamsBFVPtr *out) {
+  try {
+    if (!out) {
+      return MakePKEError("NewParamsBFV: null output pointer");
+    }
+    *out = new CCParams<CryptoContextBFVRNS>();
+
+    return MakePKEOk();
+  }
+  PKE_CATCH_RETURN()
 }
-*out = new CCParams<CryptoContextBFVRNS>();
-return PKE_OK;
-}
-PKE_CATCH_RETURN(PKE_ERR)
-}
-PKE_Err ParamsBFV_SetPlaintextModulus(ParamsBFVPtr p,
-                                      uint64_t mod){PKE_TRY{if (!p){
-    set_last_error_pke_str("ParamsBFV_SetPlaintextModulus: null params");
-return PKE_ERR;
-}
-reinterpret_cast<CCParams<CryptoContextBFVRNS> *>(p)->SetPlaintextModulus(mod);
-return PKE_OK;
-}
-PKE_CATCH_RETURN(PKE_ERR)
-}
-PKE_Err ParamsBFV_SetMultiplicativeDepth(ParamsBFVPtr p, int depth) {
-  PKE_TRY {
+
+PKE_Err ParamsBFV_SetPlaintextModulus(ParamsBFVPtr p, uint64_t mod) {
+  try {
     if (!p) {
-      set_last_error_pke_str("ParamsBFV_SetMultiplicativeDepth: null params");
-      return PKE_ERR;
+      return MakePKEError("ParamsBFV_SetPlaintextModulus: null params");
+    }
+    reinterpret_cast<CCParams<CryptoContextBFVRNS> *>(p)->SetPlaintextModulus(
+        mod);
+
+    return MakePKEOk();
+  }
+  PKE_CATCH_RETURN()
+}
+
+PKE_Err ParamsBFV_SetMultiplicativeDepth(ParamsBFVPtr p, int depth) {
+  try {
+    if (!p) {
+      return MakePKEError("ParamsBFV_SetMultiplicativeDepth: null params");
     }
     reinterpret_cast<CCParams<CryptoContextBFVRNS> *>(p)
         ->SetMultiplicativeDepth(depth);
-    return PKE_OK;
+
+    return MakePKEOk();
   }
-  PKE_CATCH_RETURN(PKE_ERR)
+  PKE_CATCH_RETURN()
 }
+
 void DestroyParamsBFV(ParamsBFVPtr p) {
   delete reinterpret_cast<CCParams<CryptoContextBFVRNS> *>(p);
 }
 
 // --- BFV CryptoContext ---
-PKE_Err NewCryptoContextBFV(ParamsBFVPtr p, CryptoContextPtr *out){
-    PKE_TRY{if (!p){set_last_error_pke_str("NewCryptoContextBFV: null params");
-return PKE_ERR;
-}
-if (!out) {
-  set_last_error_pke_str("NewCryptoContextBFV: null output pointer");
-  return PKE_ERR;
-}
-auto params_ptr = reinterpret_cast<CCParams<CryptoContextBFVRNS> *>(p);
-CryptoContext<DCRTPoly> cc_sptr = GenCryptoContext(*params_ptr);
-*out = reinterpret_cast<CryptoContextPtr>(new CryptoContextSharedPtr(cc_sptr));
-return PKE_OK;
-}
-PKE_CATCH_RETURN(PKE_ERR)
+PKE_Err NewCryptoContextBFV(ParamsBFVPtr p, CryptoContextPtr *out) {
+  try {
+    if (!p) {
+      return MakePKEError("NewCryptoContextBFV: null params");
+    }
+    if (!out) {
+      return MakePKEError("NewCryptoContextBFV: null output pointer");
+    }
+    auto params_ptr = reinterpret_cast<CCParams<CryptoContextBFVRNS> *>(p);
+    CryptoContext<DCRTPoly> cc_sptr = GenCryptoContext(*params_ptr);
+    *out =
+        reinterpret_cast<CryptoContextPtr>(new CryptoContextSharedPtr(cc_sptr));
+
+    return MakePKEOk();
+  }
+  PKE_CATCH_RETURN()
 }
 
 // --- BFV Plaintext ---
 PKE_Err CryptoContext_MakePackedPlaintext(CryptoContextPtr cc_ptr_to_sptr,
                                           int64_t *values, int len,
                                           PlaintextPtr *out) {
-  PKE_TRY {
+  try {
     if (!cc_ptr_to_sptr) {
-      set_last_error_pke_str("CryptoContext_MakePackedPlaintext: null context");
-      return PKE_ERR;
+      return MakePKEError("CryptoContext_MakePackedPlaintext: null context");
     }
     if (len > 0 && !values) {
-      set_last_error_pke_str("CryptoContext_MakePackedPlaintext: non-zero "
-                             "length with null values");
-      return PKE_ERR;
+      return MakePKEError("CryptoContext_MakePackedPlaintext: non-zero length "
+                          "with null values");
     }
     if (!out) {
-      set_last_error_pke_str(
+      return MakePKEError(
           "CryptoContext_MakePackedPlaintext: null output pointer");
-      return PKE_ERR;
     }
     auto &cc_sptr = GetCCSharedPtr(cc_ptr_to_sptr);
     std::vector<int64_t> vec(values, values + len);
     Plaintext pt_sptr = cc_sptr->MakePackedPlaintext(vec);
     *out = reinterpret_cast<PlaintextPtr>(new PlaintextSharedPtr(pt_sptr));
-    return PKE_OK;
+
+    return MakePKEOk();
   }
-  PKE_CATCH_RETURN(PKE_ERR)
+  PKE_CATCH_RETURN()
 }
 
 } // extern "C"

@@ -56,6 +56,9 @@ PKE_Err CryptoContext_EvalBootstrapKeyGen(CryptoContextPtr cc, KeyPairPtr keys,
                                           uint32_t slots);
 PKE_Err CryptoContext_EvalBootstrap(CryptoContextPtr cc, CiphertextPtr ct,
                                     CiphertextPtr *out);
+PKE_Err CryptoContext_EvalPoly(CryptoContextPtr cc, CiphertextPtr ct,
+                               const double *coefficients, size_t count,
+                               CiphertextPtr *out);
 
 uint32_t CKKS_GetBootstrapDepth(const uint32_t *levelBudget, int len,
                                 int secretKeyDist);

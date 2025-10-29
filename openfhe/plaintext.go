@@ -18,24 +18,31 @@ func (pt *Plaintext) GetPackedValue() ([]int64, error) {
 	if pt.ptr == nil {
 		return nil, errors.New("Plaintext is closed or invalid")
 	}
+
 	var lengthC C.int
+
 	status := C.Plaintext_GetPackedValueLength(pt.ptr, &lengthC)
-	if status != PKE_OK {
-		return nil, lastPKEError()
+	err := checkPKEErrorMsg(status)
+	if err != nil {
+		return nil, err
 	}
+
 	length := int(lengthC)
 	if length == 0 {
 		return nil, nil // Empty vector
 	}
+
 	goSlice := make([]int64, length)
 	for i := 0; i < length; i++ {
 		var valC C.int64_t
 		status = C.Plaintext_GetPackedValueAt(pt.ptr, C.int(i), &valC)
-		if status != PKE_OK {
-			return nil, lastPKEError()
+		err := checkPKEErrorMsg(status)
+		if err != nil {
+			return nil, err
 		}
 		goSlice[i] = int64(valC)
 	}
+
 	return goSlice, nil
 }
 
@@ -43,24 +50,33 @@ func (pt *Plaintext) GetRealPackedValue() ([]float64, error) {
 	if pt.ptr == nil {
 		return nil, errors.New("Plaintext is closed or invalid")
 	}
+
 	var lengthC C.int
+
 	status := C.Plaintext_GetRealPackedValueLength(pt.ptr, &lengthC)
-	if status != PKE_OK {
-		return nil, lastPKEError()
+	err := checkPKEErrorMsg(status)
+	if err != nil {
+		return nil, err
 	}
+
 	length := int(lengthC)
 	if length == 0 {
 		return nil, nil // Empty vector
 	}
+
 	goSlice := make([]float64, length)
 	for i := 0; i < length; i++ {
 		var valC C.double
+
 		status = C.Plaintext_GetRealPackedValueAt(pt.ptr, C.int(i), &valC)
-		if status != PKE_OK {
-			return nil, lastPKEError()
+		err := checkPKEErrorMsg(status)
+		if err != nil {
+			return nil, err
 		}
+
 		goSlice[i] = float64(valC)
 	}
+
 	return goSlice, nil
 }
 
@@ -68,24 +84,33 @@ func (pt *Plaintext) GetComplexPackedValue() ([]complex128, error) {
 	if pt.ptr == nil {
 		return nil, errors.New("Plaintext is closed or invalid")
 	}
+
 	var lengthC C.int
+
 	status := C.Plaintext_GetComplexPackedValueLength(pt.ptr, &lengthC)
-	if status != PKE_OK {
-		return nil, lastPKEError()
+	err := checkPKEErrorMsg(status)
+	if err != nil {
+		return nil, err
 	}
+
 	length := int(lengthC)
 	if length == 0 {
 		return nil, nil // Empty vector
 	}
+
 	goSlice := make([]complex128, length)
 	var valC C.complex_double_t
+
 	for i := 0; i < length; i++ {
 		status = C.Plaintext_GetComplexPackedValueAt(pt.ptr, C.int(i), &valC)
-		if status != PKE_OK {
-			return nil, lastPKEError()
+		err := checkPKEErrorMsg(status)
+		if err != nil {
+			return nil, err
 		}
+
 		goSlice[i] = complex(float64(valC.real), float64(valC.imag))
 	}
+
 	return goSlice, nil
 }
 
@@ -93,10 +118,13 @@ func (pt *Plaintext) SetLength(len int) error {
 	if pt.ptr == nil {
 		return errors.New("Plaintext is closed or invalid")
 	}
+
 	status := C.Plaintext_SetLength(pt.ptr, C.int(len))
-	if status != PKE_OK {
-		return lastPKEError()
+	err := checkPKEErrorMsg(status)
+	if err != nil {
+		return err
 	}
+
 	return nil
 }
 
