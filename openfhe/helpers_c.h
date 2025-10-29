@@ -40,15 +40,6 @@ static inline char *DupString(const std::string &s) {
 }
 
 // --- String Helper ---
-// Helper to copy std::string to C string (caller must free using C.free or
-// FreeString)
-// static inline char *CopyStringToC(const std::string &s) {
-//   char *cstr = (char *)malloc(s.length() + 1);
-//   if (!cstr)
-//     return nullptr; // Handle malloc failure
-//   std::strcpy(cstr, s.c_str());
-//   return cstr;
-// }
 static inline char *CopyStringToC(const std::string &s) {
   size_t len = s.length();
   // Allocate memory just for the binary data length. Null terminator not

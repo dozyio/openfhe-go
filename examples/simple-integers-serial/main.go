@@ -177,6 +177,7 @@ func main() {
 	skPtr, err := kpPrivate.GetPrivateKey() // Get pointer
 	checkErr(err)
 	checkErr(keysLoaded.SetPrivateKey(skPtr)) // Set pointer
+
 	fmt.Println(" - KeyPair reconstructed.")
 
 	// Deserialize Ciphertext
