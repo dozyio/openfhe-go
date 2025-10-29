@@ -20,7 +20,7 @@ CMAKE_OPTIONS := -DBUILD_SHARED=OFF \
                  -DBUILD_EXAMPLES=OFF \
                  -DBUILD_UNITTESTS=OFF \
                  -DBUILD_BENCHMARKS=OFF \
-                 -DBUILD_SERIALIZATION=ON \
+                 -DWITH_NATIVEOPT=OFF \
                  -DCMAKE_BUILD_TYPE=Release \
                  -DWITH_OPENMP=OFF # Disable OpenMP if not needed/causing issues
 
