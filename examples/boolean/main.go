@@ -15,7 +15,7 @@ func checkErr(err error, msg string) {
 }
 
 func main() {
-	fmt.Println("Starting BinFHE simple boolean example")
+	fmt.Println("Starting BinFHE boolean example")
 
 	// 1. Create BinFHE Context
 	cc, err := openfhe.NewBinFHEContext()
