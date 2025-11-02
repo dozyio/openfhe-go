@@ -7,7 +7,7 @@ using namespace lbcrypto;
 extern "C" {
 
 // --- PKE Error Handling ---
-void FreePKE_ErrMsg(char *msg) {
+void FreePKEErrMsg(char *msg) {
   if (msg) {
     // Use free() because DupString uses malloc/strdup
     free(msg);
@@ -15,7 +15,7 @@ void FreePKE_ErrMsg(char *msg) {
 }
 
 // --- Common CryptoContext Functions ---
-PKE_Err CryptoContext_Enable(CryptoContextPtr cc_ptr_to_sptr, int feature) {
+PKEErr CryptoContext_Enable(CryptoContextPtr cc_ptr_to_sptr, int feature) {
   try {
     if (!cc_ptr_to_sptr) {
       return MakePKEError("CryptoContext_Enable: null context");
@@ -45,7 +45,7 @@ PKE_Err CryptoContext_Enable(CryptoContextPtr cc_ptr_to_sptr, int feature) {
   PKE_CATCH_RETURN()
 }
 
-PKE_Err CryptoContext_KeyGen(CryptoContextPtr cc_ptr_to_sptr, KeyPairPtr *out) {
+PKEErr CryptoContext_KeyGen(CryptoContextPtr cc_ptr_to_sptr, KeyPairPtr *out) {
   try {
     if (!cc_ptr_to_sptr) {
       return MakePKEError("CryptoContext_KeyGen: null context");
@@ -61,7 +61,7 @@ PKE_Err CryptoContext_KeyGen(CryptoContextPtr cc_ptr_to_sptr, KeyPairPtr *out) {
   PKE_CATCH_RETURN()
 }
 
-PKE_Err CryptoContext_EvalMultKeyGen(CryptoContextPtr cc_ptr_to_sptr,
+PKEErr CryptoContext_EvalMultKeyGen(CryptoContextPtr cc_ptr_to_sptr,
                                      KeyPairPtr keys_raw_ptr) {
   try {
     if (!cc_ptr_to_sptr) {
@@ -82,7 +82,7 @@ PKE_Err CryptoContext_EvalMultKeyGen(CryptoContextPtr cc_ptr_to_sptr,
   PKE_CATCH_RETURN()
 }
 
-PKE_Err CryptoContext_EvalRotateKeyGen(CryptoContextPtr cc_ptr_to_sptr,
+PKEErr CryptoContext_EvalRotateKeyGen(CryptoContextPtr cc_ptr_to_sptr,
                                        KeyPairPtr keys_raw_ptr,
                                        int32_t *indices, int len) {
   try {
@@ -124,7 +124,7 @@ void DestroyCryptoContext(CryptoContextPtr cc_ptr_to_sptr) {
 }
 
 // --- Common Operations ---
-PKE_Err CryptoContext_Encrypt(CryptoContextPtr cc_ptr_to_sptr,
+PKEErr CryptoContext_Encrypt(CryptoContextPtr cc_ptr_to_sptr,
                               KeyPairPtr keys_raw_ptr,
                               PlaintextPtr pt_ptr_to_sptr, CiphertextPtr *out) {
   try {
@@ -156,7 +156,7 @@ PKE_Err CryptoContext_Encrypt(CryptoContextPtr cc_ptr_to_sptr,
   PKE_CATCH_RETURN()
 }
 
-PKE_Err CryptoContext_Decrypt(CryptoContextPtr cc_ptr_to_sptr,
+PKEErr CryptoContext_Decrypt(CryptoContextPtr cc_ptr_to_sptr,
                               KeyPairPtr keys_raw_ptr,
                               CiphertextPtr ct_ptr_to_sptr, PlaintextPtr *out) {
   try {
@@ -194,7 +194,7 @@ PKE_Err CryptoContext_Decrypt(CryptoContextPtr cc_ptr_to_sptr,
   PKE_CATCH_RETURN()
 }
 
-PKE_Err CryptoContext_EvalAdd(CryptoContextPtr cc_ptr_to_sptr,
+PKEErr CryptoContext_EvalAdd(CryptoContextPtr cc_ptr_to_sptr,
                               CiphertextPtr ct1_ptr_to_sptr,
                               CiphertextPtr ct2_ptr_to_sptr,
                               CiphertextPtr *out) {
@@ -219,7 +219,7 @@ PKE_Err CryptoContext_EvalAdd(CryptoContextPtr cc_ptr_to_sptr,
   PKE_CATCH_RETURN()
 }
 
-PKE_Err CryptoContext_EvalSub(CryptoContextPtr cc_ptr_to_sptr,
+PKEErr CryptoContext_EvalSub(CryptoContextPtr cc_ptr_to_sptr,
                               CiphertextPtr ct1_ptr_to_sptr,
                               CiphertextPtr ct2_ptr_to_sptr,
                               CiphertextPtr *out) {
@@ -245,7 +245,7 @@ PKE_Err CryptoContext_EvalSub(CryptoContextPtr cc_ptr_to_sptr,
   PKE_CATCH_RETURN()
 }
 
-PKE_Err CryptoContext_EvalMult(CryptoContextPtr cc_ptr_to_sptr,
+PKEErr CryptoContext_EvalMult(CryptoContextPtr cc_ptr_to_sptr,
                                CiphertextPtr ct1_ptr_to_sptr,
                                CiphertextPtr ct2_ptr_to_sptr,
                                CiphertextPtr *out) {
@@ -271,7 +271,7 @@ PKE_Err CryptoContext_EvalMult(CryptoContextPtr cc_ptr_to_sptr,
   PKE_CATCH_RETURN()
 }
 
-PKE_Err CryptoContext_EvalRotate(CryptoContextPtr cc_ptr_to_sptr,
+PKEErr CryptoContext_EvalRotate(CryptoContextPtr cc_ptr_to_sptr,
                                  CiphertextPtr ct_ptr_to_sptr, int32_t index,
                                  CiphertextPtr *out) {
   try {
@@ -295,7 +295,7 @@ PKE_Err CryptoContext_EvalRotate(CryptoContextPtr cc_ptr_to_sptr,
 }
 
 // --- KeyPair ---
-PKE_Err GetPublicKey(KeyPairPtr kp_raw_ptr, void **out_pk_sptr_wrapper) {
+PKEErr GetPublicKey(KeyPairPtr kp_raw_ptr, void **out_pk_sptr_wrapper) {
   try {
     if (!kp_raw_ptr) {
       return MakePKEError("GetPublicKey: null keypair");
@@ -316,7 +316,7 @@ PKE_Err GetPublicKey(KeyPairPtr kp_raw_ptr, void **out_pk_sptr_wrapper) {
   PKE_CATCH_RETURN()
 }
 
-PKE_Err GetPrivateKey(KeyPairPtr kp_raw_ptr, void **out_sk_sptr_wrapper) {
+PKEErr GetPrivateKey(KeyPairPtr kp_raw_ptr, void **out_sk_sptr_wrapper) {
   try {
     if (!kp_raw_ptr) {
       return MakePKEError("GetPrivateKey: null keypair");
@@ -338,7 +338,7 @@ PKE_Err GetPrivateKey(KeyPairPtr kp_raw_ptr, void **out_sk_sptr_wrapper) {
   PKE_CATCH_RETURN()
 }
 
-PKE_Err NewKeyPair(KeyPairPtr *out) {
+PKEErr NewKeyPair(KeyPairPtr *out) {
   try {
     if (!out) {
       return MakePKEError("NewKeyPair: null output pointer");
@@ -349,7 +349,7 @@ PKE_Err NewKeyPair(KeyPairPtr *out) {
   PKE_CATCH_RETURN()
 }
 
-PKE_Err SetPublicKey(KeyPairPtr kp_raw_ptr, void *pk_ptr_to_sptr) {
+PKEErr SetPublicKey(KeyPairPtr kp_raw_ptr, void *pk_ptr_to_sptr) {
   try {
     if (!kp_raw_ptr) {
       return MakePKEError("SetPublicKey: null keypair");
@@ -367,7 +367,7 @@ PKE_Err SetPublicKey(KeyPairPtr kp_raw_ptr, void *pk_ptr_to_sptr) {
   PKE_CATCH_RETURN()
 }
 
-PKE_Err SetPrivateKey(KeyPairPtr kp_raw_ptr, void *sk_ptr_to_sptr) {
+PKEErr SetPrivateKey(KeyPairPtr kp_raw_ptr, void *sk_ptr_to_sptr) {
   try {
     if (!kp_raw_ptr) {
       return MakePKEError("SetPrivateKey: null keypair");
@@ -391,7 +391,7 @@ void DestroyKeyPair(KeyPairPtr kp_raw_ptr) {
 }
 
 // --- Plaintext ---
-PKE_Err Plaintext_GetPackedValueLength(PlaintextPtr pt_ptr_to_sptr,
+PKEErr Plaintext_GetPackedValueLength(PlaintextPtr pt_ptr_to_sptr,
                                        int *out_len) {
   try {
     if (!pt_ptr_to_sptr) {
@@ -408,7 +408,7 @@ PKE_Err Plaintext_GetPackedValueLength(PlaintextPtr pt_ptr_to_sptr,
   PKE_CATCH_RETURN()
 }
 
-PKE_Err Plaintext_GetPackedValueAt(PlaintextPtr pt_ptr_to_sptr, int i,
+PKEErr Plaintext_GetPackedValueAt(PlaintextPtr pt_ptr_to_sptr, int i,
                                    int64_t *out_val) {
   try {
     if (!pt_ptr_to_sptr) {
@@ -428,7 +428,7 @@ PKE_Err Plaintext_GetPackedValueAt(PlaintextPtr pt_ptr_to_sptr, int i,
   PKE_CATCH_RETURN()
 }
 
-PKE_Err Plaintext_GetRealPackedValueLength(PlaintextPtr pt_ptr_to_sptr,
+PKEErr Plaintext_GetRealPackedValueLength(PlaintextPtr pt_ptr_to_sptr,
                                            int *out_len) {
   try {
     if (!pt_ptr_to_sptr) {
@@ -445,7 +445,7 @@ PKE_Err Plaintext_GetRealPackedValueLength(PlaintextPtr pt_ptr_to_sptr,
   PKE_CATCH_RETURN()
 }
 
-PKE_Err Plaintext_GetRealPackedValueAt(PlaintextPtr pt_ptr_to_sptr, int i,
+PKEErr Plaintext_GetRealPackedValueAt(PlaintextPtr pt_ptr_to_sptr, int i,
                                        double *out_val) {
   try {
     if (!pt_ptr_to_sptr) {
@@ -666,7 +666,7 @@ CiphertextPtr DeserializeCiphertextFromBytes(const char *inData, int inLen) {
 }
 
 // --- Debugging Function ---
-PKE_Err CryptoContext_GetParameterElementString(CryptoContextPtr cc_ptr_to_sptr,
+PKEErr CryptoContext_GetParameterElementString(CryptoContextPtr cc_ptr_to_sptr,
                                                 char **outString) {
   try {
     if (!cc_ptr_to_sptr) {

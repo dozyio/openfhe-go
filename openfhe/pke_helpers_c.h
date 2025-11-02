@@ -62,10 +62,10 @@ inline PrivateKeySharedPtr &GetSKSharedPtr(void *sk_ptr_to_sptr) {
     return MakePKEError("Unknown C++ exception caught in PKE.");               \
   }
 
-static inline PKE_Err MakePKEOk() { return (PKE_Err){PKE_OK_CODE, NULL}; }
+static inline PKEErr MakePKEOk() { return (PKEErr){PKE_OK_CODE, NULL}; }
 
-static inline PKE_Err MakePKEError(const std::string &msg) {
-  return (PKE_Err){PKE_ERR_CODE, DupString(msg)};
+static inline PKEErr MakePKEError(const std::string &msg) {
+  return (PKEErr){PKE_ERR_CODE, DupString(msg)};
 }
 
 #endif // PKE_HELPERS_C_H

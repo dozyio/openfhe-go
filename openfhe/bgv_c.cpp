@@ -6,7 +6,7 @@ using namespace lbcrypto;
 extern "C" {
 
 // --- BGV Params Functions ---
-PKE_Err NewParamsBGV(ParamsBGVPtr *out) {
+PKEErr NewParamsBGV(ParamsBGVPtr *out) {
   try {
     if (!out) {
       return MakePKEError("NewParamsBGV: null output pointer");
@@ -17,7 +17,7 @@ PKE_Err NewParamsBGV(ParamsBGVPtr *out) {
   PKE_CATCH_RETURN()
 }
 
-PKE_Err ParamsBGV_SetPlaintextModulus(ParamsBGVPtr p, uint64_t mod) {
+PKEErr ParamsBGV_SetPlaintextModulus(ParamsBGVPtr p, uint64_t mod) {
   try {
     if (!p) {
       return MakePKEError("ParamsBGV_SetPlaintextModulus: null params");
@@ -29,7 +29,7 @@ PKE_Err ParamsBGV_SetPlaintextModulus(ParamsBGVPtr p, uint64_t mod) {
   PKE_CATCH_RETURN()
 }
 
-PKE_Err ParamsBGV_SetMultiplicativeDepth(ParamsBGVPtr p, int depth) {
+PKEErr ParamsBGV_SetMultiplicativeDepth(ParamsBGVPtr p, int depth) {
   try {
     if (!p) {
       return MakePKEError("ParamsBGV_SetMultiplicativeDepth: null params");
@@ -46,7 +46,7 @@ void DestroyParamsBGV(ParamsBGVPtr p) {
 }
 
 // --- BGV CryptoContext ---
-PKE_Err NewCryptoContextBGV(ParamsBGVPtr p, CryptoContextPtr *out) {
+PKEErr NewCryptoContextBGV(ParamsBGVPtr p, CryptoContextPtr *out) {
   try {
     if (!p) {
       return MakePKEError("NewCryptoContextBGV: null params");
@@ -69,7 +69,7 @@ PKE_Err NewCryptoContextBGV(ParamsBGVPtr p, CryptoContextPtr *out) {
 // This is fine as the implementation is identical.
 // We only need to implement the BGV-specific SetLength here.
 
-PKE_Err Plaintext_SetLength(PlaintextPtr pt_ptr_to_sptr, int len) {
+PKEErr Plaintext_SetLength(PlaintextPtr pt_ptr_to_sptr, int len) {
   try {
     if (!pt_ptr_to_sptr) {
       return MakePKEError("Plaintext_SetLength: null plaintext");

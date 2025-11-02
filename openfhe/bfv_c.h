@@ -11,17 +11,17 @@ extern "C" {
 typedef void *ParamsBFVPtr;
 
 // --- BFV Params Functions ---
-PKE_Err NewParamsBFV(ParamsBFVPtr *out);
-PKE_Err ParamsBFV_SetPlaintextModulus(ParamsBFVPtr p, uint64_t mod);
-PKE_Err ParamsBFV_SetMultiplicativeDepth(ParamsBFVPtr p, int depth);
+PKEErr NewParamsBFV(ParamsBFVPtr *out);
+PKEErr ParamsBFV_SetPlaintextModulus(ParamsBFVPtr p, uint64_t mod);
+PKEErr ParamsBFV_SetMultiplicativeDepth(ParamsBFVPtr p, int depth);
 void DestroyParamsBFV(ParamsBFVPtr p);
 
 // --- BFV CryptoContext ---
-PKE_Err NewCryptoContextBFV(ParamsBFVPtr p, CryptoContextPtr *out);
+PKEErr NewCryptoContextBFV(ParamsBFVPtr p, CryptoContextPtr *out);
 
 // --- BFV Plaintext ---
 // (Note: BFV uses the Packed encoding)
-PKE_Err CryptoContext_MakePackedPlaintext(CryptoContextPtr cc, int64_t *values,
+PKEErr CryptoContext_MakePackedPlaintext(CryptoContextPtr cc, int64_t *values,
                                           int len, PlaintextPtr *out);
 
 #ifdef __cplusplus

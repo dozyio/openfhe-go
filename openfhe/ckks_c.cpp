@@ -7,7 +7,7 @@ using namespace lbcrypto;
 extern "C" {
 
 // --- CKKS Params Functions ---
-PKE_Err NewParamsCKKS(ParamsCKKSPtr *out) {
+PKEErr NewParamsCKKS(ParamsCKKSPtr *out) {
   try {
     if (!out) {
       return MakePKEError("NewParamsCKKS: null output pointer");
@@ -18,7 +18,7 @@ PKE_Err NewParamsCKKS(ParamsCKKSPtr *out) {
   PKE_CATCH_RETURN()
 }
 
-PKE_Err ParamsCKKS_SetScalingModSize(ParamsCKKSPtr p, int modSize) {
+PKEErr ParamsCKKS_SetScalingModSize(ParamsCKKSPtr p, int modSize) {
   try {
     if (!p) {
       return MakePKEError("ParamsCKKS_SetScalingModSize: null params");
@@ -30,7 +30,7 @@ PKE_Err ParamsCKKS_SetScalingModSize(ParamsCKKSPtr p, int modSize) {
   PKE_CATCH_RETURN()
 }
 
-PKE_Err ParamsCKKS_SetBatchSize(ParamsCKKSPtr p, int batchSize) {
+PKEErr ParamsCKKS_SetBatchSize(ParamsCKKSPtr p, int batchSize) {
   try {
     if (!p) {
       return MakePKEError("ParamsCKKS_SetBatchSize: null params");
@@ -42,7 +42,7 @@ PKE_Err ParamsCKKS_SetBatchSize(ParamsCKKSPtr p, int batchSize) {
   PKE_CATCH_RETURN()
 }
 
-PKE_Err ParamsCKKS_SetMultiplicativeDepth(ParamsCKKSPtr p, int depth) {
+PKEErr ParamsCKKS_SetMultiplicativeDepth(ParamsCKKSPtr p, int depth) {
   try {
     if (!p) {
       return MakePKEError("ParamsCKKS_SetMultiplicativeDepth: null params");
@@ -54,7 +54,7 @@ PKE_Err ParamsCKKS_SetMultiplicativeDepth(ParamsCKKSPtr p, int depth) {
   PKE_CATCH_RETURN()
 }
 
-PKE_Err ParamsCKKS_SetSecurityLevel(ParamsCKKSPtr p, OFHESecurityLevel level) {
+PKEErr ParamsCKKS_SetSecurityLevel(ParamsCKKSPtr p, OFHESecurityLevel level) {
   try {
     if (!p) {
       return MakePKEError("ParamsCKKS_SetSecurityLevel: null params");
@@ -66,7 +66,7 @@ PKE_Err ParamsCKKS_SetSecurityLevel(ParamsCKKSPtr p, OFHESecurityLevel level) {
   PKE_CATCH_RETURN()
 }
 
-PKE_Err ParamsCKKS_SetRingDim(ParamsCKKSPtr p, uint64_t ringDim) {
+PKEErr ParamsCKKS_SetRingDim(ParamsCKKSPtr p, uint64_t ringDim) {
   try {
     if (!p) {
       return MakePKEError("ParamsCKKS_SetRingDim: null params");
@@ -77,7 +77,7 @@ PKE_Err ParamsCKKS_SetRingDim(ParamsCKKSPtr p, uint64_t ringDim) {
   PKE_CATCH_RETURN()
 }
 
-PKE_Err ParamsCKKS_SetScalingTechnique(ParamsCKKSPtr p, int technique) {
+PKEErr ParamsCKKS_SetScalingTechnique(ParamsCKKSPtr p, int technique) {
   try {
     if (!p) {
       return MakePKEError("ParamsCKKS_SetScalingTechnique: null params");
@@ -110,7 +110,7 @@ PKE_Err ParamsCKKS_SetScalingTechnique(ParamsCKKSPtr p, int technique) {
   PKE_CATCH_RETURN()
 }
 
-PKE_Err ParamsCKKS_SetSecretKeyDist(ParamsCKKSPtr p, OFHESecretKeyDist dist) {
+PKEErr ParamsCKKS_SetSecretKeyDist(ParamsCKKSPtr p, OFHESecretKeyDist dist) {
   try {
     if (!p) {
       return MakePKEError("ParamsCKKS_SetSecretKeyDist: null params");
@@ -122,7 +122,7 @@ PKE_Err ParamsCKKS_SetSecretKeyDist(ParamsCKKSPtr p, OFHESecretKeyDist dist) {
   PKE_CATCH_RETURN()
 }
 
-PKE_Err ParamsCKKS_SetFirstModSize(ParamsCKKSPtr p, int modSize) {
+PKEErr ParamsCKKS_SetFirstModSize(ParamsCKKSPtr p, int modSize) {
   try {
     if (!p) {
       return MakePKEError("ParamsCKKS_SetFirstModSize: null params");
@@ -134,7 +134,7 @@ PKE_Err ParamsCKKS_SetFirstModSize(ParamsCKKSPtr p, int modSize) {
   PKE_CATCH_RETURN()
 }
 
-PKE_Err ParamsCKKS_SetNumLargeDigits(ParamsCKKSPtr p, int numDigits) {
+PKEErr ParamsCKKS_SetNumLargeDigits(ParamsCKKSPtr p, int numDigits) {
   try {
     if (!p) {
       return MakePKEError("ParamsCKKS_SetNumLargeDigits: null params");
@@ -153,7 +153,7 @@ void DestroyParamsCKKS(ParamsCKKSPtr p) {
 }
 
 // --- CKKS CryptoContext ---
-PKE_Err NewCryptoContextCKKS(ParamsCKKSPtr p, CryptoContextPtr *out) {
+PKEErr NewCryptoContextCKKS(ParamsCKKSPtr p, CryptoContextPtr *out) {
   try {
     if (!p) {
       return MakePKEError("NewCryptoContextCKKS: null params");
@@ -172,7 +172,7 @@ PKE_Err NewCryptoContextCKKS(ParamsCKKSPtr p, CryptoContextPtr *out) {
 }
 
 // --- CKKS Plaintext ---
-PKE_Err CryptoContext_MakeCKKSPackedPlaintext(CryptoContextPtr cc_ptr_to_sptr,
+PKEErr CryptoContext_MakeCKKSPackedPlaintext(CryptoContextPtr cc_ptr_to_sptr,
                                               double *values, int len,
                                               PlaintextPtr *out) {
   try {
@@ -201,7 +201,7 @@ PKE_Err CryptoContext_MakeCKKSPackedPlaintext(CryptoContextPtr cc_ptr_to_sptr,
   PKE_CATCH_RETURN()
 }
 
-PKE_Err
+PKEErr
 CryptoContext_MakeCKKSComplexPackedPlaintext(CryptoContextPtr cc_ptr_to_sptr,
                                              complex_double_t *values, int len,
                                              PlaintextPtr *out) {
@@ -237,7 +237,7 @@ CryptoContext_MakeCKKSComplexPackedPlaintext(CryptoContextPtr cc_ptr_to_sptr,
   PKE_CATCH_RETURN()
 }
 
-PKE_Err Plaintext_GetComplexPackedValueLength(PlaintextPtr pt_ptr_to_sptr,
+PKEErr Plaintext_GetComplexPackedValueLength(PlaintextPtr pt_ptr_to_sptr,
                                               int *out_len) {
   try {
     if (!pt_ptr_to_sptr) {
@@ -262,7 +262,7 @@ PKE_Err Plaintext_GetComplexPackedValueLength(PlaintextPtr pt_ptr_to_sptr,
   PKE_CATCH_RETURN()
 }
 
-PKE_Err Plaintext_GetComplexPackedValueAt(PlaintextPtr pt_ptr_to_sptr, int i,
+PKEErr Plaintext_GetComplexPackedValueAt(PlaintextPtr pt_ptr_to_sptr, int i,
                                           complex_double_t *out) {
   try {
     if (!!pt_ptr_to_sptr) {
@@ -293,7 +293,7 @@ PKE_Err Plaintext_GetComplexPackedValueAt(PlaintextPtr pt_ptr_to_sptr, int i,
 }
 
 // --- CKKS Operations ---
-PKE_Err CryptoContext_Rescale(CryptoContextPtr cc_ptr_to_sptr,
+PKEErr CryptoContext_Rescale(CryptoContextPtr cc_ptr_to_sptr,
                               CiphertextPtr ct_ptr_to_sptr,
                               CiphertextPtr *out) {
   try {
@@ -320,7 +320,7 @@ PKE_Err CryptoContext_Rescale(CryptoContextPtr cc_ptr_to_sptr,
   PKE_CATCH_RETURN()
 }
 
-PKE_Err CryptoContext_ModReduce(CryptoContextPtr cc_ptr_to_sptr,
+PKEErr CryptoContext_ModReduce(CryptoContextPtr cc_ptr_to_sptr,
                                 CiphertextPtr ct_ptr_to_sptr,
                                 CiphertextPtr *out) {
   try {
@@ -348,7 +348,7 @@ PKE_Err CryptoContext_ModReduce(CryptoContextPtr cc_ptr_to_sptr,
   PKE_CATCH_RETURN()
 }
 
-PKE_Err CryptoContext_EvalPoly(CryptoContextPtr cc_ptr_to_sptr,
+PKEErr CryptoContext_EvalPoly(CryptoContextPtr cc_ptr_to_sptr,
                                CiphertextPtr ct_ptr_to_sptr,
                                const double *coefficients, size_t count,
                                CiphertextPtr *out) {
@@ -389,7 +389,7 @@ PKE_Err CryptoContext_EvalPoly(CryptoContextPtr cc_ptr_to_sptr,
 }
 
 // --- CKKS Bootstrapping ---
-PKE_Err CryptoContext_EvalBootstrapSetup_Simple(CryptoContextPtr cc_ptr_to_sptr,
+PKEErr CryptoContext_EvalBootstrapSetup_Simple(CryptoContextPtr cc_ptr_to_sptr,
                                                 const uint32_t *lb, int len) {
   try {
     if (!cc_ptr_to_sptr) {
@@ -409,7 +409,7 @@ PKE_Err CryptoContext_EvalBootstrapSetup_Simple(CryptoContextPtr cc_ptr_to_sptr,
   PKE_CATCH_RETURN()
 }
 
-PKE_Err CryptoContext_EvalBootstrapKeyGen(CryptoContextPtr cc_ptr_to_sptr,
+PKEErr CryptoContext_EvalBootstrapKeyGen(CryptoContextPtr cc_ptr_to_sptr,
                                           KeyPairPtr keys_raw_ptr,
                                           uint32_t slots) {
   try {
@@ -433,7 +433,7 @@ PKE_Err CryptoContext_EvalBootstrapKeyGen(CryptoContextPtr cc_ptr_to_sptr,
   PKE_CATCH_RETURN()
 }
 
-PKE_Err CryptoContext_EvalBootstrap(CryptoContextPtr cc_ptr_to_sptr,
+PKEErr CryptoContext_EvalBootstrap(CryptoContextPtr cc_ptr_to_sptr,
                                     CiphertextPtr ct_ptr_to_sptr,
                                     CiphertextPtr *out) {
   try {

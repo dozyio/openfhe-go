@@ -35,7 +35,7 @@ type (
 	DistributionType C.DistributionType
 	SecurityLevel    C.OFHESecurityLevel
 	SecretKeyDist    C.OFHESecretKeyDist
-	PKE_Err          C.PKE_Err
+	PKEErr           C.PKEErr
 	BinFHEErr        C.BinFHEErr
 )
 
@@ -70,11 +70,11 @@ const (
 	SecretKeySparseEncapsulated SecretKeyDist = C.SPARSE_ENCAPSULATED
 )
 
-func checkPKEErrorMsg(cErr C.PKE_Err) error {
+func checkPKEErrorMsg(cErr C.PKEErr) error {
 	// Check the error code first
 	if cErr.code == PKE_OK {
 		if cErr.msg != nil {
-			C.FreePKE_ErrMsg(cErr.msg) // Should be NULL on success, free anyway
+			C.FreePKEErrMsg(cErr.msg) // Should be NULL on success, free anyway
 		}
 		return nil // Success
 	}
@@ -96,7 +96,7 @@ func checkPKEErrorMsg(cErr C.PKE_Err) error {
 		goMsg = string(goBytes)
 
 		// *** CRITICAL: Free the C string memory ***
-		C.FreePKE_ErrMsg(cErr.msg)
+		C.FreePKEErrMsg(cErr.msg)
 	}
 
 	// Fallback message if manual read failed somehow

@@ -17,10 +17,10 @@ typedef enum {
 typedef struct {
   PKE_Err_Code code; // 0 for OK, non-zero for error (e.g., 1)
   char *msg; // Allocated error string if code != 0, NULL otherwise. Go side
-             // MUST call FreePKE_ErrMsg on this if not NULL.
-} PKE_Err;
+             // MUST call FreePKEErrMsg on this if not NULL.
+} PKEErr;
 
-void FreePKE_ErrMsg(char *msg);
+void FreePKEErrMsg(char *msg);
 
 // --- Opaque Pointers ---
 typedef void *CryptoContextPtr;
@@ -54,42 +54,42 @@ typedef enum {
 } OFHESecretKeyDist;
 
 // --- Common CryptoContext Functions ---
-PKE_Err CryptoContext_Enable(CryptoContextPtr cc, int feature);
-PKE_Err CryptoContext_KeyGen(CryptoContextPtr cc, KeyPairPtr *out);
-PKE_Err CryptoContext_EvalMultKeyGen(CryptoContextPtr cc, KeyPairPtr keys);
-PKE_Err CryptoContext_EvalRotateKeyGen(CryptoContextPtr cc, KeyPairPtr keys,
+PKEErr CryptoContext_Enable(CryptoContextPtr cc, int feature);
+PKEErr CryptoContext_KeyGen(CryptoContextPtr cc, KeyPairPtr *out);
+PKEErr CryptoContext_EvalMultKeyGen(CryptoContextPtr cc, KeyPairPtr keys);
+PKEErr CryptoContext_EvalRotateKeyGen(CryptoContextPtr cc, KeyPairPtr keys,
                                        int32_t *indices, int len);
 uint64_t CryptoContext_GetRingDimension(CryptoContextPtr cc);
 int Ciphertext_GetLevel(CiphertextPtr ct);
 void DestroyCryptoContext(CryptoContextPtr cc);
 
 // --- Common Operations ---
-PKE_Err CryptoContext_Encrypt(CryptoContextPtr cc, KeyPairPtr keys,
+PKEErr CryptoContext_Encrypt(CryptoContextPtr cc, KeyPairPtr keys,
                               PlaintextPtr pt, CiphertextPtr *out);
-PKE_Err CryptoContext_Decrypt(CryptoContextPtr cc, KeyPairPtr keys,
+PKEErr CryptoContext_Decrypt(CryptoContextPtr cc, KeyPairPtr keys,
                               CiphertextPtr ct, PlaintextPtr *out);
-PKE_Err CryptoContext_EvalAdd(CryptoContextPtr cc, CiphertextPtr ct1,
+PKEErr CryptoContext_EvalAdd(CryptoContextPtr cc, CiphertextPtr ct1,
                               CiphertextPtr ct2, CiphertextPtr *out);
-PKE_Err CryptoContext_EvalSub(CryptoContextPtr cc, CiphertextPtr ct1,
+PKEErr CryptoContext_EvalSub(CryptoContextPtr cc, CiphertextPtr ct1,
                               CiphertextPtr ct2, CiphertextPtr *out);
-PKE_Err CryptoContext_EvalMult(CryptoContextPtr cc, CiphertextPtr ct1,
+PKEErr CryptoContext_EvalMult(CryptoContextPtr cc, CiphertextPtr ct1,
                                CiphertextPtr ct2, CiphertextPtr *out);
-PKE_Err CryptoContext_EvalRotate(CryptoContextPtr cc, CiphertextPtr ct,
+PKEErr CryptoContext_EvalRotate(CryptoContextPtr cc, CiphertextPtr ct,
                                  int32_t index, CiphertextPtr *out);
 
 // --- KeyPair ---
-PKE_Err GetPublicKey(KeyPairPtr kp, void **out_pk_sptr_wrapper);
-PKE_Err GetPrivateKey(KeyPairPtr kp, void **out_sk_sptr_wrapper);
-PKE_Err NewKeyPair(KeyPairPtr *out);
-PKE_Err SetPublicKey(KeyPairPtr kp, void *pk);
-PKE_Err SetPrivateKey(KeyPairPtr kp, void *sk);
+PKEErr GetPublicKey(KeyPairPtr kp, void **out_pk_sptr_wrapper);
+PKEErr GetPrivateKey(KeyPairPtr kp, void **out_sk_sptr_wrapper);
+PKEErr NewKeyPair(KeyPairPtr *out);
+PKEErr SetPublicKey(KeyPairPtr kp, void *pk);
+PKEErr SetPrivateKey(KeyPairPtr kp, void *sk);
 void DestroyKeyPair(KeyPairPtr kp);
 
 // --- Plaintext ---
-PKE_Err Plaintext_GetPackedValueLength(PlaintextPtr pt, int *out_len);
-PKE_Err Plaintext_GetPackedValueAt(PlaintextPtr pt, int i, int64_t *out_val);
-PKE_Err Plaintext_GetRealPackedValueLength(PlaintextPtr pt, int *out_len);
-PKE_Err Plaintext_GetRealPackedValueAt(PlaintextPtr pt, int i, double *out_val);
+PKEErr Plaintext_GetPackedValueLength(PlaintextPtr pt, int *out_len);
+PKEErr Plaintext_GetPackedValueAt(PlaintextPtr pt, int i, int64_t *out_val);
+PKEErr Plaintext_GetRealPackedValueLength(PlaintextPtr pt, int *out_len);
+PKEErr Plaintext_GetRealPackedValueAt(PlaintextPtr pt, int i, double *out_val);
 void DestroyPlaintext(PlaintextPtr pt);
 
 // --- Ciphertext ---
@@ -117,7 +117,7 @@ void DeserializeEvalMultKeyFromBytes(CryptoContextPtr cc, const char *inData,
 size_t SerializeCiphertextToBytes(CiphertextPtr ct, char **outBytes);
 CiphertextPtr DeserializeCiphertextFromBytes(const char *inData, int inLen);
 
-PKE_Err CryptoContext_GetParameterElementString(CryptoContextPtr cc,
+PKEErr CryptoContext_GetParameterElementString(CryptoContextPtr cc,
                                                 char **outString);
 #ifdef __cplusplus
 }

@@ -6,7 +6,7 @@ using namespace lbcrypto;
 extern "C" {
 
 // --- BFV Params Functions ---
-PKE_Err NewParamsBFV(ParamsBFVPtr *out) {
+PKEErr NewParamsBFV(ParamsBFVPtr *out) {
   try {
     if (!out) {
       return MakePKEError("NewParamsBFV: null output pointer");
@@ -18,7 +18,7 @@ PKE_Err NewParamsBFV(ParamsBFVPtr *out) {
   PKE_CATCH_RETURN()
 }
 
-PKE_Err ParamsBFV_SetPlaintextModulus(ParamsBFVPtr p, uint64_t mod) {
+PKEErr ParamsBFV_SetPlaintextModulus(ParamsBFVPtr p, uint64_t mod) {
   try {
     if (!p) {
       return MakePKEError("ParamsBFV_SetPlaintextModulus: null params");
@@ -31,7 +31,7 @@ PKE_Err ParamsBFV_SetPlaintextModulus(ParamsBFVPtr p, uint64_t mod) {
   PKE_CATCH_RETURN()
 }
 
-PKE_Err ParamsBFV_SetMultiplicativeDepth(ParamsBFVPtr p, int depth) {
+PKEErr ParamsBFV_SetMultiplicativeDepth(ParamsBFVPtr p, int depth) {
   try {
     if (!p) {
       return MakePKEError("ParamsBFV_SetMultiplicativeDepth: null params");
@@ -49,7 +49,7 @@ void DestroyParamsBFV(ParamsBFVPtr p) {
 }
 
 // --- BFV CryptoContext ---
-PKE_Err NewCryptoContextBFV(ParamsBFVPtr p, CryptoContextPtr *out) {
+PKEErr NewCryptoContextBFV(ParamsBFVPtr p, CryptoContextPtr *out) {
   try {
     if (!p) {
       return MakePKEError("NewCryptoContextBFV: null params");
@@ -68,7 +68,7 @@ PKE_Err NewCryptoContextBFV(ParamsBFVPtr p, CryptoContextPtr *out) {
 }
 
 // --- BFV Plaintext ---
-PKE_Err CryptoContext_MakePackedPlaintext(CryptoContextPtr cc_ptr_to_sptr,
+PKEErr CryptoContext_MakePackedPlaintext(CryptoContextPtr cc_ptr_to_sptr,
                                           int64_t *values, int len,
                                           PlaintextPtr *out) {
   try {
