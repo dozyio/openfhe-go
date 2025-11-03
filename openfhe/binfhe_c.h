@@ -125,6 +125,32 @@ BinFHEErr BinFHEContext_Decrypt(BinFHEContextH h, LWESecretKeyH sk,
                                 LWECiphertextH ct,
                                 int *out_bit); // Output param
 
+// Decrypt with plaintext modulus
+BinFHEErr BinFHEContext_DecryptModulus(BinFHEContextH h, LWESecretKeyH sk,
+                                       LWECiphertextH ct, uint64_t p,
+                                       uint64_t *out_val);
+
+// Decrypt with plaintext modulus using LWEPrivateKey (from scheme switching)
+// Note: We use void* to accept the LWEPrivateKeyPtr from schemeswitch_c.h
+BinFHEErr BinFHEContext_DecryptModulusLWEKey(BinFHEContextH h, void *sk,
+                                             LWECiphertextH ct, uint64_t p,
+                                             uint64_t *out_val);
+
+// --- Parameter Getters ---
+BinFHEErr BinFHEContext_GetMaxPlaintextSpace(BinFHEContextH h, uint32_t *out);
+BinFHEErr BinFHEContext_Getn(BinFHEContextH h, uint32_t *out);
+BinFHEErr BinFHEContext_Getq(BinFHEContextH h, uint64_t *out);
+BinFHEErr BinFHEContext_GetBeta(BinFHEContextH h, uint32_t *out);
+
+// --- Advanced Operations ---
+BinFHEErr BinFHEContext_EvalSign(BinFHEContextH h, LWECiphertextH ct,
+                                 LWECiphertextH *out);
+BinFHEErr BinFHEContext_EvalFloor(BinFHEContextH h, LWECiphertextH ct,
+                                  uint32_t bits, LWECiphertextH *out);
+
+// Note: LUT and arbitrary function evaluation require more complex types
+// and will be added in a future enhancement if needed
+
 #ifdef __cplusplus
 }
 #endif

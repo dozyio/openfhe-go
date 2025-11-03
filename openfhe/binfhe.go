@@ -299,3 +299,140 @@ func (cc *BinFHEContext) Decrypt(sk *BinFHESecretKey, ct *BinFHECiphertext) (int
 
 	return int(resultBit), nil
 }
+
+// DecryptModulus decrypts with a specific plaintext modulus
+func (cc *BinFHEContext) DecryptModulus(sk *BinFHESecretKey, ct *BinFHECiphertext, p uint64) (uint64, error) {
+	if cc.h == nil {
+		return 0, errors.New("BinFHEContext is closed or invalid")
+	}
+
+	if sk == nil || sk.h == nil {
+		return 0, errors.New("BinFHESecretKey is closed or invalid")
+	}
+
+	if ct == nil || ct.h == nil {
+		return 0, errors.New("BinFHECiphertext is closed or invalid")
+	}
+
+	var result C.uint64_t
+
+	status := C.BinFHEContext_DecryptModulus(cc.h, sk.h, ct.h, C.uint64_t(p), &result)
+	err := checkBinFHEErrorMsg(status)
+	if err != nil {
+		return 0, err
+	}
+
+	return uint64(result), nil
+}
+
+// GetMaxPlaintextSpace returns the maximum plaintext space
+func (cc *BinFHEContext) GetMaxPlaintextSpace() (uint32, error) {
+	if cc.h == nil {
+		return 0, errors.New("BinFHEContext is closed or invalid")
+	}
+
+	var result C.uint32_t
+	status := C.BinFHEContext_GetMaxPlaintextSpace(cc.h, &result)
+	err := checkBinFHEErrorMsg(status)
+	if err != nil {
+		return 0, err
+	}
+
+	return uint32(result), nil
+}
+
+// Getn returns the lattice parameter n
+func (cc *BinFHEContext) Getn() (uint32, error) {
+	if cc.h == nil {
+		return 0, errors.New("BinFHEContext is closed or invalid")
+	}
+
+	var result C.uint32_t
+	status := C.BinFHEContext_Getn(cc.h, &result)
+	err := checkBinFHEErrorMsg(status)
+	if err != nil {
+		return 0, err
+	}
+
+	return uint32(result), nil
+}
+
+// Getq returns the ciphertext modulus q
+func (cc *BinFHEContext) Getq() (uint64, error) {
+	if cc.h == nil {
+		return 0, errors.New("BinFHEContext is closed or invalid")
+	}
+
+	var result C.uint64_t
+	status := C.BinFHEContext_Getq(cc.h, &result)
+	err := checkBinFHEErrorMsg(status)
+	if err != nil {
+		return 0, err
+	}
+
+	return uint64(result), nil
+}
+
+// GetBeta returns the beta parameter
+func (cc *BinFHEContext) GetBeta() (uint32, error) {
+	if cc.h == nil {
+		return 0, errors.New("BinFHEContext is closed or invalid")
+	}
+
+	var result C.uint32_t
+	status := C.BinFHEContext_GetBeta(cc.h, &result)
+	err := checkBinFHEErrorMsg(status)
+	if err != nil {
+		return 0, err
+	}
+
+	return uint32(result), nil
+}
+
+// EvalSign evaluates the sign function on an LWE ciphertext
+func (cc *BinFHEContext) EvalSign(ct *BinFHECiphertext) (*BinFHECiphertext, error) {
+	if cc.h == nil {
+		return nil, errors.New("BinFHEContext is closed or invalid")
+	}
+
+	if ct == nil || ct.h == nil {
+		return nil, errors.New("BinFHECiphertext is closed or invalid")
+	}
+
+	var outH C.LWECiphertextH
+	status := C.BinFHEContext_EvalSign(cc.h, ct.h, &outH)
+	err := checkBinFHEErrorMsg(status)
+	if err != nil {
+		return nil, err
+	}
+
+	if outH == nil {
+		return nil, fmt.Errorf("EvalSign returned OK but null handle")
+	}
+
+	return &BinFHECiphertext{h: outH}, nil
+}
+
+// EvalFloor evaluates the floor function, removing the lowest 'bits' bits
+func (cc *BinFHEContext) EvalFloor(ct *BinFHECiphertext, bits uint32) (*BinFHECiphertext, error) {
+	if cc.h == nil {
+		return nil, errors.New("BinFHEContext is closed or invalid")
+	}
+
+	if ct == nil || ct.h == nil {
+		return nil, errors.New("BinFHECiphertext is closed or invalid")
+	}
+
+	var outH C.LWECiphertextH
+	status := C.BinFHEContext_EvalFloor(cc.h, ct.h, C.uint32_t(bits), &outH)
+	err := checkBinFHEErrorMsg(status)
+	if err != nil {
+		return nil, err
+	}
+
+	if outH == nil {
+		return nil, fmt.Errorf("EvalFloor returned OK but null handle")
+	}
+
+	return &BinFHECiphertext{h: outH}, nil
+}

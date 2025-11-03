@@ -203,4 +203,174 @@ BinFHEErr BinFHEContext_Decrypt(BinFHEContextH h, LWESecretKeyH skh,
   BINFHE_CATCH_RETURN()
 }
 
+BinFHEErr BinFHEContext_DecryptModulus(BinFHEContextH h, LWESecretKeyH skh,
+                                       LWECiphertextH cth, uint64_t p,
+                                       uint64_t *out_val) {
+  try {
+    if (!h) {
+      return MakeBinFHEError("Null BinFHEContext handle");
+    }
+    if (!skh) {
+      return MakeBinFHEError("Null LWESecretKey handle");
+    }
+    if (!cth) {
+      return MakeBinFHEError("Null LWECiphertext handle");
+    }
+    if (!out_val) {
+      return MakeBinFHEError("Null output pointer for DecryptModulus");
+    }
+
+    lbcrypto::LWEPlaintext pt_result = 0;
+    AsBinFHEContext(h)->Decrypt(*AsLWESecretKey(skh), *AsLWECiphertext(cth),
+                                &pt_result, p);
+    *out_val = static_cast<uint64_t>(pt_result);
+    return MakeBinFHEOk();
+  }
+  BINFHE_CATCH_RETURN()
+}
+
+// --- Parameter Getters ---
+BinFHEErr BinFHEContext_GetMaxPlaintextSpace(BinFHEContextH h, uint32_t *out) {
+  try {
+    if (!h) {
+      return MakeBinFHEError("Null BinFHEContext handle");
+    }
+    if (!out) {
+      return MakeBinFHEError("Null output pointer");
+    }
+    *out = static_cast<uint32_t>(
+        AsBinFHEContext(h)->GetMaxPlaintextSpace().ConvertToInt());
+    return MakeBinFHEOk();
+  }
+  BINFHE_CATCH_RETURN()
+}
+
+BinFHEErr BinFHEContext_Getn(BinFHEContextH h, uint32_t *out) {
+  try {
+    if (!h) {
+      return MakeBinFHEError("Null BinFHEContext handle");
+    }
+    if (!out) {
+      return MakeBinFHEError("Null output pointer");
+    }
+    // Get n from LWE params
+    auto params = AsBinFHEContext(h)->GetParams();
+    if (!params) {
+      return MakeBinFHEError("BinFHE params not initialized");
+    }
+    auto lweParams = params->GetLWEParams();
+    if (!lweParams) {
+      return MakeBinFHEError("LWE params not initialized");
+    }
+    *out = static_cast<uint32_t>(lweParams->Getn());
+    return MakeBinFHEOk();
+  }
+  BINFHE_CATCH_RETURN()
+}
+
+BinFHEErr BinFHEContext_Getq(BinFHEContextH h, uint64_t *out) {
+  try {
+    if (!h) {
+      return MakeBinFHEError("Null BinFHEContext handle");
+    }
+    if (!out) {
+      return MakeBinFHEError("Null output pointer");
+    }
+    // Get q from LWE params
+    auto params = AsBinFHEContext(h)->GetParams();
+    if (!params) {
+      return MakeBinFHEError("BinFHE params not initialized");
+    }
+    auto lweParams = params->GetLWEParams();
+    if (!lweParams) {
+      return MakeBinFHEError("LWE params not initialized");
+    }
+    *out = static_cast<uint64_t>(lweParams->Getq().ConvertToInt());
+    return MakeBinFHEOk();
+  }
+  BINFHE_CATCH_RETURN()
+}
+
+BinFHEErr BinFHEContext_GetBeta(BinFHEContextH h, uint32_t *out) {
+  try {
+    if (!h) {
+      return MakeBinFHEError("Null BinFHEContext handle");
+    }
+    if (!out) {
+      return MakeBinFHEError("Null output pointer");
+    }
+    auto beta = AsBinFHEContext(h)->GetBeta();
+    *out = static_cast<uint32_t>(beta.ConvertToInt());
+    return MakeBinFHEOk();
+  }
+  BINFHE_CATCH_RETURN()
+}
+
+// --- Advanced Operations ---
+BinFHEErr BinFHEContext_EvalSign(BinFHEContextH h, LWECiphertextH cth,
+                                 LWECiphertextH *out) {
+  try {
+    if (!h) {
+      return MakeBinFHEError("Null BinFHEContext handle");
+    }
+    if (!cth) {
+      return MakeBinFHEError("Null LWECiphertext handle");
+    }
+    if (!out) {
+      return MakeBinFHEError("Null output pointer for EvalSign");
+    }
+    auto ct_val = AsBinFHEContext(h)->EvalSign(*AsLWECiphertext(cth));
+    *out = new lbcrypto::LWECiphertext(std::move(ct_val));
+    return MakeBinFHEOk();
+  }
+  BINFHE_CATCH_RETURN()
+}
+
+BinFHEErr BinFHEContext_EvalFloor(BinFHEContextH h, LWECiphertextH cth,
+                                  uint32_t bits, LWECiphertextH *out) {
+  try {
+    if (!h) {
+      return MakeBinFHEError("Null BinFHEContext handle");
+    }
+    if (!cth) {
+      return MakeBinFHEError("Null LWECiphertext handle");
+    }
+    if (!out) {
+      return MakeBinFHEError("Null output pointer for EvalFloor");
+    }
+    auto ct_val = AsBinFHEContext(h)->EvalFloor(*AsLWECiphertext(cth), bits);
+    *out = new lbcrypto::LWECiphertext(std::move(ct_val));
+    return MakeBinFHEOk();
+  }
+  BINFHE_CATCH_RETURN()
+}
+
+BinFHEErr BinFHEContext_DecryptModulusLWEKey(BinFHEContextH h, void *skh,
+                                             LWECiphertextH cth, uint64_t p,
+                                             uint64_t *out_val) {
+  try {
+    if (!h) {
+      return MakeBinFHEError("Null BinFHEContext handle");
+    }
+    if (!skh) {
+      return MakeBinFHEError("Null LWEPrivateKey handle");
+    }
+    if (!cth) {
+      return MakeBinFHEError("Null LWECiphertext handle");
+    }
+    if (!out_val) {
+      return MakeBinFHEError("Null output pointer for DecryptModulusLWEKey");
+    }
+
+    // Cast to LWEPrivateKey (same as LWESecretKey in OpenFHE)
+    auto *lwesk = static_cast<lbcrypto::LWEPrivateKey *>(skh);
+
+    lbcrypto::LWEPlaintext pt_result = 0;
+    AsBinFHEContext(h)->Decrypt(*lwesk, *AsLWECiphertext(cth), &pt_result, p);
+    *out_val = static_cast<uint64_t>(pt_result);
+    return MakeBinFHEOk();
+  }
+  BINFHE_CATCH_RETURN()
+}
+
 } // extern "C"
