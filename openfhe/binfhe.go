@@ -436,3 +436,27 @@ func (cc *BinFHEContext) EvalFloor(ct *BinFHECiphertext, bits uint32) (*BinFHECi
 
 	return &BinFHECiphertext{h: outH}, nil
 }
+
+// EvalNOT evaluates the NOT operation on a ciphertext
+func (cc *BinFHEContext) EvalNOT(ct *BinFHECiphertext) (*BinFHECiphertext, error) {
+	if cc.h == nil {
+		return nil, errors.New("BinFHEContext is closed or invalid")
+	}
+
+	if ct == nil || ct.h == nil {
+		return nil, errors.New("BinFHECiphertext is closed or invalid")
+	}
+
+	var outH C.LWECiphertextH
+	status := C.BinFHEContext_EvalNOT(cc.h, ct.h, &outH)
+	err := checkBinFHEErrorMsg(status)
+	if err != nil {
+		return nil, err
+	}
+
+	if outH == nil {
+		return nil, fmt.Errorf("EvalNOT returned OK but null handle")
+	}
+
+	return &BinFHECiphertext{h: outH}, nil
+}

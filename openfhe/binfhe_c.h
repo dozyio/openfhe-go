@@ -147,6 +147,8 @@ BinFHEErr BinFHEContext_EvalSign(BinFHEContextH h, LWECiphertextH ct,
                                  LWECiphertextH *out);
 BinFHEErr BinFHEContext_EvalFloor(BinFHEContextH h, LWECiphertextH ct,
                                   uint32_t bits, LWECiphertextH *out);
+BinFHEErr BinFHEContext_EvalNOT(BinFHEContextH h, LWECiphertextH ct,
+                                LWECiphertextH *out);
 
 // Note: LUT and arbitrary function evaluation require more complex types
 // and will be added in a future enhancement if needed

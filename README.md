@@ -27,7 +27,7 @@ See examples and tests for usage
 ### Boolean FHE
 - [ ] boolean-ap
 - [ ] boolean-lmkcdey
-- [ ] boolean-truth-tables
+- [x] boolean-truth-tables
 - [x] boolean
 
 ### PKE FHE

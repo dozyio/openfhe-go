@@ -345,6 +345,25 @@ BinFHEErr BinFHEContext_EvalFloor(BinFHEContextH h, LWECiphertextH cth,
   BINFHE_CATCH_RETURN()
 }
 
+BinFHEErr BinFHEContext_EvalNOT(BinFHEContextH h, LWECiphertextH cth,
+                                LWECiphertextH *out) {
+  try {
+    if (!h) {
+      return MakeBinFHEError("Null BinFHEContext handle");
+    }
+    if (!cth) {
+      return MakeBinFHEError("Null LWECiphertext handle");
+    }
+    if (!out) {
+      return MakeBinFHEError("Null output pointer for EvalNOT");
+    }
+    auto ct_val = AsBinFHEContext(h)->EvalNOT(*AsLWECiphertext(cth));
+    *out = new lbcrypto::LWECiphertext(std::move(ct_val));
+    return MakeBinFHEOk();
+  }
+  BINFHE_CATCH_RETURN()
+}
+
 BinFHEErr BinFHEContext_DecryptModulusLWEKey(BinFHEContextH h, void *skh,
                                              LWECiphertextH cth, uint64_t p,
                                              uint64_t *out_val) {
