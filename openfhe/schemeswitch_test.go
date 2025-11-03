@@ -114,7 +114,7 @@ func TestBasicSchemeSwitching(t *testing.T) {
 	t.Log("Decrypting FHEW ciphertexts:")
 	x1Int := make([]uint64, len(x1))
 	for i := range x1 {
-		x1Int[i] = uint64(math.Round(x1[i])) % uint64(pLWE)
+		x1Int[i] = uint64(math.RoundToEven(x1[i])) % uint64(pLWE)
 	}
 
 	for i := 0; i < len(lweCts) && i < len(x1); i++ {
