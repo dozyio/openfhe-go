@@ -38,7 +38,7 @@ See examples and tests for usage
 - [ ] iterative-ckks-bootstrapping
 - [x] polynomial-evaluation
 - [ ] pre-buffer
-- [ ] scheme-switching
+- [x] scheme-switching
 - [x] simple-ckks-bootstrapping
 - [x] simple-integers-bgvrns
 - [ ] simple-integers-serial-bgvrns
