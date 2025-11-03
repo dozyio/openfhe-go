@@ -160,6 +160,34 @@ func (p *ParamsCKKS) SetSecretKeyDist(d SecretKeyDist) error {
 	return nil
 }
 
+func (p *ParamsCKKS) SetDigitSize(digitSize int) error {
+	if p.ptr == nil {
+		return errors.New("ParamsCKKS is closed or invalid")
+	}
+
+	status := C.ParamsCKKS_SetDigitSize(p.ptr, C.int(digitSize))
+	err := checkPKEErrorMsg(status)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (p *ParamsCKKS) SetKeySwitchTechnique(technique int) error {
+	if p.ptr == nil {
+		return errors.New("ParamsCKKS is closed or invalid")
+	}
+
+	status := C.ParamsCKKS_SetKeySwitchTechnique(p.ptr, C.int(technique))
+	err := checkPKEErrorMsg(status)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // Close method for ParamsCKKS
 func (p *ParamsCKKS) Close() {
 	if p.ptr != nil {

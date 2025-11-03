@@ -62,7 +62,7 @@ PKEErr CryptoContext_KeyGen(CryptoContextPtr cc_ptr_to_sptr, KeyPairPtr *out) {
 }
 
 PKEErr CryptoContext_EvalMultKeyGen(CryptoContextPtr cc_ptr_to_sptr,
-                                     KeyPairPtr keys_raw_ptr) {
+                                    KeyPairPtr keys_raw_ptr) {
   try {
     if (!cc_ptr_to_sptr) {
       return MakePKEError("CryptoContext_EvalMultKeyGen: null context");
@@ -83,8 +83,8 @@ PKEErr CryptoContext_EvalMultKeyGen(CryptoContextPtr cc_ptr_to_sptr,
 }
 
 PKEErr CryptoContext_EvalRotateKeyGen(CryptoContextPtr cc_ptr_to_sptr,
-                                       KeyPairPtr keys_raw_ptr,
-                                       int32_t *indices, int len) {
+                                      KeyPairPtr keys_raw_ptr, int32_t *indices,
+                                      int len) {
   try {
     if (!cc_ptr_to_sptr) {
       return MakePKEError("CryptoContext_EvalRotateKeyGen: null context");
@@ -125,8 +125,8 @@ void DestroyCryptoContext(CryptoContextPtr cc_ptr_to_sptr) {
 
 // --- Common Operations ---
 PKEErr CryptoContext_Encrypt(CryptoContextPtr cc_ptr_to_sptr,
-                              KeyPairPtr keys_raw_ptr,
-                              PlaintextPtr pt_ptr_to_sptr, CiphertextPtr *out) {
+                             KeyPairPtr keys_raw_ptr,
+                             PlaintextPtr pt_ptr_to_sptr, CiphertextPtr *out) {
   try {
     if (!cc_ptr_to_sptr) {
       return MakePKEError("CryptoContext_Encrypt: null context");
@@ -157,8 +157,8 @@ PKEErr CryptoContext_Encrypt(CryptoContextPtr cc_ptr_to_sptr,
 }
 
 PKEErr CryptoContext_Decrypt(CryptoContextPtr cc_ptr_to_sptr,
-                              KeyPairPtr keys_raw_ptr,
-                              CiphertextPtr ct_ptr_to_sptr, PlaintextPtr *out) {
+                             KeyPairPtr keys_raw_ptr,
+                             CiphertextPtr ct_ptr_to_sptr, PlaintextPtr *out) {
   try {
     if (!cc_ptr_to_sptr) {
       return MakePKEError("CryptoContext_Decrypt: null context");
@@ -195,9 +195,9 @@ PKEErr CryptoContext_Decrypt(CryptoContextPtr cc_ptr_to_sptr,
 }
 
 PKEErr CryptoContext_EvalAdd(CryptoContextPtr cc_ptr_to_sptr,
-                              CiphertextPtr ct1_ptr_to_sptr,
-                              CiphertextPtr ct2_ptr_to_sptr,
-                              CiphertextPtr *out) {
+                             CiphertextPtr ct1_ptr_to_sptr,
+                             CiphertextPtr ct2_ptr_to_sptr,
+                             CiphertextPtr *out) {
   try {
     if (!cc_ptr_to_sptr) {
       return MakePKEError("CryptoContext_EvalAdd: null context");
@@ -220,9 +220,9 @@ PKEErr CryptoContext_EvalAdd(CryptoContextPtr cc_ptr_to_sptr,
 }
 
 PKEErr CryptoContext_EvalSub(CryptoContextPtr cc_ptr_to_sptr,
-                              CiphertextPtr ct1_ptr_to_sptr,
-                              CiphertextPtr ct2_ptr_to_sptr,
-                              CiphertextPtr *out) {
+                             CiphertextPtr ct1_ptr_to_sptr,
+                             CiphertextPtr ct2_ptr_to_sptr,
+                             CiphertextPtr *out) {
   try {
     if (!cc_ptr_to_sptr) {
       return MakePKEError("CryptoContext_EvalSub: null context");
@@ -246,9 +246,9 @@ PKEErr CryptoContext_EvalSub(CryptoContextPtr cc_ptr_to_sptr,
 }
 
 PKEErr CryptoContext_EvalMult(CryptoContextPtr cc_ptr_to_sptr,
-                               CiphertextPtr ct1_ptr_to_sptr,
-                               CiphertextPtr ct2_ptr_to_sptr,
-                               CiphertextPtr *out) {
+                              CiphertextPtr ct1_ptr_to_sptr,
+                              CiphertextPtr ct2_ptr_to_sptr,
+                              CiphertextPtr *out) {
   try {
     if (!cc_ptr_to_sptr) {
       return MakePKEError("CryptoContext_EvalMult: null context");
@@ -272,8 +272,8 @@ PKEErr CryptoContext_EvalMult(CryptoContextPtr cc_ptr_to_sptr,
 }
 
 PKEErr CryptoContext_EvalRotate(CryptoContextPtr cc_ptr_to_sptr,
-                                 CiphertextPtr ct_ptr_to_sptr, int32_t index,
-                                 CiphertextPtr *out) {
+                                CiphertextPtr ct_ptr_to_sptr, int32_t index,
+                                CiphertextPtr *out) {
   try {
     if (!cc_ptr_to_sptr) {
       return MakePKEError("CryptoContext_EvalRotate: null context");
@@ -292,6 +292,77 @@ PKEErr CryptoContext_EvalRotate(CryptoContextPtr cc_ptr_to_sptr,
     return MakePKEOk();
   }
   PKE_CATCH_RETURN()
+}
+
+PKEErr CryptoContext_EvalFastRotationPrecompute(CryptoContextPtr cc_ptr_to_sptr,
+                                                CiphertextPtr ct_ptr_to_sptr,
+                                                void **out) {
+  try {
+    if (!cc_ptr_to_sptr) {
+      return MakePKEError(
+          "CryptoContext_EvalFastRotationPrecompute: null context");
+    }
+    if (!ct_ptr_to_sptr) {
+      return MakePKEError(
+          "CryptoContext_EvalFastRotationPrecompute: null ciphertext");
+    }
+    if (!out) {
+      return MakePKEError(
+          "CryptoContext_EvalFastRotationPrecompute: null output pointer");
+    }
+    auto &cc_sptr = GetCCSharedPtr(cc_ptr_to_sptr);
+    auto &ct_sptr = GetCTSharedPtr(ct_ptr_to_sptr);
+
+    // EvalFastRotationPrecompute returns a shared_ptr<std::vector<DCRTPoly>>
+    auto precomp = cc_sptr->EvalFastRotationPrecompute(ct_sptr);
+
+    // Store the shared_ptr on the heap and return as void*
+    *out = new std::shared_ptr<std::vector<DCRTPoly>>(precomp);
+
+    return MakePKEOk();
+  }
+  PKE_CATCH_RETURN()
+}
+
+PKEErr CryptoContext_EvalFastRotation(CryptoContextPtr cc_ptr_to_sptr,
+                                      CiphertextPtr ct_ptr_to_sptr,
+                                      int32_t index, uint32_t m, void *precomp,
+                                      CiphertextPtr *out) {
+  try {
+    if (!cc_ptr_to_sptr) {
+      return MakePKEError("CryptoContext_EvalFastRotation: null context");
+    }
+    if (!ct_ptr_to_sptr) {
+      return MakePKEError("CryptoContext_EvalFastRotation: null ciphertext");
+    }
+    if (!precomp) {
+      return MakePKEError(
+          "CryptoContext_EvalFastRotation: null precomputation");
+    }
+    if (!out) {
+      return MakePKEError(
+          "CryptoContext_EvalFastRotation: null output pointer");
+    }
+
+    auto &cc_sptr = GetCCSharedPtr(cc_ptr_to_sptr);
+    auto &ct_sptr = GetCTSharedPtr(ct_ptr_to_sptr);
+    auto &precomp_sptr =
+        *reinterpret_cast<std::shared_ptr<std::vector<DCRTPoly>> *>(precomp);
+
+    Ciphertext<DCRTPoly> result_ct_sptr =
+        cc_sptr->EvalFastRotation(ct_sptr, index, m, precomp_sptr);
+    *out = reinterpret_cast<CiphertextPtr>(
+        new CiphertextSharedPtr(result_ct_sptr));
+
+    return MakePKEOk();
+  }
+  PKE_CATCH_RETURN()
+}
+
+void DestroyFastRotationPrecompute(void *precomp) {
+  if (precomp) {
+    delete reinterpret_cast<std::shared_ptr<std::vector<DCRTPoly>> *>(precomp);
+  }
 }
 
 // --- KeyPair ---
@@ -392,7 +463,7 @@ void DestroyKeyPair(KeyPairPtr kp_raw_ptr) {
 
 // --- Plaintext ---
 PKEErr Plaintext_GetPackedValueLength(PlaintextPtr pt_ptr_to_sptr,
-                                       int *out_len) {
+                                      int *out_len) {
   try {
     if (!pt_ptr_to_sptr) {
       return MakePKEError("Plaintext_GetPackedValueLength: null plaintext");
@@ -409,7 +480,7 @@ PKEErr Plaintext_GetPackedValueLength(PlaintextPtr pt_ptr_to_sptr,
 }
 
 PKEErr Plaintext_GetPackedValueAt(PlaintextPtr pt_ptr_to_sptr, int i,
-                                   int64_t *out_val) {
+                                  int64_t *out_val) {
   try {
     if (!pt_ptr_to_sptr) {
       return MakePKEError("Plaintext_GetPackedValueAt: null plaintext");
@@ -429,7 +500,7 @@ PKEErr Plaintext_GetPackedValueAt(PlaintextPtr pt_ptr_to_sptr, int i,
 }
 
 PKEErr Plaintext_GetRealPackedValueLength(PlaintextPtr pt_ptr_to_sptr,
-                                           int *out_len) {
+                                          int *out_len) {
   try {
     if (!pt_ptr_to_sptr) {
       return MakePKEError("Plaintext_GetRealPackedValueLength: null plaintext");
@@ -446,7 +517,7 @@ PKEErr Plaintext_GetRealPackedValueLength(PlaintextPtr pt_ptr_to_sptr,
 }
 
 PKEErr Plaintext_GetRealPackedValueAt(PlaintextPtr pt_ptr_to_sptr, int i,
-                                       double *out_val) {
+                                      double *out_val) {
   try {
     if (!pt_ptr_to_sptr) {
       return MakePKEError("Plaintext_GetRealPackedValueAt: null plaintext");
@@ -667,7 +738,7 @@ CiphertextPtr DeserializeCiphertextFromBytes(const char *inData, int inLen) {
 
 // --- Debugging Function ---
 PKEErr CryptoContext_GetParameterElementString(CryptoContextPtr cc_ptr_to_sptr,
-                                                char **outString) {
+                                               char **outString) {
   try {
     if (!cc_ptr_to_sptr) {
       *outString = nullptr;
@@ -704,4 +775,15 @@ PKEErr CryptoContext_GetParameterElementString(CryptoContextPtr cc_ptr_to_sptr,
     return MakePKEError("Unknown C++ exception");
   }
 }
+
+int GetNativeInt() {
+// Return the native integer size in bits (64 or 128)
+// This is determined at compile time by OpenFHE's NATIVE_SIZE macro
+#if defined(NATIVE_SIZE) && NATIVE_SIZE == 128
+  return 128;
+#else
+  return 64;
+#endif
+}
+
 } // extern "C"

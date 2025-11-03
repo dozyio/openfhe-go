@@ -62,6 +62,7 @@ PKEErr CryptoContext_EvalRotateKeyGen(CryptoContextPtr cc, KeyPairPtr keys,
 uint64_t CryptoContext_GetRingDimension(CryptoContextPtr cc);
 int Ciphertext_GetLevel(CiphertextPtr ct);
 void DestroyCryptoContext(CryptoContextPtr cc);
+int GetNativeInt();
 
 // --- Common Operations ---
 PKEErr CryptoContext_Encrypt(CryptoContextPtr cc, KeyPairPtr keys,
@@ -76,6 +77,13 @@ PKEErr CryptoContext_EvalMult(CryptoContextPtr cc, CiphertextPtr ct1,
                                CiphertextPtr ct2, CiphertextPtr *out);
 PKEErr CryptoContext_EvalRotate(CryptoContextPtr cc, CiphertextPtr ct,
                                  int32_t index, CiphertextPtr *out);
+PKEErr CryptoContext_EvalFastRotationPrecompute(CryptoContextPtr cc,
+                                                 CiphertextPtr ct,
+                                                 void **out);
+PKEErr CryptoContext_EvalFastRotation(CryptoContextPtr cc, CiphertextPtr ct,
+                                       int32_t index, uint32_t m,
+                                       void *precomp, CiphertextPtr *out);
+void DestroyFastRotationPrecompute(void *precomp);
 
 // --- KeyPair ---
 PKEErr GetPublicKey(KeyPairPtr kp, void **out_pk_sptr_wrapper);

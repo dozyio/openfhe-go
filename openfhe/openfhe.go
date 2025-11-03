@@ -45,6 +45,13 @@ const (
 	INVALID_RS_TECHNIQUE   = 7
 )
 
+// --- Key Switch Techniques ---
+const (
+	INVALID_KS_TECH = 0
+	BV              = 1
+	HYBRID          = 2
+)
+
 // --- Common CryptoContext Methods ---
 func (cc *CryptoContext) Enable(feature int) error {
 	if cc.ptr == nil {
@@ -239,6 +246,66 @@ func (cc *CryptoContext) EvalRotate(ct *Ciphertext, index int32) (*Ciphertext, e
 	}
 	resCt := &Ciphertext{ptr: ctH}
 	return resCt, nil
+}
+
+// FastRotationPrecompute holds precomputed values for fast rotation
+type FastRotationPrecompute struct {
+	ptr unsafe.Pointer
+}
+
+func (cc *CryptoContext) EvalFastRotationPrecompute(ct *Ciphertext) (*FastRotationPrecompute, error) {
+	if cc.ptr == nil {
+		return nil, errors.New("CryptoContext is closed or invalid")
+	}
+	if ct == nil || ct.ptr == nil {
+		return nil, errors.New("Input Ciphertext is closed or invalid")
+	}
+	var precompH unsafe.Pointer
+	status := C.CryptoContext_EvalFastRotationPrecompute(cc.ptr, ct.ptr, &precompH)
+	err := checkPKEErrorMsg(status)
+	if err != nil {
+		return nil, err
+	}
+	if precompH == nil {
+		return nil, errors.New("EvalFastRotationPrecompute returned OK but null handle")
+	}
+	precomp := &FastRotationPrecompute{ptr: precompH}
+	return precomp, nil
+}
+
+func (cc *CryptoContext) EvalFastRotation(ct *Ciphertext, index int32, m uint32, precomp *FastRotationPrecompute) (*Ciphertext, error) {
+	if cc.ptr == nil {
+		return nil, errors.New("CryptoContext is closed or invalid")
+	}
+	if ct == nil || ct.ptr == nil {
+		return nil, errors.New("Input Ciphertext is closed or invalid")
+	}
+	if precomp == nil || precomp.ptr == nil {
+		return nil, errors.New("FastRotationPrecompute is closed or invalid")
+	}
+	var ctH C.CiphertextPtr
+	status := C.CryptoContext_EvalFastRotation(cc.ptr, ct.ptr, C.int32_t(index), C.uint32_t(m), precomp.ptr, &ctH)
+	err := checkPKEErrorMsg(status)
+	if err != nil {
+		return nil, err
+	}
+	if ctH == nil {
+		return nil, errors.New("EvalFastRotation returned OK but null handle")
+	}
+	resCt := &Ciphertext{ptr: ctH}
+	return resCt, nil
+}
+
+func (p *FastRotationPrecompute) Close() {
+	if p.ptr != nil {
+		C.DestroyFastRotationPrecompute(p.ptr)
+		p.ptr = nil
+	}
+}
+
+// GetNativeInt returns the native integer size in bits (64 or 128)
+func GetNativeInt() int {
+	return int(C.GetNativeInt())
 }
 
 // --- CKKS Bootstrapping ---

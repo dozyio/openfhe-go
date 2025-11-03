@@ -148,6 +148,34 @@ PKEErr ParamsCKKS_SetNumLargeDigits(ParamsCKKSPtr p, int numDigits) {
   PKE_CATCH_RETURN()
 }
 
+PKEErr ParamsCKKS_SetDigitSize(ParamsCKKSPtr p, int digitSize) {
+  try {
+    if (!p) {
+      return MakePKEError("ParamsCKKS_SetDigitSize: null params");
+    }
+    reinterpret_cast<CCParams<CryptoContextCKKSRNS> *>(p)->SetDigitSize(
+        digitSize);
+
+    return MakePKEOk();
+  }
+  PKE_CATCH_RETURN()
+}
+
+PKEErr ParamsCKKS_SetKeySwitchTechnique(ParamsCKKSPtr p, int technique) {
+  try {
+    if (!p) {
+      return MakePKEError("ParamsCKKS_SetKeySwitchTechnique: null params");
+    }
+    // Map int to KeySwitchTechnique enum
+    // INVALID = 0, BV = 1, HYBRID = 2 (same as in OpenFHE)
+    reinterpret_cast<CCParams<CryptoContextCKKSRNS> *>(p)
+        ->SetKeySwitchTechnique(static_cast<KeySwitchTechnique>(technique));
+
+    return MakePKEOk();
+  }
+  PKE_CATCH_RETURN()
+}
+
 void DestroyParamsCKKS(ParamsCKKSPtr p) {
   delete reinterpret_cast<CCParams<CryptoContextCKKSRNS> *>(p);
 }
@@ -173,8 +201,8 @@ PKEErr NewCryptoContextCKKS(ParamsCKKSPtr p, CryptoContextPtr *out) {
 
 // --- CKKS Plaintext ---
 PKEErr CryptoContext_MakeCKKSPackedPlaintext(CryptoContextPtr cc_ptr_to_sptr,
-                                              double *values, int len,
-                                              PlaintextPtr *out) {
+                                             double *values, int len,
+                                             PlaintextPtr *out) {
   try {
     if (!cc_ptr_to_sptr) {
       return MakePKEError(
@@ -238,7 +266,7 @@ CryptoContext_MakeCKKSComplexPackedPlaintext(CryptoContextPtr cc_ptr_to_sptr,
 }
 
 PKEErr Plaintext_GetComplexPackedValueLength(PlaintextPtr pt_ptr_to_sptr,
-                                              int *out_len) {
+                                             int *out_len) {
   try {
     if (!pt_ptr_to_sptr) {
       return MakePKEError(
@@ -263,7 +291,7 @@ PKEErr Plaintext_GetComplexPackedValueLength(PlaintextPtr pt_ptr_to_sptr,
 }
 
 PKEErr Plaintext_GetComplexPackedValueAt(PlaintextPtr pt_ptr_to_sptr, int i,
-                                          complex_double_t *out) {
+                                         complex_double_t *out) {
   try {
     if (!!pt_ptr_to_sptr) {
       return MakePKEError("Plaintext_GetComplexPackedValueAt: null plaintext");
@@ -294,8 +322,7 @@ PKEErr Plaintext_GetComplexPackedValueAt(PlaintextPtr pt_ptr_to_sptr, int i,
 
 // --- CKKS Operations ---
 PKEErr CryptoContext_Rescale(CryptoContextPtr cc_ptr_to_sptr,
-                              CiphertextPtr ct_ptr_to_sptr,
-                              CiphertextPtr *out) {
+                             CiphertextPtr ct_ptr_to_sptr, CiphertextPtr *out) {
   try {
     if (!cc_ptr_to_sptr) {
       return MakePKEError("CryptoContext_Rescale: null context");
@@ -321,8 +348,8 @@ PKEErr CryptoContext_Rescale(CryptoContextPtr cc_ptr_to_sptr,
 }
 
 PKEErr CryptoContext_ModReduce(CryptoContextPtr cc_ptr_to_sptr,
-                                CiphertextPtr ct_ptr_to_sptr,
-                                CiphertextPtr *out) {
+                               CiphertextPtr ct_ptr_to_sptr,
+                               CiphertextPtr *out) {
   try {
     if (!cc_ptr_to_sptr) {
       return MakePKEError("CryptoContext_ModReduce: null context");
@@ -349,9 +376,9 @@ PKEErr CryptoContext_ModReduce(CryptoContextPtr cc_ptr_to_sptr,
 }
 
 PKEErr CryptoContext_EvalPoly(CryptoContextPtr cc_ptr_to_sptr,
-                               CiphertextPtr ct_ptr_to_sptr,
-                               const double *coefficients, size_t count,
-                               CiphertextPtr *out) {
+                              CiphertextPtr ct_ptr_to_sptr,
+                              const double *coefficients, size_t count,
+                              CiphertextPtr *out) {
   try {
     if (!cc_ptr_to_sptr) {
       return MakePKEError("CryptoContext_EvalPoly: null context");
@@ -390,7 +417,7 @@ PKEErr CryptoContext_EvalPoly(CryptoContextPtr cc_ptr_to_sptr,
 
 // --- CKKS Bootstrapping ---
 PKEErr CryptoContext_EvalBootstrapSetup_Simple(CryptoContextPtr cc_ptr_to_sptr,
-                                                const uint32_t *lb, int len) {
+                                               const uint32_t *lb, int len) {
   try {
     if (!cc_ptr_to_sptr) {
       return MakePKEError(
@@ -410,8 +437,8 @@ PKEErr CryptoContext_EvalBootstrapSetup_Simple(CryptoContextPtr cc_ptr_to_sptr,
 }
 
 PKEErr CryptoContext_EvalBootstrapKeyGen(CryptoContextPtr cc_ptr_to_sptr,
-                                          KeyPairPtr keys_raw_ptr,
-                                          uint32_t slots) {
+                                         KeyPairPtr keys_raw_ptr,
+                                         uint32_t slots) {
   try {
     auto &cc = GetCCSharedPtr(cc_ptr_to_sptr);
     if (!cc) {
@@ -434,8 +461,8 @@ PKEErr CryptoContext_EvalBootstrapKeyGen(CryptoContextPtr cc_ptr_to_sptr,
 }
 
 PKEErr CryptoContext_EvalBootstrap(CryptoContextPtr cc_ptr_to_sptr,
-                                    CiphertextPtr ct_ptr_to_sptr,
-                                    CiphertextPtr *out) {
+                                   CiphertextPtr ct_ptr_to_sptr,
+                                   CiphertextPtr *out) {
   try {
     auto &cc = GetCCSharedPtr(cc_ptr_to_sptr);
     auto &ct = GetCTSharedPtr(ct_ptr_to_sptr);
