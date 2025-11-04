@@ -496,7 +496,9 @@ func (cc *CryptoContext) EvalCompareSwitchPrecompute(pLWE uint32, scaleSign floa
 
 // DecryptLWECiphertext decrypts an LWE ciphertext using the LWEPrivateKey from scheme switching
 // This is a convenience method that calls the BinFHE context's decrypt function
-func (lwesk *LWEPrivateKey) DecryptLWECiphertext(ccLWE *BinFHEContext, ct *LWECiphertext, p uint64) (uint64, error) {
+// Returns int64 to match OpenFHE's LWEPlaintext type
+// Note: returned values are always in range [0, p-1] despite being signed
+func (lwesk *LWEPrivateKey) DecryptLWECiphertext(ccLWE *BinFHEContext, ct *LWECiphertext, p uint64) (int64, error) {
 	if lwesk == nil || lwesk.ptr == nil {
 		return 0, errors.New("LWEPrivateKey is closed or invalid")
 	}
@@ -507,7 +509,7 @@ func (lwesk *LWEPrivateKey) DecryptLWECiphertext(ccLWE *BinFHEContext, ct *LWECi
 		return 0, errors.New("LWECiphertext is closed or invalid")
 	}
 
-	var result C.uint64_t
+	var result C.int64_t
 	// Convert LWEPrivateKeyPtr to unsafe.Pointer for void* parameter
 	status := C.BinFHEContext_DecryptModulusLWEKey(ccLWE.h, unsafe.Pointer(lwesk.ptr), ct.h, C.uint64_t(p), &result)
 	err := checkBinFHEErrorMsg(status)
@@ -515,5 +517,5 @@ func (lwesk *LWEPrivateKey) DecryptLWECiphertext(ccLWE *BinFHEContext, ct *LWECi
 		return 0, err
 	}
 
-	return uint64(result), nil
+	return int64(result), nil
 }

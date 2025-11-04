@@ -301,7 +301,9 @@ func (cc *BinFHEContext) Decrypt(sk *BinFHESecretKey, ct *BinFHECiphertext) (int
 }
 
 // DecryptModulus decrypts with a specific plaintext modulus
-func (cc *BinFHEContext) DecryptModulus(sk *BinFHESecretKey, ct *BinFHECiphertext, p uint64) (uint64, error) {
+// Returns int64 to match OpenFHE's LWEPlaintext type
+// Note: returned values are always in range [0, p-1] despite being signed
+func (cc *BinFHEContext) DecryptModulus(sk *BinFHESecretKey, ct *BinFHECiphertext, p uint64) (int64, error) {
 	if cc.h == nil {
 		return 0, errors.New("BinFHEContext is closed or invalid")
 	}
@@ -314,7 +316,7 @@ func (cc *BinFHEContext) DecryptModulus(sk *BinFHESecretKey, ct *BinFHECiphertex
 		return 0, errors.New("BinFHECiphertext is closed or invalid")
 	}
 
-	var result C.uint64_t
+	var result C.int64_t
 
 	status := C.BinFHEContext_DecryptModulus(cc.h, sk.h, ct.h, C.uint64_t(p), &result)
 	err := checkBinFHEErrorMsg(status)
@@ -322,7 +324,7 @@ func (cc *BinFHEContext) DecryptModulus(sk *BinFHESecretKey, ct *BinFHECiphertex
 		return 0, err
 	}
 
-	return uint64(result), nil
+	return int64(result), nil
 }
 
 // GetMaxPlaintextSpace returns the maximum plaintext space

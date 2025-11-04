@@ -126,15 +126,17 @@ BinFHEErr BinFHEContext_Decrypt(BinFHEContextH h, LWESecretKeyH sk,
                                 int *out_bit); // Output param
 
 // Decrypt with plaintext modulus
+// Returns int64_t to match OpenFHE's LWEPlaintext type (signed values)
 BinFHEErr BinFHEContext_DecryptModulus(BinFHEContextH h, LWESecretKeyH sk,
                                        LWECiphertextH ct, uint64_t p,
-                                       uint64_t *out_val);
+                                       int64_t *out_val);
 
 // Decrypt with plaintext modulus using LWEPrivateKey (from scheme switching)
 // Note: We use void* to accept the LWEPrivateKeyPtr from schemeswitch_c.h
+// Returns int64_t to match OpenFHE's LWEPlaintext type (signed values)
 BinFHEErr BinFHEContext_DecryptModulusLWEKey(BinFHEContextH h, void *sk,
                                              LWECiphertextH ct, uint64_t p,
-                                             uint64_t *out_val);
+                                             int64_t *out_val);
 
 // --- Parameter Getters ---
 BinFHEErr BinFHEContext_GetMaxPlaintextSpace(BinFHEContextH h, uint32_t *out);

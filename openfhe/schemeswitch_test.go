@@ -84,7 +84,11 @@ func TestBasicSchemeSwitching(t *testing.T) {
 	t.Logf("FHEW scheme using n=%d, logQ=25, q=%d, p=%d", n, q, pLWE)
 
 	// Step 4: Encode and encrypt input
-	x1 := []float64{0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0}
+	// Use values that avoid exact rounding boundaries to prevent non-deterministic results
+	// This matches the approach in OpenFHE's C++ unit tests (UnitTestSchemeSwitch.cpp)
+	// which uses {0, 1, -2, -3, pLWE/8, pLWE/4, pLWE/2, pLWE/1} for the first 8 values
+	pLWEFloat := float64(pLWE)
+	x1 := []float64{0.0, 1.0, -2.0, -3.0, pLWEFloat / 8.0, pLWEFloat / 4.0, pLWEFloat / 2.0, pLWEFloat / 1.0}
 
 	ptxt1, err := cc.MakeCKKSPackedPlaintext(x1)
 	mustT(t, err, "MakeCKKSPackedPlaintext")
@@ -112,9 +116,20 @@ func TestBasicSchemeSwitching(t *testing.T) {
 
 	// Step 6: Decrypt FHEW ciphertexts to verify
 	t.Log("Decrypting FHEW ciphertexts:")
-	x1Int := make([]uint64, len(x1))
+	// Compute expected values matching C++ test pattern
+	// C++ does: static_cast<int32_t>(static_cast<int32_t>(round(x)) % pLWE)
+	// When pLWE is uint64, the modulo operation converts signed to unsigned modular form
+	x1Int := make([]int64, len(x1))
 	for i := range x1 {
-		x1Int[i] = uint64(math.RoundToEven(x1[i])) % uint64(pLWE)
+		// Round the input value
+		rounded := int64(math.Round(x1[i]))
+		// Modulo with uint64 pLWE converts to positive modular representation
+		// This matches C++: int64 % uint64 promotes to uint64, giving [0, p-1]
+		result := rounded % int64(pLWE)
+		if result < 0 {
+			result += int64(pLWE)
+		}
+		x1Int[i] = result
 	}
 
 	for i := 0; i < len(lweCts) && i < len(x1); i++ {
