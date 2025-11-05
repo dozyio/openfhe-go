@@ -26,7 +26,7 @@ CMAKE_OPTIONS := -DBUILD_SHARED=OFF \
 
 # --- Targets ---
 
-.PHONY: all build run clean fetch_openfhe build_openfhe clean_openfhe
+.PHONY: all build run clean fetch_openfhe build_openfhe clean_openfhe test test-coverage benchmark
 
 # Default target: build the Go application
 all: build
@@ -77,6 +77,23 @@ test: $(OPENFHE_INSTALL_MARKER)
 	@echo "Running Go tests..."
 	@go test -v -count 1 ./openfhe
 
+test-coverage: $(OPENFHE_INSTALL_MARKER)
+	@echo "Running Go tests with coverage..."
+	@go test -v -count 1 -coverprofile=coverage.out ./openfhe
+	@echo "\n--- Coverage Summary ---"
+	@go tool cover -func=coverage.out | tail -1
+	@echo "\nGenerating HTML coverage report..."
+	@go tool cover -html=coverage.out -o coverage.html
+	@echo "Coverage report generated: coverage.html"
+
+test-short: $(OPENFHE_INSTALL_MARKER)
+	@echo "Running Go tests (short mode, skips slow tests)..."
+	@go test -v -short -count 1 ./openfhe
+
+benchmark: $(OPENFHE_INSTALL_MARKER)
+	@echo "Running benchmarks..."
+	@go test -bench=. -benchmem -count 3 ./openfhe
+
 run-examples: $(OPENFHE_INSTALL_MARKER)
 	@echo "Running all Go examples..."
 	@find ./examples -type f -name 'main.go' -execdir sh -c 'echo "\n▶ running $$(pwd)/$$1"; go run . ' _ {} \;
@@ -85,6 +102,7 @@ run-examples: $(OPENFHE_INSTALL_MARKER)
 clean:
 	@echo "--- Cleaning Go build artifacts ---"
 	@rm -f $(GO_APP_NAME)
+	@rm -f coverage.out coverage.html
 	@go clean
 
 # Target to clean OpenFHE build and install directories

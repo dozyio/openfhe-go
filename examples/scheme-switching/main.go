@@ -206,7 +206,13 @@ func runSchemeSwitchingExample() error {
 			continue
 		}
 
-		expected := uint64(math.Round(x[i])) % uint64(pLWE)
+		// Compute expected value matching C++ test pattern
+		// C++ does: static_cast<int32_t>(static_cast<int32_t>(round(x)) % pLWE)
+		rounded := int64(math.Round(x[i]))
+		expected := rounded % int64(pLWE)
+		if expected < 0 {
+			expected += int64(pLWE)
+		}
 		status := "✓"
 		if result != expected {
 			status = "✗"
