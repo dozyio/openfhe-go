@@ -52,6 +52,30 @@ func (p *ParamsBFV) SetMultiplicativeDepth(depth int) error {
 	return nil
 }
 
+func (p *ParamsBFV) SetSecurityLevel(level SecurityLevel) error {
+	if p.ptr == nil {
+		return errors.New("ParamsBFV is closed or invalid")
+	}
+	status := C.ParamsBFV_SetSecurityLevel(p.ptr, C.OFHESecurityLevel(level))
+	err := checkPKEErrorMsg(status)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (p *ParamsBFV) SetRingDim(ringDim uint64) error {
+	if p.ptr == nil {
+		return errors.New("ParamsBFV is closed or invalid")
+	}
+	status := C.ParamsBFV_SetRingDim(p.ptr, C.uint64_t(ringDim))
+	err := checkPKEErrorMsg(status)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func (p *ParamsBFV) Close() {
 	if p.ptr != nil {
 		C.DestroyParamsBFV(p.ptr)

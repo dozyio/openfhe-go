@@ -44,6 +44,29 @@ PKEErr ParamsBFV_SetMultiplicativeDepth(ParamsBFVPtr p, int depth) {
   PKE_CATCH_RETURN()
 }
 
+PKEErr ParamsBFV_SetSecurityLevel(ParamsBFVPtr p, OFHESecurityLevel level) {
+  try {
+    if (!p) {
+      return MakePKEError("ParamsBFV_SetSecurityLevel: null params");
+    }
+    auto params = reinterpret_cast<CCParams<CryptoContextBFVRNS> *>(p);
+    params->SetSecurityLevel(static_cast<lbcrypto::SecurityLevel>(level));
+    return MakePKEOk();
+  }
+  PKE_CATCH_RETURN()
+}
+
+PKEErr ParamsBFV_SetRingDim(ParamsBFVPtr p, uint64_t ringDim) {
+  try {
+    if (!p) {
+      return MakePKEError("ParamsBFV_SetRingDim: null params");
+    }
+    reinterpret_cast<CCParams<CryptoContextBFVRNS> *>(p)->SetRingDim(ringDim);
+    return MakePKEOk();
+  }
+  PKE_CATCH_RETURN()
+}
+
 void DestroyParamsBFV(ParamsBFVPtr p) {
   delete reinterpret_cast<CCParams<CryptoContextBFVRNS> *>(p);
 }

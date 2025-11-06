@@ -34,6 +34,7 @@ See examples and tests for usage
 - [x] advanced-real-numbers-128
 - [x] advanced-real-numbers
 - [ ] function-evaluation
+- [x] inner-product
 - [ ] interactive-bootstrapping
 - [ ] iterative-ckks-bootstrapping
 - [x] polynomial-evaluation

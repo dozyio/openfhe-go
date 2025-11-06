@@ -396,3 +396,100 @@ func GetBootstrapDepth(levelBudget []uint32, skd SecretKeyDist) uint32 {
 
 	return uint32(d)
 }
+
+// --- CKKS Advanced Operations ---
+
+// EvalSumKeyGen generates the rotation keys required for EvalSum operations.
+// This must be called before using EvalSum or EvalInnerProduct.
+// The function generates all necessary rotation keys for summing slots.
+func (cc *CryptoContext) EvalSumKeyGen(keys *KeyPair) error {
+	if cc.ptr == nil {
+		return errors.New("CryptoContext is closed or invalid")
+	}
+	if keys == nil || keys.ptr == nil {
+		return errors.New("KeyPair is closed or invalid")
+	}
+
+	status := C.CryptoContext_EvalSumKeyGen(cc.ptr, keys.ptr)
+	err := checkPKEErrorMsg(status)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// EvalSum computes the sum of all slots in a ciphertext.
+// Returns a ciphertext where all slots contain the sum of the input slots.
+// Requires EvalSumKeyGen to have been called first.
+//
+// Parameters:
+//   - ct: The input ciphertext
+//   - batchSize: The number of slots to sum (must match the batch size used during encryption)
+//
+// Example:
+//
+//	input:  [1, 2, 3, 4, 5, 6, 7, 8]
+//	output: [36, 36, 36, 36, 36, 36, 36, 36]  // sum = 1+2+3+4+5+6+7+8 = 36
+func (cc *CryptoContext) EvalSum(ct *Ciphertext, batchSize uint32) (*Ciphertext, error) {
+	if cc.ptr == nil {
+		return nil, errors.New("CryptoContext is closed or invalid")
+	}
+	if ct == nil || ct.ptr == nil {
+		return nil, errors.New("Input Ciphertext is closed or invalid")
+	}
+
+	var ctH C.CiphertextPtr
+	status := C.CryptoContext_EvalSum(cc.ptr, ct.ptr, C.uint32_t(batchSize), &ctH)
+	err := checkPKEErrorMsg(status)
+	if err != nil {
+		return nil, err
+	}
+
+	if ctH == nil {
+		return nil, errors.New("EvalSum returned OK but null handle")
+	}
+
+	resCt := &Ciphertext{ptr: ctH}
+	return resCt, nil
+}
+
+// EvalInnerProduct computes the inner product (dot product) of two ciphertexts.
+// Returns a ciphertext containing the inner product result in all slots.
+// Requires both EvalMultKeyGen and EvalSumKeyGen to have been called first.
+//
+// The inner product is computed as: sum(ct1[i] * ct2[i]) for i in 0..batchSize-1
+//
+// Parameters:
+//   - ct1: The first input ciphertext
+//   - ct2: The second input ciphertext
+//   - batchSize: The number of slots to use in the computation
+//
+// Example:
+//
+//	ct1:    [1, 2, 3, 4]
+//	ct2:    [5, 6, 7, 8]
+//	output: [70, 70, 70, 70]  // 1*5 + 2*6 + 3*7 + 4*8 = 70
+func (cc *CryptoContext) EvalInnerProduct(ct1, ct2 *Ciphertext, batchSize uint32) (*Ciphertext, error) {
+	if cc.ptr == nil {
+		return nil, errors.New("CryptoContext is closed or invalid")
+	}
+	if ct1 == nil || ct1.ptr == nil || ct2 == nil || ct2.ptr == nil {
+		return nil, errors.New("Input Ciphertext is closed or invalid")
+	}
+
+	var ctH C.CiphertextPtr
+	status := C.CryptoContext_EvalInnerProduct(cc.ptr, ct1.ptr, ct2.ptr,
+		C.uint32_t(batchSize), &ctH)
+	err := checkPKEErrorMsg(status)
+	if err != nil {
+		return nil, err
+	}
+
+	if ctH == nil {
+		return nil, errors.New("EvalInnerProduct returned OK but null handle")
+	}
+
+	resCt := &Ciphertext{ptr: ctH}
+	return resCt, nil
+}

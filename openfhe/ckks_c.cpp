@@ -495,4 +495,86 @@ uint32_t CKKS_GetBootstrapDepth(const uint32_t *levelBudget, int len,
   return FHECKKSRNS::GetBootstrapDepth(lb, skd);
 }
 
+// --- CKKS Advanced Operations ---
+PKEErr CryptoContext_EvalSumKeyGen(CryptoContextPtr cc_ptr_to_sptr,
+                                   KeyPairPtr keys_raw_ptr) {
+  try {
+    if (!cc_ptr_to_sptr) {
+      return MakePKEError("CryptoContext_EvalSumKeyGen: null context");
+    }
+    if (!keys_raw_ptr) {
+      return MakePKEError("CryptoContext_EvalSumKeyGen: null keypair");
+    }
+
+    auto &cc_sptr = GetCCSharedPtr(cc_ptr_to_sptr);
+    auto kp_raw = reinterpret_cast<KeyPairRawPtr>(keys_raw_ptr);
+
+    if (!kp_raw->secretKey) {
+      return MakePKEError(
+          "CryptoContext_EvalSumKeyGen: keypair has no secret key");
+    }
+
+    cc_sptr->EvalSumKeyGen(kp_raw->secretKey);
+    return MakePKEOk();
+  }
+  PKE_CATCH_RETURN()
+}
+
+PKEErr CryptoContext_EvalSum(CryptoContextPtr cc_ptr_to_sptr,
+                             CiphertextPtr ct_ptr_to_sptr, uint32_t batchSize,
+                             CiphertextPtr *out) {
+  try {
+    if (!cc_ptr_to_sptr) {
+      return MakePKEError("CryptoContext_EvalSum: null context");
+    }
+    if (!ct_ptr_to_sptr) {
+      return MakePKEError("CryptoContext_EvalSum: null ciphertext");
+    }
+    if (!out) {
+      return MakePKEError("CryptoContext_EvalSum: null output pointer");
+    }
+
+    auto &cc_sptr = GetCCSharedPtr(cc_ptr_to_sptr);
+    auto &ct_sptr = GetCTSharedPtr(ct_ptr_to_sptr);
+
+    Ciphertext<DCRTPoly> result_ct_sptr = cc_sptr->EvalSum(ct_sptr, batchSize);
+    *out = reinterpret_cast<CiphertextPtr>(
+        new CiphertextSharedPtr(result_ct_sptr));
+
+    return MakePKEOk();
+  }
+  PKE_CATCH_RETURN()
+}
+
+PKEErr CryptoContext_EvalInnerProduct(CryptoContextPtr cc_ptr_to_sptr,
+                                      CiphertextPtr ct1_ptr_to_sptr,
+                                      CiphertextPtr ct2_ptr_to_sptr,
+                                      uint32_t batchSize, CiphertextPtr *out) {
+  try {
+    if (!cc_ptr_to_sptr) {
+      return MakePKEError("CryptoContext_EvalInnerProduct: null context");
+    }
+    if (!ct1_ptr_to_sptr || !ct2_ptr_to_sptr) {
+      return MakePKEError(
+          "CryptoContext_EvalInnerProduct: null input ciphertext");
+    }
+    if (!out) {
+      return MakePKEError(
+          "CryptoContext_EvalInnerProduct: null output pointer");
+    }
+
+    auto &cc_sptr = GetCCSharedPtr(cc_ptr_to_sptr);
+    auto &ct1_sptr = GetCTSharedPtr(ct1_ptr_to_sptr);
+    auto &ct2_sptr = GetCTSharedPtr(ct2_ptr_to_sptr);
+
+    Ciphertext<DCRTPoly> result_ct_sptr =
+        cc_sptr->EvalInnerProduct(ct1_sptr, ct2_sptr, batchSize);
+    *out = reinterpret_cast<CiphertextPtr>(
+        new CiphertextSharedPtr(result_ct_sptr));
+
+    return MakePKEOk();
+  }
+  PKE_CATCH_RETURN()
+}
+
 } // extern "C"

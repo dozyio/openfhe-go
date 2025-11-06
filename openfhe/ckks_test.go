@@ -159,3 +159,338 @@ func TestCKKSBootstrap_AfterArithmetic(t *testing.T) {
 		t.Fatalf("CKKS bootstrap after arithmetic mismatch.\nwant ~%v\ngot  %v", want, got[:len(want)])
 	}
 }
+
+// Test 3: EvalSum - basic functionality
+func TestCKKS_EvalSum(t *testing.T) {
+	// Setup
+	params, err := NewParamsCKKSRNS()
+	mustT(t, err, "NewParamsCKKSRNS")
+	defer params.Close()
+
+	mustT(t, params.SetMultiplicativeDepth(5), "SetMultiplicativeDepth")
+	mustT(t, params.SetScalingModSize(50), "SetScalingModSize")
+	mustT(t, params.SetBatchSize(8), "SetBatchSize")
+
+	cc, err := NewCryptoContextCKKS(params)
+	mustT(t, err, "NewCryptoContextCKKS")
+	defer cc.Close()
+
+	mustT(t, cc.Enable(PKE), "Enable PKE")
+	mustT(t, cc.Enable(KEYSWITCH), "Enable KEYSWITCH")
+	mustT(t, cc.Enable(LEVELEDSHE), "Enable LEVELEDSHE")
+	mustT(t, cc.Enable(ADVANCEDSHE), "Enable ADVANCEDSHE")
+
+	keys, err := cc.KeyGen()
+	mustT(t, err, "KeyGen")
+	defer keys.Close()
+
+	// Generate sum keys
+	mustT(t, cc.EvalSumKeyGen(keys), "EvalSumKeyGen")
+
+	// Create test vector
+	batchSize := uint32(8)
+	input := []float64{1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0}
+	expectedSum := 36.0 // Sum of 1+2+...+8
+
+	pt, err := cc.MakeCKKSPackedPlaintext(input)
+	mustT(t, err, "MakeCKKSPackedPlaintext")
+	defer pt.Close()
+
+	ct, err := cc.Encrypt(keys, pt)
+	mustT(t, err, "Encrypt")
+	defer ct.Close()
+
+	// Perform sum
+	ctSum, err := cc.EvalSum(ct, batchSize)
+	mustT(t, err, "EvalSum")
+	defer ctSum.Close()
+
+	// Decrypt and verify
+	ptResult, err := cc.Decrypt(keys, ctSum)
+	mustT(t, err, "Decrypt")
+	defer ptResult.Close()
+
+	result, err := ptResult.GetRealPackedValue()
+	mustT(t, err, "GetRealPackedValue")
+
+	// All slots should contain the sum
+	tolerance := 0.01
+	for i := 0; i < len(input); i++ {
+		if math.Abs(result[i]-expectedSum) > tolerance {
+			t.Errorf("Slot %d: expected %.6f, got %.6f", i, expectedSum, result[i])
+		}
+	}
+}
+
+// Test 4: EvalSum - small batch size
+func TestCKKS_EvalSum_SmallBatch(t *testing.T) {
+	params, err := NewParamsCKKSRNS()
+	mustT(t, err, "NewParamsCKKSRNS")
+	defer params.Close()
+
+	mustT(t, params.SetMultiplicativeDepth(5), "SetMultiplicativeDepth")
+	mustT(t, params.SetScalingModSize(50), "SetScalingModSize")
+	mustT(t, params.SetBatchSize(4), "SetBatchSize")
+
+	cc, err := NewCryptoContextCKKS(params)
+	mustT(t, err, "NewCryptoContextCKKS")
+	defer cc.Close()
+
+	mustT(t, cc.Enable(PKE), "Enable PKE")
+	mustT(t, cc.Enable(KEYSWITCH), "Enable KEYSWITCH")
+	mustT(t, cc.Enable(LEVELEDSHE), "Enable LEVELEDSHE")
+	mustT(t, cc.Enable(ADVANCEDSHE), "Enable ADVANCEDSHE")
+
+	keys, err := cc.KeyGen()
+	mustT(t, err, "KeyGen")
+	defer keys.Close()
+
+	mustT(t, cc.EvalSumKeyGen(keys), "EvalSumKeyGen")
+
+	batchSize := uint32(4)
+	input := []float64{10.5, 20.5, 30.5, 40.5}
+	expectedSum := 102.0 // 10.5 + 20.5 + 30.5 + 40.5
+
+	pt, err := cc.MakeCKKSPackedPlaintext(input)
+	mustT(t, err, "MakeCKKSPackedPlaintext")
+	defer pt.Close()
+
+	ct, err := cc.Encrypt(keys, pt)
+	mustT(t, err, "Encrypt")
+	defer ct.Close()
+
+	ctSum, err := cc.EvalSum(ct, batchSize)
+	mustT(t, err, "EvalSum")
+	defer ctSum.Close()
+
+	ptResult, err := cc.Decrypt(keys, ctSum)
+	mustT(t, err, "Decrypt")
+	defer ptResult.Close()
+
+	result, err := ptResult.GetRealPackedValue()
+	mustT(t, err, "GetRealPackedValue")
+
+	tolerance := 0.01
+	if math.Abs(result[0]-expectedSum) > tolerance {
+		t.Errorf("Expected sum %.6f, got %.6f", expectedSum, result[0])
+	}
+}
+
+// Test 5: EvalInnerProduct - basic functionality
+func TestCKKS_EvalInnerProduct(t *testing.T) {
+	params, err := NewParamsCKKSRNS()
+	mustT(t, err, "NewParamsCKKSRNS")
+	defer params.Close()
+
+	mustT(t, params.SetMultiplicativeDepth(5), "SetMultiplicativeDepth")
+	mustT(t, params.SetScalingModSize(50), "SetScalingModSize")
+	mustT(t, params.SetBatchSize(4), "SetBatchSize")
+
+	cc, err := NewCryptoContextCKKS(params)
+	mustT(t, err, "NewCryptoContextCKKS")
+	defer cc.Close()
+
+	mustT(t, cc.Enable(PKE), "Enable PKE")
+	mustT(t, cc.Enable(KEYSWITCH), "Enable KEYSWITCH")
+	mustT(t, cc.Enable(LEVELEDSHE), "Enable LEVELEDSHE")
+	mustT(t, cc.Enable(ADVANCEDSHE), "Enable ADVANCEDSHE")
+
+	keys, err := cc.KeyGen()
+	mustT(t, err, "KeyGen")
+	defer keys.Close()
+
+	// Generate required keys
+	mustT(t, cc.EvalMultKeyGen(keys), "EvalMultKeyGen")
+	mustT(t, cc.EvalSumKeyGen(keys), "EvalSumKeyGen")
+
+	// Create test vectors
+	batchSize := uint32(4)
+	vec1 := []float64{1.0, 2.0, 3.0, 4.0}
+	vec2 := []float64{5.0, 6.0, 7.0, 8.0}
+	expectedIP := 1.0*5.0 + 2.0*6.0 + 3.0*7.0 + 4.0*8.0 // = 70.0
+
+	pt1, err := cc.MakeCKKSPackedPlaintext(vec1)
+	mustT(t, err, "MakeCKKSPackedPlaintext 1")
+	defer pt1.Close()
+
+	pt2, err := cc.MakeCKKSPackedPlaintext(vec2)
+	mustT(t, err, "MakeCKKSPackedPlaintext 2")
+	defer pt2.Close()
+
+	ct1, err := cc.Encrypt(keys, pt1)
+	mustT(t, err, "Encrypt 1")
+	defer ct1.Close()
+
+	ct2, err := cc.Encrypt(keys, pt2)
+	mustT(t, err, "Encrypt 2")
+	defer ct2.Close()
+
+	// Compute inner product
+	ctIP, err := cc.EvalInnerProduct(ct1, ct2, batchSize)
+	mustT(t, err, "EvalInnerProduct")
+	defer ctIP.Close()
+
+	// Decrypt and verify
+	ptResult, err := cc.Decrypt(keys, ctIP)
+	mustT(t, err, "Decrypt")
+	defer ptResult.Close()
+
+	result, err := ptResult.GetRealPackedValue()
+	mustT(t, err, "GetRealPackedValue")
+
+	// All slots should contain inner product
+	tolerance := 0.01
+	if math.Abs(result[0]-expectedIP) > tolerance {
+		t.Errorf("Expected inner product %.6f, got %.6f", expectedIP, result[0])
+	}
+}
+
+// Test 6: EvalInnerProduct - orthogonal vectors
+func TestCKKS_EvalInnerProduct_Orthogonal(t *testing.T) {
+	params, err := NewParamsCKKSRNS()
+	mustT(t, err, "NewParamsCKKSRNS")
+	defer params.Close()
+
+	mustT(t, params.SetMultiplicativeDepth(5), "SetMultiplicativeDepth")
+	mustT(t, params.SetScalingModSize(50), "SetScalingModSize")
+	mustT(t, params.SetBatchSize(4), "SetBatchSize")
+
+	cc, err := NewCryptoContextCKKS(params)
+	mustT(t, err, "NewCryptoContextCKKS")
+	defer cc.Close()
+
+	mustT(t, cc.Enable(PKE), "Enable PKE")
+	mustT(t, cc.Enable(KEYSWITCH), "Enable KEYSWITCH")
+	mustT(t, cc.Enable(LEVELEDSHE), "Enable LEVELEDSHE")
+	mustT(t, cc.Enable(ADVANCEDSHE), "Enable ADVANCEDSHE")
+
+	keys, err := cc.KeyGen()
+	mustT(t, err, "KeyGen")
+	defer keys.Close()
+
+	mustT(t, cc.EvalMultKeyGen(keys), "EvalMultKeyGen")
+	mustT(t, cc.EvalSumKeyGen(keys), "EvalSumKeyGen")
+
+	// Orthogonal vectors: [1, 1, 0, 0] and [0, 0, 1, 1]
+	batchSize := uint32(4)
+	vec1 := []float64{1.0, 1.0, 0.0, 0.0}
+	vec2 := []float64{0.0, 0.0, 1.0, 1.0}
+	expectedIP := 0.0 // Orthogonal vectors
+
+	pt1, err := cc.MakeCKKSPackedPlaintext(vec1)
+	mustT(t, err, "MakeCKKSPackedPlaintext 1")
+	defer pt1.Close()
+
+	pt2, err := cc.MakeCKKSPackedPlaintext(vec2)
+	mustT(t, err, "MakeCKKSPackedPlaintext 2")
+	defer pt2.Close()
+
+	ct1, err := cc.Encrypt(keys, pt1)
+	mustT(t, err, "Encrypt 1")
+	defer ct1.Close()
+
+	ct2, err := cc.Encrypt(keys, pt2)
+	mustT(t, err, "Encrypt 2")
+	defer ct2.Close()
+
+	ctIP, err := cc.EvalInnerProduct(ct1, ct2, batchSize)
+	mustT(t, err, "EvalInnerProduct")
+	defer ctIP.Close()
+
+	ptResult, err := cc.Decrypt(keys, ctIP)
+	mustT(t, err, "Decrypt")
+	defer ptResult.Close()
+
+	result, err := ptResult.GetRealPackedValue()
+	mustT(t, err, "GetRealPackedValue")
+
+	tolerance := 0.01
+	if math.Abs(result[0]-expectedIP) > tolerance {
+		t.Errorf("Expected inner product %.6f, got %.6f", expectedIP, result[0])
+	}
+}
+
+// Test 7: EvalSum error handling - missing key generation
+func TestCKKS_EvalSum_MissingKeyGen(t *testing.T) {
+	params, err := NewParamsCKKSRNS()
+	mustT(t, err, "NewParamsCKKSRNS")
+	defer params.Close()
+
+	mustT(t, params.SetMultiplicativeDepth(5), "SetMultiplicativeDepth")
+	mustT(t, params.SetScalingModSize(50), "SetScalingModSize")
+	mustT(t, params.SetBatchSize(4), "SetBatchSize")
+
+	cc, err := NewCryptoContextCKKS(params)
+	mustT(t, err, "NewCryptoContextCKKS")
+	defer cc.Close()
+
+	mustT(t, cc.Enable(PKE), "Enable PKE")
+	mustT(t, cc.Enable(KEYSWITCH), "Enable KEYSWITCH")
+	mustT(t, cc.Enable(LEVELEDSHE), "Enable LEVELEDSHE")
+	mustT(t, cc.Enable(ADVANCEDSHE), "Enable ADVANCEDSHE")
+
+	keys, err := cc.KeyGen()
+	mustT(t, err, "KeyGen")
+	defer keys.Close()
+
+	// Intentionally skip EvalSumKeyGen
+
+	input := []float64{1.0, 2.0, 3.0, 4.0}
+	pt, err := cc.MakeCKKSPackedPlaintext(input)
+	mustT(t, err, "MakeCKKSPackedPlaintext")
+	defer pt.Close()
+
+	ct, err := cc.Encrypt(keys, pt)
+	mustT(t, err, "Encrypt")
+	defer ct.Close()
+
+	// This should fail because we didn't generate sum keys
+	_, err = cc.EvalSum(ct, 4)
+	if err == nil {
+		t.Error("Expected error when calling EvalSum without EvalSumKeyGen, got nil")
+	}
+}
+
+// Test 8: Error handling - closed context
+func TestCKKS_EvalSum_ClosedContext(t *testing.T) {
+	params, err := NewParamsCKKSRNS()
+	mustT(t, err, "NewParamsCKKSRNS")
+	defer params.Close()
+
+	mustT(t, params.SetMultiplicativeDepth(5), "SetMultiplicativeDepth")
+	mustT(t, params.SetScalingModSize(50), "SetScalingModSize")
+	mustT(t, params.SetBatchSize(4), "SetBatchSize")
+
+	cc, err := NewCryptoContextCKKS(params)
+	mustT(t, err, "NewCryptoContextCKKS")
+	cc.Close() // Close the context
+
+	ct := &Ciphertext{}
+	_, err = cc.EvalSum(ct, 8)
+	if err == nil {
+		t.Error("Expected error with closed context")
+	}
+	if err.Error() != "CryptoContext is closed or invalid" {
+		t.Errorf("Expected 'CryptoContext is closed or invalid', got %v", err)
+	}
+}
+
+// Test 9: Error handling - null ciphertext
+func TestCKKS_EvalSum_NullCiphertext(t *testing.T) {
+	params, err := NewParamsCKKSRNS()
+	mustT(t, err, "NewParamsCKKSRNS")
+	defer params.Close()
+
+	mustT(t, params.SetMultiplicativeDepth(5), "SetMultiplicativeDepth")
+	mustT(t, params.SetScalingModSize(50), "SetScalingModSize")
+	mustT(t, params.SetBatchSize(4), "SetBatchSize")
+
+	cc, err := NewCryptoContextCKKS(params)
+	mustT(t, err, "NewCryptoContextCKKS")
+	defer cc.Close()
+
+	_, err = cc.EvalSum(nil, 4)
+	if err == nil {
+		t.Error("Expected error with null ciphertext")
+	}
+}
