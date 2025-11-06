@@ -31,7 +31,7 @@ See examples and tests for usage
 - [x] boolean
 
 ### PKE FHE
-- [ ] advanced-real-numbers-128
+- [x] advanced-real-numbers-128
 - [x] advanced-real-numbers
 - [ ] function-evaluation
 - [ ] interactive-bootstrapping
