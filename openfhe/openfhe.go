@@ -228,6 +228,75 @@ func (cc *CryptoContext) EvalMult(ct1, ct2 *Ciphertext) (*Ciphertext, error) {
 	return ct, nil
 }
 
+func (cc *CryptoContext) EvalAddPlain(ct *Ciphertext, pt *Plaintext) (*Ciphertext, error) {
+	if cc.ptr == nil {
+		return nil, errors.New("CryptoContext is closed or invalid")
+	}
+	if ct == nil || ct.ptr == nil {
+		return nil, errors.New("Input Ciphertext is closed or invalid")
+	}
+	if pt == nil || pt.ptr == nil {
+		return nil, errors.New("Input Plaintext is closed or invalid")
+	}
+	var ctH C.CiphertextPtr
+	status := C.CryptoContext_EvalAddPlain(cc.ptr, ct.ptr, pt.ptr, &ctH)
+	err := checkPKEErrorMsg(status)
+	if err != nil {
+		return nil, err
+	}
+	if ctH == nil {
+		return nil, errors.New("EvalAddPlain returned OK but null handle")
+	}
+	resCt := &Ciphertext{ptr: ctH}
+	return resCt, nil
+}
+
+func (cc *CryptoContext) EvalSubPlain(ct *Ciphertext, pt *Plaintext) (*Ciphertext, error) {
+	if cc.ptr == nil {
+		return nil, errors.New("CryptoContext is closed or invalid")
+	}
+	if ct == nil || ct.ptr == nil {
+		return nil, errors.New("Input Ciphertext is closed or invalid")
+	}
+	if pt == nil || pt.ptr == nil {
+		return nil, errors.New("Input Plaintext is closed or invalid")
+	}
+	var ctH C.CiphertextPtr
+	status := C.CryptoContext_EvalSubPlain(cc.ptr, ct.ptr, pt.ptr, &ctH)
+	err := checkPKEErrorMsg(status)
+	if err != nil {
+		return nil, err
+	}
+	if ctH == nil {
+		return nil, errors.New("EvalSubPlain returned OK but null handle")
+	}
+	resCt := &Ciphertext{ptr: ctH}
+	return resCt, nil
+}
+
+func (cc *CryptoContext) EvalMultPlain(ct *Ciphertext, pt *Plaintext) (*Ciphertext, error) {
+	if cc.ptr == nil {
+		return nil, errors.New("CryptoContext is closed or invalid")
+	}
+	if ct == nil || ct.ptr == nil {
+		return nil, errors.New("Input Ciphertext is closed or invalid")
+	}
+	if pt == nil || pt.ptr == nil {
+		return nil, errors.New("Input Plaintext is closed or invalid")
+	}
+	var ctH C.CiphertextPtr
+	status := C.CryptoContext_EvalMultPlain(cc.ptr, ct.ptr, pt.ptr, &ctH)
+	err := checkPKEErrorMsg(status)
+	if err != nil {
+		return nil, err
+	}
+	if ctH == nil {
+		return nil, errors.New("EvalMultPlain returned OK but null handle")
+	}
+	resCt := &Ciphertext{ptr: ctH}
+	return resCt, nil
+}
+
 func (cc *CryptoContext) EvalRotate(ct *Ciphertext, index int32) (*Ciphertext, error) {
 	if cc.ptr == nil {
 		return nil, errors.New("CryptoContext is closed or invalid")

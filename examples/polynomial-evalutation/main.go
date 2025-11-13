@@ -135,9 +135,9 @@ func main() {
 		}
 
 		diff := math.Abs(expected[i] - gotVal)
-		status := "✅"
+		status := "Pass"
 		if diff > precision || math.IsNaN(gotVal) {
-			status = "❌"
+			status = "Fail"
 			passed = false
 		}
 		fmt.Printf(" %5.2f | %8.4f | %8.4f | %9.2e %s\n", input[i], expected[i], gotVal, diff, status)
@@ -151,8 +151,8 @@ func main() {
 	}
 
 	if !passed {
-		fmt.Println("\n❌ Polynomial Evaluation FAILED.")
+		fmt.Println("\nPolynomial Evaluation FAILED.")
 		os.Exit(1)
 	}
-	fmt.Println("\n✅ Polynomial Evaluation Successful!")
+	fmt.Println("\nPolynomial Evaluation Successful!")
 }

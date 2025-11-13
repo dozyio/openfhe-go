@@ -37,6 +37,7 @@ See examples and tests for usage
 - [x] inner-product
 - [ ] interactive-bootstrapping
 - [ ] iterative-ckks-bootstrapping
+- [x] plaintext-operations
 - [x] polynomial-evaluation
 - [ ] pre-buffer
 - [x] scheme-switching

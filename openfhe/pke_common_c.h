@@ -84,6 +84,12 @@ PKEErr CryptoContext_EvalFastRotation(CryptoContextPtr cc, CiphertextPtr ct,
                                        int32_t index, uint32_t m,
                                        void *precomp, CiphertextPtr *out);
 void DestroyFastRotationPrecompute(void *precomp);
+PKEErr CryptoContext_EvalAddPlain(CryptoContextPtr cc, CiphertextPtr ct,
+                                   PlaintextPtr pt, CiphertextPtr *out);
+PKEErr CryptoContext_EvalSubPlain(CryptoContextPtr cc, CiphertextPtr ct,
+                                   PlaintextPtr pt, CiphertextPtr *out);
+PKEErr CryptoContext_EvalMultPlain(CryptoContextPtr cc, CiphertextPtr ct,
+                                    PlaintextPtr pt, CiphertextPtr *out);
 
 // --- KeyPair ---
 PKEErr GetPublicKey(KeyPairPtr kp, void **out_pk_sptr_wrapper);

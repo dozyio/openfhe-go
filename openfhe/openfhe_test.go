@@ -675,3 +675,237 @@ func TestSerializationRoundTrip(t *testing.T) {
 		t.Errorf("Round Trip: Decryption mismatch. Expected %v, Got %v", vectorOfInts, result[:vecLen])
 	}
 }
+
+// --- Plain Operations Tests ---
+
+func TestBFVEvalAddPlain(t *testing.T) {
+	cc, keys := setupBFVContextAndKeys(t)
+	defer cc.Close()
+	defer keys.Close()
+
+	vectorOfInts1 := []int64{1, 2, 3, 4, 5, 6, 7, 8}
+	vectorOfInts2 := []int64{10, 20, 30, 40, 50, 60, 70, 80}
+
+	pt1, err := cc.MakePackedPlaintext(vectorOfInts1)
+	mustT(t, err, "MakePackedPlaintext pt1")
+	defer pt1.Close()
+
+	pt2, err := cc.MakePackedPlaintext(vectorOfInts2)
+	mustT(t, err, "MakePackedPlaintext pt2")
+	defer pt2.Close()
+
+	ct1, err := cc.Encrypt(keys, pt1)
+	mustT(t, err, "Encrypt ct1")
+	defer ct1.Close()
+
+	ctResult, err := cc.EvalAddPlain(ct1, pt2)
+	mustT(t, err, "EvalAddPlain")
+	defer ctResult.Close()
+
+	ptResult, err := cc.Decrypt(keys, ctResult)
+	mustT(t, err, "Decrypt")
+	defer ptResult.Close()
+
+	expected := []int64{11, 22, 33, 44, 55, 66, 77, 88}
+	result, err := ptResult.GetPackedValue()
+	mustT(t, err, "GetPackedValue")
+
+	vecLen := len(expected)
+	if !slicesEqual(result[:vecLen], expected) {
+		t.Errorf("BFV EvalAddPlain failed. Expected %v, Got %v", expected, result[:vecLen])
+	}
+}
+
+func TestBFVEvalSubPlain(t *testing.T) {
+	cc, keys := setupBFVContextAndKeys(t)
+	defer cc.Close()
+	defer keys.Close()
+
+	vectorOfInts1 := []int64{100, 200, 300, 400, 500, 600, 700, 800}
+	vectorOfInts2 := []int64{10, 20, 30, 40, 50, 60, 70, 80}
+
+	pt1, err := cc.MakePackedPlaintext(vectorOfInts1)
+	mustT(t, err, "MakePackedPlaintext pt1")
+	defer pt1.Close()
+
+	pt2, err := cc.MakePackedPlaintext(vectorOfInts2)
+	mustT(t, err, "MakePackedPlaintext pt2")
+	defer pt2.Close()
+
+	ct1, err := cc.Encrypt(keys, pt1)
+	mustT(t, err, "Encrypt ct1")
+	defer ct1.Close()
+
+	ctResult, err := cc.EvalSubPlain(ct1, pt2)
+	mustT(t, err, "EvalSubPlain")
+	defer ctResult.Close()
+
+	ptResult, err := cc.Decrypt(keys, ctResult)
+	mustT(t, err, "Decrypt")
+	defer ptResult.Close()
+
+	expected := []int64{90, 180, 270, 360, 450, 540, 630, 720}
+	result, err := ptResult.GetPackedValue()
+	mustT(t, err, "GetPackedValue")
+
+	vecLen := len(expected)
+	if !slicesEqual(result[:vecLen], expected) {
+		t.Errorf("BFV EvalSubPlain failed. Expected %v, Got %v", expected, result[:vecLen])
+	}
+}
+
+func TestBFVEvalMultPlain(t *testing.T) {
+	cc, keys := setupBFVContextAndKeys(t)
+	defer cc.Close()
+	defer keys.Close()
+
+	vectorOfInts1 := []int64{1, 2, 3, 4, 5, 6, 7, 8}
+	vectorOfInts2 := []int64{10, 20, 30, 40, 50, 60, 70, 80}
+
+	pt1, err := cc.MakePackedPlaintext(vectorOfInts1)
+	mustT(t, err, "MakePackedPlaintext pt1")
+	defer pt1.Close()
+
+	pt2, err := cc.MakePackedPlaintext(vectorOfInts2)
+	mustT(t, err, "MakePackedPlaintext pt2")
+	defer pt2.Close()
+
+	ct1, err := cc.Encrypt(keys, pt1)
+	mustT(t, err, "Encrypt ct1")
+	defer ct1.Close()
+
+	ctResult, err := cc.EvalMultPlain(ct1, pt2)
+	mustT(t, err, "EvalMultPlain")
+	defer ctResult.Close()
+
+	ptResult, err := cc.Decrypt(keys, ctResult)
+	mustT(t, err, "Decrypt")
+	defer ptResult.Close()
+
+	expected := []int64{10, 40, 90, 160, 250, 360, 490, 640}
+	result, err := ptResult.GetPackedValue()
+	mustT(t, err, "GetPackedValue")
+
+	vecLen := len(expected)
+	if !slicesEqual(result[:vecLen], expected) {
+		t.Errorf("BFV EvalMultPlain failed. Expected %v, Got %v", expected, result[:vecLen])
+	}
+}
+
+func TestCKKSEvalAddPlain(t *testing.T) {
+	cc, keys := setupCKKSContextAndKeys(t)
+	defer cc.Close()
+	defer keys.Close()
+
+	vectorOfDoubles1 := []float64{1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0}
+	vectorOfDoubles2 := []float64{0.5, 1.5, 2.5, 3.5, 4.5, 5.5, 6.5, 7.5}
+
+	pt1, err := cc.MakeCKKSPackedPlaintext(vectorOfDoubles1)
+	mustT(t, err, "MakeCKKSPackedPlaintext pt1")
+	defer pt1.Close()
+
+	pt2, err := cc.MakeCKKSPackedPlaintext(vectorOfDoubles2)
+	mustT(t, err, "MakeCKKSPackedPlaintext pt2")
+	defer pt2.Close()
+
+	ct1, err := cc.Encrypt(keys, pt1)
+	mustT(t, err, "Encrypt ct1")
+	defer ct1.Close()
+
+	ctResult, err := cc.EvalAddPlain(ct1, pt2)
+	mustT(t, err, "EvalAddPlain")
+	defer ctResult.Close()
+
+	ptResult, err := cc.Decrypt(keys, ctResult)
+	mustT(t, err, "Decrypt")
+	defer ptResult.Close()
+
+	expected := []float64{1.5, 3.5, 5.5, 7.5, 9.5, 11.5, 13.5, 15.5}
+	result, err := ptResult.GetRealPackedValue()
+	mustT(t, err, "GetRealPackedValue")
+
+	batchSize := len(expected)
+	tolerance := 0.0001
+	if !slicesApproxEqual(result[:batchSize], expected, tolerance) {
+		t.Errorf("CKKS EvalAddPlain failed. Expected ~%v, Got %v", expected, result[:batchSize])
+	}
+}
+
+func TestCKKSEvalSubPlain(t *testing.T) {
+	cc, keys := setupCKKSContextAndKeys(t)
+	defer cc.Close()
+	defer keys.Close()
+
+	vectorOfDoubles1 := []float64{10.0, 20.0, 30.0, 40.0, 50.0, 60.0, 70.0, 80.0}
+	vectorOfDoubles2 := []float64{0.5, 1.5, 2.5, 3.5, 4.5, 5.5, 6.5, 7.5}
+
+	pt1, err := cc.MakeCKKSPackedPlaintext(vectorOfDoubles1)
+	mustT(t, err, "MakeCKKSPackedPlaintext pt1")
+	defer pt1.Close()
+
+	pt2, err := cc.MakeCKKSPackedPlaintext(vectorOfDoubles2)
+	mustT(t, err, "MakeCKKSPackedPlaintext pt2")
+	defer pt2.Close()
+
+	ct1, err := cc.Encrypt(keys, pt1)
+	mustT(t, err, "Encrypt ct1")
+	defer ct1.Close()
+
+	ctResult, err := cc.EvalSubPlain(ct1, pt2)
+	mustT(t, err, "EvalSubPlain")
+	defer ctResult.Close()
+
+	ptResult, err := cc.Decrypt(keys, ctResult)
+	mustT(t, err, "Decrypt")
+	defer ptResult.Close()
+
+	expected := []float64{9.5, 18.5, 27.5, 36.5, 45.5, 54.5, 63.5, 72.5}
+	result, err := ptResult.GetRealPackedValue()
+	mustT(t, err, "GetRealPackedValue")
+
+	batchSize := len(expected)
+	tolerance := 0.0001
+	if !slicesApproxEqual(result[:batchSize], expected, tolerance) {
+		t.Errorf("CKKS EvalSubPlain failed. Expected ~%v, Got %v", expected, result[:batchSize])
+	}
+}
+
+func TestCKKSEvalMultPlain(t *testing.T) {
+	cc, keys := setupCKKSContextAndKeys(t)
+	defer cc.Close()
+	defer keys.Close()
+
+	vectorOfDoubles1 := []float64{1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0}
+	vectorOfDoubles2 := []float64{2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0}
+
+	pt1, err := cc.MakeCKKSPackedPlaintext(vectorOfDoubles1)
+	mustT(t, err, "MakeCKKSPackedPlaintext pt1")
+	defer pt1.Close()
+
+	pt2, err := cc.MakeCKKSPackedPlaintext(vectorOfDoubles2)
+	mustT(t, err, "MakeCKKSPackedPlaintext pt2")
+	defer pt2.Close()
+
+	ct1, err := cc.Encrypt(keys, pt1)
+	mustT(t, err, "Encrypt ct1")
+	defer ct1.Close()
+
+	ctResult, err := cc.EvalMultPlain(ct1, pt2)
+	mustT(t, err, "EvalMultPlain")
+	defer ctResult.Close()
+
+	// CKKS multiplication with plaintext doesn't require rescaling
+	ptResult, err := cc.Decrypt(keys, ctResult)
+	mustT(t, err, "Decrypt")
+	defer ptResult.Close()
+
+	expected := []float64{2.0, 6.0, 12.0, 20.0, 30.0, 42.0, 56.0, 72.0}
+	result, err := ptResult.GetRealPackedValue()
+	mustT(t, err, "GetRealPackedValue")
+
+	batchSize := len(expected)
+	tolerance := 0.01
+	if !slicesApproxEqual(result[:batchSize], expected, tolerance) {
+		t.Errorf("CKKS EvalMultPlain failed. Expected ~%v, Got %v", expected, result[:batchSize])
+	}
+}

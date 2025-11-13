@@ -271,6 +271,93 @@ PKEErr CryptoContext_EvalMult(CryptoContextPtr cc_ptr_to_sptr,
   PKE_CATCH_RETURN()
 }
 
+PKEErr CryptoContext_EvalAddPlain(CryptoContextPtr cc_ptr_to_sptr,
+                                  CiphertextPtr ct_ptr_to_sptr,
+                                  PlaintextPtr pt_ptr_to_sptr,
+                                  CiphertextPtr *out) {
+  try {
+    if (!cc_ptr_to_sptr) {
+      return MakePKEError("CryptoContext_EvalAddPlain: null context");
+    }
+    if (!ct_ptr_to_sptr) {
+      return MakePKEError("CryptoContext_EvalAddPlain: null input ciphertext");
+    }
+    if (!pt_ptr_to_sptr) {
+      return MakePKEError("CryptoContext_EvalAddPlain: null input plaintext");
+    }
+    if (!out) {
+      return MakePKEError("CryptoContext_EvalAddPlain: null output pointer");
+    }
+
+    auto &cc_sptr = GetCCSharedPtr(cc_ptr_to_sptr);
+    auto &ct_sptr = GetCTSharedPtr(ct_ptr_to_sptr);
+    auto &pt_sptr = GetPTSharedPtr(pt_ptr_to_sptr);
+    Ciphertext<DCRTPoly> result_ct_sptr = cc_sptr->EvalAdd(ct_sptr, pt_sptr);
+    *out = reinterpret_cast<CiphertextPtr>(
+        new CiphertextSharedPtr(result_ct_sptr));
+    return MakePKEOk();
+  }
+  PKE_CATCH_RETURN()
+}
+
+PKEErr CryptoContext_EvalSubPlain(CryptoContextPtr cc_ptr_to_sptr,
+                                  CiphertextPtr ct_ptr_to_sptr,
+                                  PlaintextPtr pt_ptr_to_sptr,
+                                  CiphertextPtr *out) {
+  try {
+    if (!cc_ptr_to_sptr) {
+      return MakePKEError("CryptoContext_EvalSubPlain: null context");
+    }
+    if (!ct_ptr_to_sptr) {
+      return MakePKEError("CryptoContext_EvalSubPlain: null input ciphertext");
+    }
+    if (!pt_ptr_to_sptr) {
+      return MakePKEError("CryptoContext_EvalSubPlain: null input plaintext");
+    }
+    if (!out) {
+      return MakePKEError("CryptoContext_EvalSubPlain: null output pointer");
+    }
+
+    auto &cc_sptr = GetCCSharedPtr(cc_ptr_to_sptr);
+    auto &ct_sptr = GetCTSharedPtr(ct_ptr_to_sptr);
+    auto &pt_sptr = GetPTSharedPtr(pt_ptr_to_sptr);
+    Ciphertext<DCRTPoly> result_ct_sptr = cc_sptr->EvalSub(ct_sptr, pt_sptr);
+    *out = reinterpret_cast<CiphertextPtr>(
+        new CiphertextSharedPtr(result_ct_sptr));
+    return MakePKEOk();
+  }
+  PKE_CATCH_RETURN()
+}
+
+PKEErr CryptoContext_EvalMultPlain(CryptoContextPtr cc_ptr_to_sptr,
+                                   CiphertextPtr ct_ptr_to_sptr,
+                                   PlaintextPtr pt_ptr_to_sptr,
+                                   CiphertextPtr *out) {
+  try {
+    if (!cc_ptr_to_sptr) {
+      return MakePKEError("CryptoContext_EvalMultPlain: null context");
+    }
+    if (!ct_ptr_to_sptr) {
+      return MakePKEError("CryptoContext_EvalMultPlain: null input ciphertext");
+    }
+    if (!pt_ptr_to_sptr) {
+      return MakePKEError("CryptoContext_EvalMultPlain: null input plaintext");
+    }
+    if (!out) {
+      return MakePKEError("CryptoContext_EvalMultPlain: null output pointer");
+    }
+
+    auto &cc_sptr = GetCCSharedPtr(cc_ptr_to_sptr);
+    auto &ct_sptr = GetCTSharedPtr(ct_ptr_to_sptr);
+    auto &pt_sptr = GetPTSharedPtr(pt_ptr_to_sptr);
+    Ciphertext<DCRTPoly> result_ct_sptr = cc_sptr->EvalMult(ct_sptr, pt_sptr);
+    *out = reinterpret_cast<CiphertextPtr>(
+        new CiphertextSharedPtr(result_ct_sptr));
+    return MakePKEOk();
+  }
+  PKE_CATCH_RETURN()
+}
+
 PKEErr CryptoContext_EvalRotate(CryptoContextPtr cc_ptr_to_sptr,
                                 CiphertextPtr ct_ptr_to_sptr, int32_t index,
                                 CiphertextPtr *out) {
