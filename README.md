@@ -39,7 +39,7 @@ See examples and tests for usage
 - [ ] iterative-ckks-bootstrapping
 - [x] plaintext-operations
 - [x] polynomial-evaluation
-- [ ] pre-buffer
+- [x] pre-buffer
 - [x] scheme-switching
 - [x] simple-ckks-bootstrapping
 - [x] simple-integers-bgvrns
