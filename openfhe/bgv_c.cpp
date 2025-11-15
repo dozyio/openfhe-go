@@ -41,6 +41,18 @@ PKEErr ParamsBGV_SetMultiplicativeDepth(ParamsBGVPtr p, int depth) {
   PKE_CATCH_RETURN()
 }
 
+PKEErr ParamsBGV_SetScalingTechnique(ParamsBGVPtr p, int technique) {
+  try {
+    if (!p) {
+      return MakePKEError("ParamsBGV_SetScalingTechnique: null params");
+    }
+    reinterpret_cast<CCParams<CryptoContextBGVRNS> *>(p)->SetScalingTechnique(
+        static_cast<ScalingTechnique>(technique));
+    return MakePKEOk();
+  }
+  PKE_CATCH_RETURN()
+}
+
 void DestroyParamsBGV(ParamsBGVPtr p) {
   delete reinterpret_cast<CCParams<CryptoContextBGVRNS> *>(p);
 }

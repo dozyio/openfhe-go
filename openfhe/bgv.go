@@ -54,6 +54,18 @@ func (p *ParamsBGV) SetMultiplicativeDepth(depth int) error {
 	return nil
 }
 
+func (p *ParamsBGV) SetScalingTechnique(technique int) error {
+	if p.ptr == nil {
+		return errors.New("ParamsBGV is closed or invalid")
+	}
+	status := C.ParamsBGV_SetScalingTechnique(p.ptr, C.int(technique))
+	err := checkPKEErrorMsg(status)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 // Close method for ParamsBGV
 func (p *ParamsBGV) Close() {
 	if p.ptr != nil {

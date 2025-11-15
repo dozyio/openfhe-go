@@ -27,6 +27,7 @@ func TestBGVParamsSetters(t *testing.T) {
 	}{
 		{"SetPlaintextModulus", func() error { return params.SetPlaintextModulus(65537) }},
 		{"SetMultiplicativeDepth", func() error { return params.SetMultiplicativeDepth(2) }},
+		{"SetScalingTechnique", func() error { return params.SetScalingTechnique(FIXEDMANUAL) }},
 	}
 
 	for _, tt := range tests {
