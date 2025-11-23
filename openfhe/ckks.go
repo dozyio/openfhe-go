@@ -404,6 +404,26 @@ func (cc *CryptoContext) ModReduce(ct *Ciphertext) (*Ciphertext, error) {
 	return resCt, nil
 }
 
+// ModReduceInPlace reduces the modulus of the ciphertext in place without rescaling.
+// This is more memory-efficient than ModReduce as it modifies the input ciphertext directly.
+func (cc *CryptoContext) ModReduceInPlace(ct *Ciphertext) error {
+	if cc.ptr == nil {
+		return errors.New("CryptoContext is closed or invalid")
+	}
+
+	if ct == nil || ct.ptr == nil {
+		return errors.New("Input Ciphertext is closed or invalid")
+	}
+
+	status := C.CryptoContext_ModReduceInPlace(cc.ptr, ct.ptr)
+	err := checkPKEErrorMsg(status)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // EvalPoly evaluates a polynomial on a ciphertext.
 // coefficients: A slice of doubles representing the polynomial coefficients in ascending order (e.g., [c0, c1, c2] for c0 + c1*x + c2*x^2).
 // Returns the resulting ciphertext and a potential error.

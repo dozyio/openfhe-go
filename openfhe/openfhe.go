@@ -59,6 +59,14 @@ const (
 	NOISE_FLOODING_MULTIPARTY = 2
 )
 
+// --- Proxy Re-Encryption Modes ---
+const (
+	NOT_SET            = 0
+	INDCPA             = 1
+	FIXED_NOISE_HRA    = 2
+	NOISE_FLOODING_HRA = 3
+)
+
 // --- Common CryptoContext Methods ---
 func (cc *CryptoContext) Enable(feature int) error {
 	if cc.ptr == nil {

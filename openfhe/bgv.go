@@ -7,7 +7,10 @@ package openfhe
 #include "bgv_c.h"
 */
 import "C"
-import "errors"
+import (
+	"errors"
+	"unsafe"
+)
 
 // --- BGV Params Type ---
 // Opaque struct to hold the C pointer for BGV Params
@@ -78,6 +81,78 @@ func (p *ParamsBGV) SetMultipartyMode(mode int) error {
 	return nil
 }
 
+func (p *ParamsBGV) SetPREMode(mode int) error {
+	if p.ptr == nil {
+		return errors.New("ParamsBGV is closed or invalid")
+	}
+	status := C.ParamsBGV_SetPREMode(p.ptr, C.int(mode))
+	err := checkPKEErrorMsg(status)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (p *ParamsBGV) SetPRENumHops(numHops uint32) error {
+	if p.ptr == nil {
+		return errors.New("ParamsBGV is closed or invalid")
+	}
+	status := C.ParamsBGV_SetPRENumHops(p.ptr, C.uint32_t(numHops))
+	err := checkPKEErrorMsg(status)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (p *ParamsBGV) SetStatisticalSecurity(statSec uint32) error {
+	if p.ptr == nil {
+		return errors.New("ParamsBGV is closed or invalid")
+	}
+	status := C.ParamsBGV_SetStatisticalSecurity(p.ptr, C.uint32_t(statSec))
+	err := checkPKEErrorMsg(status)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (p *ParamsBGV) SetNumAdversarialQueries(numQueries uint32) error {
+	if p.ptr == nil {
+		return errors.New("ParamsBGV is closed or invalid")
+	}
+	status := C.ParamsBGV_SetNumAdversarialQueries(p.ptr, C.uint32_t(numQueries))
+	err := checkPKEErrorMsg(status)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (p *ParamsBGV) SetRingDim(ringDim uint32) error {
+	if p.ptr == nil {
+		return errors.New("ParamsBGV is closed or invalid")
+	}
+	status := C.ParamsBGV_SetRingDim(p.ptr, C.uint32_t(ringDim))
+	err := checkPKEErrorMsg(status)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (p *ParamsBGV) SetKeySwitchTechnique(technique int) error {
+	if p.ptr == nil {
+		return errors.New("ParamsBGV is closed or invalid")
+	}
+	status := C.ParamsBGV_SetKeySwitchTechnique(p.ptr, C.int(technique))
+	err := checkPKEErrorMsg(status)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 // Close method for ParamsBGV
 func (p *ParamsBGV) Close() {
 	if p.ptr != nil {
@@ -102,4 +177,34 @@ func NewCryptoContextBGV(p *ParamsBGV) (*CryptoContext, error) {
 	}
 	cc := &CryptoContext{ptr: ccH}
 	return cc, nil
+}
+
+// MakeCoefPackedPlaintext creates a plaintext from coefficient-packed integer values.
+// This is used for BGV/BFV schemes when working in coefficient representation.
+func (cc *CryptoContext) MakeCoefPackedPlaintext(values []int64) (*Plaintext, error) {
+	if cc.ptr == nil {
+		return nil, errors.New("CryptoContext is closed or invalid")
+	}
+	if len(values) == 0 {
+		return nil, errors.New("values slice is empty")
+	}
+
+	var ptH C.PlaintextPtr
+	status := C.CryptoContext_MakeCoefPackedPlaintext(
+		cc.ptr,
+		(*C.int64_t)(unsafe.Pointer(&values[0])),
+		C.int(len(values)),
+		&ptH,
+	)
+	err := checkPKEErrorMsg(status)
+	if err != nil {
+		return nil, err
+	}
+
+	if ptH == nil {
+		return nil, errors.New("MakeCoefPackedPlaintext returned OK but null handle")
+	}
+
+	pt := &Plaintext{ptr: ptH}
+	return pt, nil
 }
