@@ -4,13 +4,62 @@ Target: OpenFHE v1.4.2
 
 ## Build
 
+### Prerequisites
+
+For faster compilation (recommended), install ccache:
+```bash
+brew install ccache  # macOS
+# or
+apt install ccache   # Linux
 ```
+
+### Build the project
+
+```bash
 make build
 ```
 
+**Build times:**
+- First build: ~15 seconds (with ccache, cold cache)
+- Rebuild: ~8 seconds (with ccache, warm cache)
+- No-op build: ~0.1 seconds (fully cached)
+- Without ccache: ~100 seconds
+
+**Important:** ccache is automatically used when building through `make`. If you run `go build` or `go test` directly, you need to either:
+
+1. **Use make targets** (recommended):
+   ```bash
+   make build
+   make test
+   ```
+
+2. **Set environment variables** in your shell/IDE:
+   ```bash
+   export CC="ccache clang"
+   export CXX="ccache clang++"
+   go build ./openfhe
+   go test ./openfhe
+   ```
+
+3. **Configure your editor/IDE** (for gopls and test runners):
+   - **VS Code** (`settings.json`):
+     ```json
+     {
+       "go.toolsEnvVars": {
+         "CC": "ccache clang",
+         "CXX": "ccache clang++"
+       }
+     }
+     ```
+   - **Neovim/Vim**:
+     ```lua
+     vim.env.CC = "ccache clang"
+     vim.env.CXX = "ccache clang++"
+     ```
+
 ## Run tests
 
-```
+```bash
 make test
 ```
 
