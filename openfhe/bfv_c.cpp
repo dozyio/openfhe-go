@@ -116,4 +116,16 @@ PKEErr CryptoContext_MakePackedPlaintext(CryptoContextPtr cc_ptr_to_sptr,
   PKE_CATCH_RETURN()
 }
 
+PKEErr ParamsBFV_SetMultipartyMode(ParamsBFVPtr p_ptr_to_sptr, int mode) {
+  try {
+    if (!p_ptr_to_sptr) {
+      return MakePKEError("ParamsBFV_SetMultipartyMode: null params");
+    }
+    auto &params = *reinterpret_cast<CCParams<CryptoContextBFVRNS> *>(p_ptr_to_sptr);
+    params.SetMultipartyMode(static_cast<MultipartyMode>(mode));
+    return MakePKEOk();
+  }
+  PKE_CATCH_RETURN()
+}
+
 } // extern "C"

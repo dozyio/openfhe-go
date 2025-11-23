@@ -188,6 +188,20 @@ func (p *ParamsCKKS) SetKeySwitchTechnique(technique int) error {
 	return nil
 }
 
+func (p *ParamsCKKS) SetMultipartyMode(mode int) error {
+	if p.ptr == nil {
+		return errors.New("ParamsCKKS is closed or invalid")
+	}
+
+	status := C.ParamsCKKS_SetMultipartyMode(p.ptr, C.int(mode))
+	err := checkPKEErrorMsg(status)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // Close method for ParamsCKKS
 func (p *ParamsCKKS) Close() {
 	if p.ptr != nil {

@@ -1,0 +1,796 @@
+package openfhe
+
+/*
+#cgo CPPFLAGS: -I${SRCDIR}/../openfhe-install/include -I${SRCDIR}/../openfhe-install/include/openfhe -I${SRCDIR}/../openfhe-install/include/openfhe/core -I${SRCDIR}/../openfhe-install/include/openfhe/pke -I${SRCDIR}/../openfhe-install/include/openfhe/binfhe -I${SRCDIR}/../openfhe-install/include/openfhe/cereal
+#cgo CXXFLAGS: -std=c++17
+#include <stdlib.h>
+#include "pke_common_c.h"
+*/
+import "C"
+
+import (
+	"errors"
+	"unsafe"
+)
+
+// --- Multiparty Key Types ---
+
+// PrivateKey wraps an OpenFHE private key (used in multiparty operations)
+type PrivateKey struct {
+	ptr C.PrivateKeyPtr
+}
+
+// PublicKey wraps an OpenFHE public key (used in multiparty operations)
+type PublicKey struct {
+	ptr C.PublicKeyPtr
+}
+
+// EvalKeyMap wraps an OpenFHE evaluation key map (used in multiparty eval key generation)
+type EvalKeyMap struct {
+	ptr C.EvalKeyMapPtr
+}
+
+// Close releases the C++ resources for PrivateKey
+func (sk *PrivateKey) Close() {
+	if sk.ptr != nil {
+		C.DestroyPrivateKey(sk.ptr)
+		sk.ptr = nil
+	}
+}
+
+// Close releases the C++ resources for PublicKey
+func (pk *PublicKey) Close() {
+	if pk.ptr != nil {
+		C.DestroyPublicKey(pk.ptr)
+		pk.ptr = nil
+	}
+}
+
+// Close releases the C++ resources for EvalKeyMap
+func (ekm *EvalKeyMap) Close() {
+	if ekm.ptr != nil {
+		C.DestroyEvalKeyMap(ekm.ptr)
+		ekm.ptr = nil
+	}
+}
+
+// --- Helper Functions ---
+
+// GetKeyTag returns the key tag associated with this private key
+func (sk *PrivateKey) GetKeyTag() (string, error) {
+	if sk.ptr == nil {
+		return "", errors.New("PrivateKey is closed or invalid")
+	}
+
+	var cKeyTag *C.char
+	status := C.PrivateKey_GetKeyTag(sk.ptr, &cKeyTag)
+	err := checkPKEErrorMsg(status)
+	if err != nil {
+		return "", err
+	}
+
+	if cKeyTag == nil {
+		return "", errors.New("GetKeyTag returned null string")
+	}
+
+	keyTag := C.GoString(cKeyTag)
+	C.free(unsafe.Pointer(cKeyTag))
+	return keyTag, nil
+}
+
+// GetKeyTag returns the key tag associated with this public key
+func (pk *PublicKey) GetKeyTag() (string, error) {
+	if pk.ptr == nil {
+		return "", errors.New("PublicKey is closed or invalid")
+	}
+
+	var cKeyTag *C.char
+	status := C.PublicKey_GetKeyTag(pk.ptr, &cKeyTag)
+	err := checkPKEErrorMsg(status)
+	if err != nil {
+		return "", err
+	}
+
+	if cKeyTag == nil {
+		return "", errors.New("GetKeyTag returned null string")
+	}
+
+	keyTag := C.GoString(cKeyTag)
+	C.free(unsafe.Pointer(cKeyTag))
+	return keyTag, nil
+}
+
+// GetMultipartyPrivateKey extracts the private key from a KeyPair for multiparty operations
+func (kp *KeyPair) GetMultipartyPrivateKey() (*PrivateKey, error) {
+	if kp.ptr == nil {
+		return nil, errors.New("KeyPair is closed or invalid")
+	}
+
+	var skPtr C.PrivateKeyPtr
+	status := C.GetPrivateKey(kp.ptr, (*unsafe.Pointer)(unsafe.Pointer(&skPtr)))
+	err := checkPKEErrorMsg(status)
+	if err != nil {
+		return nil, err
+	}
+
+	if skPtr == nil {
+		return nil, errors.New("GetMultipartyPrivateKey returned null private key")
+	}
+
+	return &PrivateKey{ptr: skPtr}, nil
+}
+
+// GetMultipartyPublicKey extracts the public key from a KeyPair for multiparty operations
+func (kp *KeyPair) GetMultipartyPublicKey() (*PublicKey, error) {
+	if kp.ptr == nil {
+		return nil, errors.New("KeyPair is closed or invalid")
+	}
+
+	var pkPtr C.PublicKeyPtr
+	status := C.GetPublicKey(kp.ptr, (*unsafe.Pointer)(unsafe.Pointer(&pkPtr)))
+	err := checkPKEErrorMsg(status)
+	if err != nil {
+		return nil, err
+	}
+
+	if pkPtr == nil {
+		return nil, errors.New("GetMultipartyPublicKey returned null public key")
+	}
+
+	return &PublicKey{ptr: pkPtr}, nil
+}
+
+// --- Multiparty Key Generation ---
+
+// MultipartyKeyGen generates a keypair from a vector of private keys (additive secret sharing)
+func (cc *CryptoContext) MultipartyKeyGen(privateKeys []*PrivateKey) (*KeyPair, error) {
+	if cc.ptr == nil {
+		return nil, errors.New("CryptoContext is closed or invalid")
+	}
+
+	if len(privateKeys) == 0 {
+		return nil, errors.New("privateKeys slice is empty")
+	}
+
+	// Convert Go slice to C array
+	cPrivateKeys := make([]C.PrivateKeyPtr, len(privateKeys))
+	for i, sk := range privateKeys {
+		if sk == nil || sk.ptr == nil {
+			return nil, errors.New("private key at index " + string(rune(i)) + " is nil")
+		}
+		cPrivateKeys[i] = sk.ptr
+	}
+
+	var outKP C.KeyPairPtr
+	status := C.CryptoContext_MultipartyKeyGen_FromPrivateKeys(
+		cc.ptr,
+		&cPrivateKeys[0],
+		C.size_t(len(cPrivateKeys)),
+		&outKP,
+	)
+
+	err := checkPKEErrorMsg(status)
+	if err != nil {
+		return nil, err
+	}
+
+	if outKP == nil {
+		return nil, errors.New("MultipartyKeyGen returned null keypair")
+	}
+
+	return &KeyPair{ptr: outKP}, nil
+}
+
+// MultipartyKeyGenFromPublicKey generates a keypair that is compatible with an existing public key
+func (cc *CryptoContext) MultipartyKeyGenFromPublicKey(publicKey *PublicKey, makeSparse bool, fresh bool) (*KeyPair, error) {
+	if cc.ptr == nil {
+		return nil, errors.New("CryptoContext is closed or invalid")
+	}
+
+	if publicKey == nil || publicKey.ptr == nil {
+		return nil, errors.New("publicKey is nil")
+	}
+
+	var outKP C.KeyPairPtr
+	var cMakeSparse, cFresh C.int
+	if makeSparse {
+		cMakeSparse = 1
+	}
+	if fresh {
+		cFresh = 1
+	}
+
+	status := C.CryptoContext_MultipartyKeyGen_FromPublicKey(
+		cc.ptr,
+		publicKey.ptr,
+		cMakeSparse,
+		cFresh,
+		&outKP,
+	)
+
+	err := checkPKEErrorMsg(status)
+	if err != nil {
+		return nil, err
+	}
+
+	if outKP == nil {
+		return nil, errors.New("MultipartyKeyGenFromPublicKey returned null keypair")
+	}
+
+	return &KeyPair{ptr: outKP}, nil
+}
+
+// --- Multiparty Decryption ---
+
+// MultipartyDecryptLead performs partial decryption by the lead party
+func (cc *CryptoContext) MultipartyDecryptLead(ciphertexts []*Ciphertext, privateKey *PrivateKey) ([]*Ciphertext, error) {
+	if cc.ptr == nil {
+		return nil, errors.New("CryptoContext is closed or invalid")
+	}
+
+	if len(ciphertexts) == 0 {
+		return nil, errors.New("ciphertexts slice is empty")
+	}
+
+	if privateKey == nil || privateKey.ptr == nil {
+		return nil, errors.New("privateKey is nil")
+	}
+
+	// Convert Go slice to C array
+	cCiphertexts := make([]C.CiphertextPtr, len(ciphertexts))
+	for i, ct := range ciphertexts {
+		if ct == nil || ct.ptr == nil {
+			return nil, errors.New("ciphertext at index " + string(rune(i)) + " is nil")
+		}
+		cCiphertexts[i] = ct.ptr
+	}
+
+	// Allocate output array
+	cPartials := make([]C.CiphertextPtr, len(ciphertexts))
+
+	status := C.CryptoContext_MultipartyDecryptLead(
+		cc.ptr,
+		&cCiphertexts[0],
+		C.size_t(len(cCiphertexts)),
+		privateKey.ptr,
+		&cPartials[0],
+	)
+
+	err := checkPKEErrorMsg(status)
+	if err != nil {
+		return nil, err
+	}
+
+	// Convert C array back to Go slice
+	partials := make([]*Ciphertext, len(cPartials))
+	for i, cPtr := range cPartials {
+		if cPtr == nil {
+			return nil, errors.New("MultipartyDecryptLead returned null ciphertext at index " + string(rune(i)))
+		}
+		partials[i] = &Ciphertext{ptr: cPtr}
+	}
+
+	return partials, nil
+}
+
+// MultipartyDecryptMain performs partial decryption by a main party (non-lead)
+func (cc *CryptoContext) MultipartyDecryptMain(ciphertexts []*Ciphertext, privateKey *PrivateKey) ([]*Ciphertext, error) {
+	if cc.ptr == nil {
+		return nil, errors.New("CryptoContext is closed or invalid")
+	}
+
+	if len(ciphertexts) == 0 {
+		return nil, errors.New("ciphertexts slice is empty")
+	}
+
+	if privateKey == nil || privateKey.ptr == nil {
+		return nil, errors.New("privateKey is nil")
+	}
+
+	// Convert Go slice to C array
+	cCiphertexts := make([]C.CiphertextPtr, len(ciphertexts))
+	for i, ct := range ciphertexts {
+		if ct == nil || ct.ptr == nil {
+			return nil, errors.New("ciphertext at index " + string(rune(i)) + " is nil")
+		}
+		cCiphertexts[i] = ct.ptr
+	}
+
+	// Allocate output array
+	cPartials := make([]C.CiphertextPtr, len(ciphertexts))
+
+	status := C.CryptoContext_MultipartyDecryptMain(
+		cc.ptr,
+		&cCiphertexts[0],
+		C.size_t(len(cCiphertexts)),
+		privateKey.ptr,
+		&cPartials[0],
+	)
+
+	err := checkPKEErrorMsg(status)
+	if err != nil {
+		return nil, err
+	}
+
+	// Convert C array back to Go slice
+	partials := make([]*Ciphertext, len(cPartials))
+	for i, cPtr := range cPartials {
+		if cPtr == nil {
+			return nil, errors.New("MultipartyDecryptMain returned null ciphertext at index " + string(rune(i)))
+		}
+		partials[i] = &Ciphertext{ptr: cPtr}
+	}
+
+	return partials, nil
+}
+
+// MultipartyDecryptFusion fuses partial decryptions from all parties into the final plaintext
+func (cc *CryptoContext) MultipartyDecryptFusion(partialCiphertexts []*Ciphertext) (*Plaintext, error) {
+	if cc.ptr == nil {
+		return nil, errors.New("CryptoContext is closed or invalid")
+	}
+
+	if len(partialCiphertexts) == 0 {
+		return nil, errors.New("partialCiphertexts slice is empty")
+	}
+
+	// Convert Go slice to C array
+	cPartials := make([]C.CiphertextPtr, len(partialCiphertexts))
+	for i, ct := range partialCiphertexts {
+		if ct == nil || ct.ptr == nil {
+			return nil, errors.New("partial ciphertext at index " + string(rune(i)) + " is nil")
+		}
+		cPartials[i] = ct.ptr
+	}
+
+	var outPT C.PlaintextPtr
+	status := C.CryptoContext_MultipartyDecryptFusion(
+		cc.ptr,
+		&cPartials[0],
+		C.size_t(len(cPartials)),
+		&outPT,
+	)
+
+	err := checkPKEErrorMsg(status)
+	if err != nil {
+		return nil, err
+	}
+
+	if outPT == nil {
+		return nil, errors.New("MultipartyDecryptFusion returned null plaintext")
+	}
+
+	return &Plaintext{ptr: outPT}, nil
+}
+
+// --- Multiparty Evaluation Key Generation ---
+
+// KeySwitchGen generates a key switching key from old to new private key
+// This is the base function used before MultiKeySwitchGen in multiparty workflows
+func (cc *CryptoContext) KeySwitchGen(oldPrivateKey, newPrivateKey *PrivateKey) (*EvalKey, error) {
+	if cc.ptr == nil {
+		return nil, errors.New("CryptoContext is closed or invalid")
+	}
+
+	if oldPrivateKey == nil || oldPrivateKey.ptr == nil {
+		return nil, errors.New("oldPrivateKey is nil")
+	}
+
+	if newPrivateKey == nil || newPrivateKey.ptr == nil {
+		return nil, errors.New("newPrivateKey is nil")
+	}
+
+	var outEK C.EvalKeyPtr
+	status := C.CryptoContext_KeySwitchGen(
+		cc.ptr,
+		oldPrivateKey.ptr,
+		newPrivateKey.ptr,
+		&outEK,
+	)
+
+	err := checkPKEErrorMsg(status)
+	if err != nil {
+		return nil, err
+	}
+
+	if outEK == nil {
+		return nil, errors.New("KeySwitchGen returned null eval key")
+	}
+
+	return &EvalKey{ptr: outEK}, nil
+}
+
+// InsertEvalMultKey inserts evaluation mult keys into the crypto context
+func (cc *CryptoContext) InsertEvalMultKey(evalKeys []*EvalKey) error {
+	if cc.ptr == nil {
+		return errors.New("CryptoContext is closed or invalid")
+	}
+
+	if len(evalKeys) == 0 {
+		return errors.New("evalKeys slice is empty")
+	}
+
+	// Convert Go slice to C array
+	cEvalKeys := make([]C.EvalKeyPtr, len(evalKeys))
+	for i, ek := range evalKeys {
+		if ek == nil || ek.ptr == nil {
+			return errors.New("eval key at index " + string(rune(i)) + " is nil")
+		}
+		cEvalKeys[i] = ek.ptr
+	}
+
+	status := C.CryptoContext_InsertEvalMultKey(
+		cc.ptr,
+		&cEvalKeys[0],
+		C.size_t(len(cEvalKeys)),
+	)
+
+	return checkPKEErrorMsg(status)
+}
+
+// InsertEvalSumKey inserts evaluation sum keys into the crypto context
+func (cc *CryptoContext) InsertEvalSumKey(evalKeyMap *EvalKeyMap) error {
+	if cc.ptr == nil {
+		return errors.New("CryptoContext is closed or invalid")
+	}
+
+	if evalKeyMap == nil || evalKeyMap.ptr == nil {
+		return errors.New("evalKeyMap is nil")
+	}
+
+	status := C.CryptoContext_InsertEvalSumKey(cc.ptr, evalKeyMap.ptr)
+	return checkPKEErrorMsg(status)
+}
+
+// MultiKeySwitchGen generates a multiparty key switching key
+func (cc *CryptoContext) MultiKeySwitchGen(oldPrivateKey, newPrivateKey *PrivateKey, evalKey *EvalKey) (*EvalKey, error) {
+	if cc.ptr == nil {
+		return nil, errors.New("CryptoContext is closed or invalid")
+	}
+
+	if oldPrivateKey == nil || oldPrivateKey.ptr == nil {
+		return nil, errors.New("oldPrivateKey is nil")
+	}
+
+	if newPrivateKey == nil || newPrivateKey.ptr == nil {
+		return nil, errors.New("newPrivateKey is nil")
+	}
+
+	if evalKey == nil || evalKey.ptr == nil {
+		return nil, errors.New("evalKey is nil")
+	}
+
+	var outEK C.EvalKeyPtr
+	status := C.CryptoContext_MultiKeySwitchGen(
+		cc.ptr,
+		oldPrivateKey.ptr,
+		newPrivateKey.ptr,
+		evalKey.ptr,
+		&outEK,
+	)
+
+	err := checkPKEErrorMsg(status)
+	if err != nil {
+		return nil, err
+	}
+
+	if outEK == nil {
+		return nil, errors.New("MultiKeySwitchGen returned null eval key")
+	}
+
+	return &EvalKey{ptr: outEK}, nil
+}
+
+// MultiEvalSumKeyGen generates a multiparty evaluation sum key
+func (cc *CryptoContext) MultiEvalSumKeyGen(privateKey *PrivateKey, evalKeyMap *EvalKeyMap, keyTag string) (*EvalKeyMap, error) {
+	if cc.ptr == nil {
+		return nil, errors.New("CryptoContext is closed or invalid")
+	}
+
+	if privateKey == nil || privateKey.ptr == nil {
+		return nil, errors.New("privateKey is nil")
+	}
+
+	var ekmPtr C.EvalKeyMapPtr
+	if evalKeyMap != nil {
+		ekmPtr = evalKeyMap.ptr
+	}
+
+	cKeyTag := C.CString(keyTag)
+	defer C.free(unsafe.Pointer(cKeyTag))
+
+	var outEKM C.EvalKeyMapPtr
+	status := C.CryptoContext_MultiEvalSumKeyGen(
+		cc.ptr,
+		privateKey.ptr,
+		ekmPtr,
+		cKeyTag,
+		&outEKM,
+	)
+
+	err := checkPKEErrorMsg(status)
+	if err != nil {
+		return nil, err
+	}
+
+	if outEKM == nil {
+		return nil, errors.New("MultiEvalSumKeyGen returned null eval key map")
+	}
+
+	return &EvalKeyMap{ptr: outEKM}, nil
+}
+
+// MultiEvalAtIndexKeyGen generates multiparty evaluation keys for rotation at specific indices
+func (cc *CryptoContext) MultiEvalAtIndexKeyGen(privateKey *PrivateKey, evalKeyMap *EvalKeyMap, indices []int32, keyTag string) (*EvalKeyMap, error) {
+	if cc.ptr == nil {
+		return nil, errors.New("CryptoContext is closed or invalid")
+	}
+
+	if privateKey == nil || privateKey.ptr == nil {
+		return nil, errors.New("privateKey is nil")
+	}
+
+	if len(indices) == 0 {
+		return nil, errors.New("indices slice is empty")
+	}
+
+	var ekmPtr C.EvalKeyMapPtr
+	if evalKeyMap != nil {
+		ekmPtr = evalKeyMap.ptr
+	}
+
+	cKeyTag := C.CString(keyTag)
+	defer C.free(unsafe.Pointer(cKeyTag))
+
+	var outEKM C.EvalKeyMapPtr
+	status := C.CryptoContext_MultiEvalAtIndexKeyGen(
+		cc.ptr,
+		privateKey.ptr,
+		ekmPtr,
+		(*C.int32_t)(unsafe.Pointer(&indices[0])),
+		C.size_t(len(indices)),
+		cKeyTag,
+		&outEKM,
+	)
+
+	err := checkPKEErrorMsg(status)
+	if err != nil {
+		return nil, err
+	}
+
+	if outEKM == nil {
+		return nil, errors.New("MultiEvalAtIndexKeyGen returned null eval key map")
+	}
+
+	return &EvalKeyMap{ptr: outEKM}, nil
+}
+
+// MultiMultEvalKey transforms a joint evaluation key for multiparty multiplication
+func (cc *CryptoContext) MultiMultEvalKey(privateKey *PrivateKey, evalKey *EvalKey, keyTag string) (*EvalKey, error) {
+	if cc.ptr == nil {
+		return nil, errors.New("CryptoContext is closed or invalid")
+	}
+
+	if privateKey == nil || privateKey.ptr == nil {
+		return nil, errors.New("privateKey is nil")
+	}
+
+	if evalKey == nil || evalKey.ptr == nil {
+		return nil, errors.New("evalKey is nil")
+	}
+
+	cKeyTag := C.CString(keyTag)
+	defer C.free(unsafe.Pointer(cKeyTag))
+
+	var outEK C.EvalKeyPtr
+	status := C.CryptoContext_MultiMultEvalKey(
+		cc.ptr,
+		privateKey.ptr,
+		evalKey.ptr,
+		cKeyTag,
+		&outEK,
+	)
+
+	err := checkPKEErrorMsg(status)
+	if err != nil {
+		return nil, err
+	}
+
+	if outEK == nil {
+		return nil, errors.New("MultiMultEvalKey returned null eval key")
+	}
+
+	return &EvalKey{ptr: outEK}, nil
+}
+
+// --- Key Aggregation Functions ---
+
+// MultiAddPubKeys aggregates two public keys
+func (cc *CryptoContext) MultiAddPubKeys(pk1, pk2 *PublicKey, keyTag string) (*PublicKey, error) {
+	if cc.ptr == nil {
+		return nil, errors.New("CryptoContext is closed or invalid")
+	}
+
+	if pk1 == nil || pk1.ptr == nil {
+		return nil, errors.New("pk1 is nil")
+	}
+
+	if pk2 == nil || pk2.ptr == nil {
+		return nil, errors.New("pk2 is nil")
+	}
+
+	cKeyTag := C.CString(keyTag)
+	defer C.free(unsafe.Pointer(cKeyTag))
+
+	var outPK C.PublicKeyPtr
+	status := C.CryptoContext_MultiAddPubKeys(
+		cc.ptr,
+		pk1.ptr,
+		pk2.ptr,
+		cKeyTag,
+		&outPK,
+	)
+
+	err := checkPKEErrorMsg(status)
+	if err != nil {
+		return nil, err
+	}
+
+	if outPK == nil {
+		return nil, errors.New("MultiAddPubKeys returned null public key")
+	}
+
+	return &PublicKey{ptr: outPK}, nil
+}
+
+// MultiAddEvalKeys aggregates two evaluation keys
+func (cc *CryptoContext) MultiAddEvalKeys(ek1, ek2 *EvalKey, keyTag string) (*EvalKey, error) {
+	if cc.ptr == nil {
+		return nil, errors.New("CryptoContext is closed or invalid")
+	}
+
+	if ek1 == nil || ek1.ptr == nil {
+		return nil, errors.New("ek1 is nil")
+	}
+
+	if ek2 == nil || ek2.ptr == nil {
+		return nil, errors.New("ek2 is nil")
+	}
+
+	cKeyTag := C.CString(keyTag)
+	defer C.free(unsafe.Pointer(cKeyTag))
+
+	var outEK C.EvalKeyPtr
+	status := C.CryptoContext_MultiAddEvalKeys(
+		cc.ptr,
+		ek1.ptr,
+		ek2.ptr,
+		cKeyTag,
+		&outEK,
+	)
+
+	err := checkPKEErrorMsg(status)
+	if err != nil {
+		return nil, err
+	}
+
+	if outEK == nil {
+		return nil, errors.New("MultiAddEvalKeys returned null eval key")
+	}
+
+	return &EvalKey{ptr: outEK}, nil
+}
+
+// MultiAddEvalMultKeys aggregates two multiplication evaluation keys
+func (cc *CryptoContext) MultiAddEvalMultKeys(ek1, ek2 *EvalKey, keyTag string) (*EvalKey, error) {
+	if cc.ptr == nil {
+		return nil, errors.New("CryptoContext is closed or invalid")
+	}
+
+	if ek1 == nil || ek1.ptr == nil {
+		return nil, errors.New("ek1 is nil")
+	}
+
+	if ek2 == nil || ek2.ptr == nil {
+		return nil, errors.New("ek2 is nil")
+	}
+
+	cKeyTag := C.CString(keyTag)
+	defer C.free(unsafe.Pointer(cKeyTag))
+
+	var outEK C.EvalKeyPtr
+	status := C.CryptoContext_MultiAddEvalMultKeys(
+		cc.ptr,
+		ek1.ptr,
+		ek2.ptr,
+		cKeyTag,
+		&outEK,
+	)
+
+	err := checkPKEErrorMsg(status)
+	if err != nil {
+		return nil, err
+	}
+
+	if outEK == nil {
+		return nil, errors.New("MultiAddEvalMultKeys returned null eval key")
+	}
+
+	return &EvalKey{ptr: outEK}, nil
+}
+
+// MultiAddEvalSumKeys aggregates two evaluation sum key maps
+func (cc *CryptoContext) MultiAddEvalSumKeys(ekm1, ekm2 *EvalKeyMap, keyTag string) (*EvalKeyMap, error) {
+	if cc.ptr == nil {
+		return nil, errors.New("CryptoContext is closed or invalid")
+	}
+
+	if ekm1 == nil || ekm1.ptr == nil {
+		return nil, errors.New("ekm1 is nil")
+	}
+
+	if ekm2 == nil || ekm2.ptr == nil {
+		return nil, errors.New("ekm2 is nil")
+	}
+
+	cKeyTag := C.CString(keyTag)
+	defer C.free(unsafe.Pointer(cKeyTag))
+
+	var outEKM C.EvalKeyMapPtr
+	status := C.CryptoContext_MultiAddEvalSumKeys(
+		cc.ptr,
+		ekm1.ptr,
+		ekm2.ptr,
+		cKeyTag,
+		&outEKM,
+	)
+
+	err := checkPKEErrorMsg(status)
+	if err != nil {
+		return nil, err
+	}
+
+	if outEKM == nil {
+		return nil, errors.New("MultiAddEvalSumKeys returned null eval key map")
+	}
+
+	return &EvalKeyMap{ptr: outEKM}, nil
+}
+
+// MultiAddEvalAutomorphismKeys aggregates two evaluation automorphism key maps
+func (cc *CryptoContext) MultiAddEvalAutomorphismKeys(ekm1, ekm2 *EvalKeyMap, keyTag string) (*EvalKeyMap, error) {
+	if cc.ptr == nil {
+		return nil, errors.New("CryptoContext is closed or invalid")
+	}
+
+	if ekm1 == nil || ekm1.ptr == nil {
+		return nil, errors.New("ekm1 is nil")
+	}
+
+	if ekm2 == nil || ekm2.ptr == nil {
+		return nil, errors.New("ekm2 is nil")
+	}
+
+	cKeyTag := C.CString(keyTag)
+	defer C.free(unsafe.Pointer(cKeyTag))
+
+	var outEKM C.EvalKeyMapPtr
+	status := C.CryptoContext_MultiAddEvalAutomorphismKeys(
+		cc.ptr,
+		ekm1.ptr,
+		ekm2.ptr,
+		cKeyTag,
+		&outEKM,
+	)
+
+	err := checkPKEErrorMsg(status)
+	if err != nil {
+		return nil, err
+	}
+
+	if outEKM == nil {
+		return nil, errors.New("MultiAddEvalAutomorphismKeys returned null eval key map")
+	}
+
+	return &EvalKeyMap{ptr: outEKM}, nil
+}

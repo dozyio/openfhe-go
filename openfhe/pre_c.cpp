@@ -3,13 +3,6 @@
 
 using namespace lbcrypto;
 
-// Helper type for EvalKey (wraps shared_ptr<EvalKeyImpl>)
-using EvalKeySharedPtr = lbcrypto::EvalKey<lbcrypto::DCRTPoly>;
-
-inline EvalKeySharedPtr &GetEKSharedPtr(EvalKeyPtr ek_ptr_to_sptr) {
-  return *reinterpret_cast<EvalKeySharedPtr *>(ek_ptr_to_sptr);
-}
-
 extern "C" {
 
 // --- PRE (Proxy Re-Encryption) Functions ---
