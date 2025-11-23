@@ -15,6 +15,10 @@ Target: OpenFHE v1.4.2
 - **Proxy Re-Encryption (PRE)**: Delegate decryption rights without revealing keys
 - **Comparison Operations**: Find min/max values and argmin/argmax indices via scheme switching
 - **Bootstrapping**: CKKS and BinFHE bootstrapping for unlimited depth computations
+- **Function Evaluation**: Evaluate arbitrary smooth functions on encrypted data using Chebyshev approximation
+  - Pre-defined functions: `EvalLogistic`, `EvalSin`, `EvalCos`, `EvalDivide`
+  - Custom functions: `EvalChebyshevFunction` with Go callbacks (any `func(float64) float64`)
+  - Batch optimization: `EvalChebyshevCoefficients` + `EvalChebyshevSeries` for reusing coefficients
 
 ## Build
 
@@ -97,7 +101,7 @@ See examples and tests for usage
 - [x] advanced-real-numbers-128
 - [x] advanced-real-numbers
 - [x] comparison-argmin (min/max with argmin/argmax via scheme switching)
-- [ ] function-evaluation
+- [x] function-evaluation (logistic, sin, cos, custom functions, batch optimization)
 - [x] inner-product
 - [ ] interactive-bootstrapping
 - [ ] iterative-ckks-bootstrapping

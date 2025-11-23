@@ -78,6 +78,58 @@ PKEErr CryptoContext_EvalInnerProduct(CryptoContextPtr cc, CiphertextPtr ct1,
                                       CiphertextPtr ct2, uint32_t batchSize,
                                       CiphertextPtr *out);
 
+// --- CKKS Function Evaluation (Chebyshev Approximation) ---
+PKEErr CryptoContext_EvalLogistic(CryptoContextPtr cc, CiphertextPtr ct,
+                                  double lowerBound, double upperBound,
+                                  uint32_t polyDegree, CiphertextPtr *out);
+PKEErr CryptoContext_EvalDivide(CryptoContextPtr cc, CiphertextPtr ct,
+                                double lowerBound, double upperBound,
+                                uint32_t polyDegree, CiphertextPtr *out);
+PKEErr CryptoContext_EvalSin(CryptoContextPtr cc, CiphertextPtr ct,
+                             double lowerBound, double upperBound,
+                             uint32_t polyDegree, CiphertextPtr *out);
+PKEErr CryptoContext_EvalCos(CryptoContextPtr cc, CiphertextPtr ct,
+                             double lowerBound, double upperBound,
+                             uint32_t polyDegree, CiphertextPtr *out);
+
+// Callback function type for custom Chebyshev functions
+// This will be implemented in Go and called from C++
+extern double goChebyshevCallback(int callbackID, double x);
+
+// Evaluate a custom function using Chebyshev approximation
+// The function is provided via a callback ID that maps to a Go function
+PKEErr CryptoContext_EvalChebyshevFunction(CryptoContextPtr cc,
+                                           int callbackID, CiphertextPtr ct,
+                                           double lowerBound, double upperBound,
+                                           uint32_t polyDegree,
+                                           CiphertextPtr *out);
+
+// --- Chebyshev Coefficient Computation (from core/math/chebyshev.h) ---
+
+// Compute Chebyshev coefficients for approximating a function
+// This is useful for advanced users who want to:
+// 1. Inspect coefficients before encryption
+// 2. Reuse coefficients across multiple ciphertexts (via EvalChebyshevSeries)
+// 3. Implement custom evaluation logic
+typedef struct {
+    double *coeffs;
+    size_t length;
+} ChebyshevCoeffs;
+
+PKEErr EvalChebyshevCoefficients(int callbackID, double lowerBound,
+                                 double upperBound, uint32_t degree,
+                                 ChebyshevCoeffs *out);
+
+void FreeChebyshevCoeffs(ChebyshevCoeffs *coeffs);
+
+// Evaluate a Chebyshev series on encrypted data using pre-computed coefficients
+// This is more efficient than EvalChebyshevFunction when evaluating the same
+// function on multiple ciphertexts, as coefficients can be reused.
+PKEErr CryptoContext_EvalChebyshevSeries(CryptoContextPtr cc, CiphertextPtr ct,
+                                         const double *coefficients,
+                                         size_t numCoeffs, double lowerBound,
+                                         double upperBound, CiphertextPtr *out);
+
 #ifdef __cplusplus
 }
 #endif
