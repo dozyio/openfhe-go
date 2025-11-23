@@ -35,6 +35,9 @@ using CiphertextSharedPtr = lbcrypto::Ciphertext<lbcrypto::DCRTPoly>;
 using KeyPairRawPtr = lbcrypto::KeyPair<lbcrypto::DCRTPoly> *;
 using PublicKeySharedPtr = lbcrypto::PublicKey<lbcrypto::DCRTPoly>;
 using PrivateKeySharedPtr = lbcrypto::PrivateKey<lbcrypto::DCRTPoly>;
+using EvalKeySharedPtr = lbcrypto::EvalKey<lbcrypto::DCRTPoly>;
+using EvalKeyMapSharedPtr =
+    std::shared_ptr<std::map<uint32_t, lbcrypto::EvalKey<lbcrypto::DCRTPoly>>>;
 
 inline CryptoContextSharedPtr &GetCCSharedPtr(CryptoContextPtr cc_ptr_to_sptr) {
   return *reinterpret_cast<CryptoContextSharedPtr *>(cc_ptr_to_sptr);
@@ -50,6 +53,12 @@ inline PublicKeySharedPtr &GetPKSharedPtr(void *pk_ptr_to_sptr) {
 }
 inline PrivateKeySharedPtr &GetSKSharedPtr(void *sk_ptr_to_sptr) {
   return *reinterpret_cast<PrivateKeySharedPtr *>(sk_ptr_to_sptr);
+}
+inline EvalKeySharedPtr &GetEKSharedPtr(void *ek_ptr_to_sptr) {
+  return *reinterpret_cast<EvalKeySharedPtr *>(ek_ptr_to_sptr);
+}
+inline EvalKeyMapSharedPtr &GetEKMSharedPtr(void *ekm_ptr_to_sptr) {
+  return *reinterpret_cast<EvalKeyMapSharedPtr *>(ekm_ptr_to_sptr);
 }
 
 // --- PKE Error Handling ---

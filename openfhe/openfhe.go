@@ -52,6 +52,13 @@ const (
 	HYBRID          = 2
 )
 
+// --- Multiparty Modes ---
+const (
+	INVALID_MULTIPARTY_MODE   = 0
+	FIXED_NOISE_MULTIPARTY    = 1
+	NOISE_FLOODING_MULTIPARTY = 2
+)
+
 // --- Common CryptoContext Methods ---
 func (cc *CryptoContext) Enable(feature int) error {
 	if cc.ptr == nil {
@@ -541,4 +548,75 @@ func (ct *Ciphertext) Close() {
 		C.DestroyCiphertext(ct.ptr)
 		ct.ptr = nil
 	}
+}
+
+// EvalSumKeyGen generates evaluation keys for summation operations.
+// This must be called before using MultiEvalSumKeyGen in multiparty scenarios.
+func (cc *CryptoContext) EvalSumKeyGenPrivate(privateKey *PrivateKey, publicKey *PublicKey) error {
+	if cc.ptr == nil {
+		return errors.New("CryptoContext is closed or invalid")
+	}
+	if privateKey == nil || privateKey.ptr == nil {
+		return errors.New("privateKey is nil or closed")
+	}
+
+	var pkPtr C.PublicKeyPtr
+	if publicKey != nil {
+		pkPtr = publicKey.ptr
+	}
+
+	status := C.CryptoContext_EvalSumKeyGenPrivate(cc.ptr, privateKey.ptr, pkPtr)
+	return checkPKEErrorMsg(status)
+}
+
+// EvalAtIndexKeyGen generates evaluation keys for rotation at specific indices.
+// This must be called before using MultiEvalAtIndexKeyGen in multiparty scenarios.
+func (cc *CryptoContext) EvalAtIndexKeyGenPrivate(privateKey *PrivateKey, indices []int32, publicKey *PublicKey) error {
+	if cc.ptr == nil {
+		return errors.New("CryptoContext is closed or invalid")
+	}
+	if privateKey == nil || privateKey.ptr == nil {
+		return errors.New("privateKey is nil or closed")
+	}
+	if len(indices) == 0 {
+		return errors.New("indices slice is empty")
+	}
+
+	var pkPtr C.PublicKeyPtr
+	if publicKey != nil {
+		pkPtr = publicKey.ptr
+	}
+
+	status := C.CryptoContext_EvalAtIndexKeyGenPrivate(
+		cc.ptr,
+		privateKey.ptr,
+		(*C.int32_t)(unsafe.Pointer(&indices[0])),
+		C.size_t(len(indices)),
+		pkPtr,
+	)
+	return checkPKEErrorMsg(status)
+}
+
+// GetEvalSumKeyMap retrieves the evaluation sum key map from the context.
+// Used after EvalSumKeyGen to get the key map for multiparty scenarios.
+func (cc *CryptoContext) GetEvalSumKeyMap(keyTag string) (*EvalKeyMap, error) {
+	if cc.ptr == nil {
+		return nil, errors.New("CryptoContext is closed or invalid")
+	}
+
+	cKeyTag := C.CString(keyTag)
+	defer C.free(unsafe.Pointer(cKeyTag))
+
+	var outKeyMap C.EvalKeyMapPtr
+	status := C.CryptoContext_GetEvalSumKeyMap(cc.ptr, cKeyTag, &outKeyMap)
+	err := checkPKEErrorMsg(status)
+	if err != nil {
+		return nil, err
+	}
+
+	if outKeyMap == nil {
+		return nil, errors.New("GetEvalSumKeyMap returned null")
+	}
+
+	return &EvalKeyMap{ptr: outKeyMap}, nil
 }

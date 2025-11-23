@@ -3,6 +3,7 @@ package openfhe
 /*
 #cgo CPPFLAGS: -I${SRCDIR}/../openfhe-install/include -I${SRCDIR}/../openfhe-install/include/openfhe -I${SRCDIR}/../openfhe-install/include/openfhe/core -I${SRCDIR}/../openfhe-install/include/openfhe/pke -I${SRCDIR}/../openfhe-install/include/openfhe/binfhe -I${SRCDIR}/../openfhe-install/include/openfhe/cereal
 #cgo CXXFLAGS: -std=c++17
+#include <stdlib.h>
 #include <stdint.h>
 #include "pre_c.h"
 #include "pke_common_c.h"
@@ -27,6 +28,28 @@ func (ek *EvalKey) Close() {
 		C.DestroyEvalKey(ek.ptr)
 		ek.ptr = nil
 	}
+}
+
+// GetKeyTag returns the key tag associated with this evaluation key
+func (ek *EvalKey) GetKeyTag() (string, error) {
+	if ek.ptr == nil {
+		return "", errors.New("EvalKey is closed or invalid")
+	}
+
+	var cKeyTag *C.char
+	status := C.EvalKey_GetKeyTag(ek.ptr, &cKeyTag)
+	err := checkPKEErrorMsg(status)
+	if err != nil {
+		return "", err
+	}
+
+	if cKeyTag == nil {
+		return "", errors.New("GetKeyTag returned null string")
+	}
+
+	keyTag := C.GoString(cKeyTag)
+	C.free(unsafe.Pointer(cKeyTag))
+	return keyTag, nil
 }
 
 // ReKeyGen generates a re-encryption key from oldPrivateKey to newPublicKey.

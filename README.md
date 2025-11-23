@@ -65,8 +65,8 @@ See examples and tests for usage
 - [x] simple-real-numbers
 - [ ] tckks-interactive-mp-bootstrapping-Chebyschev
 - [ ] tckks-interactive-mp-bootstrapping
-- [ ] threshold-fhe-5p
-- [ ] threshold-fhe
+- [x] threshold-fhe-5p
+- [x] threshold-fhe
 
 ## Links
 

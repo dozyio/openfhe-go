@@ -41,6 +41,18 @@ PKEErr ParamsBGV_SetMultiplicativeDepth(ParamsBGVPtr p, int depth) {
   PKE_CATCH_RETURN()
 }
 
+PKEErr ParamsBGV_SetScalingTechnique(ParamsBGVPtr p, int technique) {
+  try {
+    if (!p) {
+      return MakePKEError("ParamsBGV_SetScalingTechnique: null params");
+    }
+    reinterpret_cast<CCParams<CryptoContextBGVRNS> *>(p)->SetScalingTechnique(
+        static_cast<ScalingTechnique>(technique));
+    return MakePKEOk();
+  }
+  PKE_CATCH_RETURN()
+}
+
 void DestroyParamsBGV(ParamsBGVPtr p) {
   delete reinterpret_cast<CCParams<CryptoContextBGVRNS> *>(p);
 }
@@ -76,6 +88,18 @@ PKEErr Plaintext_SetLength(PlaintextPtr pt_ptr_to_sptr, int len) {
     }
     auto &pt_sptr = GetPTSharedPtr(pt_ptr_to_sptr);
     pt_sptr->SetLength(len);
+    return MakePKEOk();
+  }
+  PKE_CATCH_RETURN()
+}
+
+PKEErr ParamsBGV_SetMultipartyMode(ParamsBGVPtr p_ptr_to_sptr, int mode) {
+  try {
+    if (!p_ptr_to_sptr) {
+      return MakePKEError("ParamsBGV_SetMultipartyMode: null params");
+    }
+    auto &params = *reinterpret_cast<CCParams<CryptoContextBGVRNS> *>(p_ptr_to_sptr);
+    params.SetMultipartyMode(static_cast<MultipartyMode>(mode));
     return MakePKEOk();
   }
   PKE_CATCH_RETURN()

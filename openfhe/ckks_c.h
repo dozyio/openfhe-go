@@ -29,6 +29,7 @@ PKEErr ParamsCKKS_SetNumLargeDigits(ParamsCKKSPtr p, int numDigits);
 PKEErr ParamsCKKS_SetSecretKeyDist(ParamsCKKSPtr p, OFHESecretKeyDist dist);
 PKEErr ParamsCKKS_SetDigitSize(ParamsCKKSPtr p, int digitSize);
 PKEErr ParamsCKKS_SetKeySwitchTechnique(ParamsCKKSPtr p, int technique);
+PKEErr ParamsCKKS_SetMultipartyMode(ParamsCKKSPtr p, int mode);
 void DestroyParamsCKKS(ParamsCKKSPtr p);
 
 // --- CKKS CryptoContext ---

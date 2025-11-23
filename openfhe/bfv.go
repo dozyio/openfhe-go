@@ -76,6 +76,18 @@ func (p *ParamsBFV) SetRingDim(ringDim uint64) error {
 	return nil
 }
 
+func (p *ParamsBFV) SetMultipartyMode(mode int) error {
+	if p.ptr == nil {
+		return errors.New("ParamsBFV is closed or invalid")
+	}
+	status := C.ParamsBFV_SetMultipartyMode(p.ptr, C.int(mode))
+	err := checkPKEErrorMsg(status)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func (p *ParamsBFV) Close() {
 	if p.ptr != nil {
 		C.DestroyParamsBFV(p.ptr)
