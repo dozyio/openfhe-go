@@ -494,3 +494,104 @@ func TestCKKS_EvalSum_NullCiphertext(t *testing.T) {
 		t.Error("Expected error with null ciphertext")
 	}
 }
+
+// --- Function Evaluation Tests ---
+
+// TestCKKS_EvalLogistic tests the logistic function evaluation using Chebyshev approximation
+func TestCKKS_EvalLogistic(t *testing.T) {
+	params, err := NewParamsCKKSRNS()
+	mustT(t, err, "NewParamsCKKSRNS")
+	defer params.Close()
+
+	// Settings based on the C++ example
+	mustT(t, params.SetSecurityLevel(HEStdNotSet), "SetSecurityLevel")
+	mustT(t, params.SetRingDim(1<<10), "SetRingDim")
+	mustT(t, params.SetScalingModSize(50), "SetScalingModSize")
+	mustT(t, params.SetFirstModSize(60), "SetFirstModSize")
+
+	polyDegree := uint32(16)
+	multDepth := 6
+	mustT(t, params.SetMultiplicativeDepth(multDepth), "SetMultiplicativeDepth")
+
+	cc, err := NewCryptoContextCKKS(params)
+	mustT(t, err, "NewCryptoContextCKKS")
+	defer cc.Close()
+
+	mustT(t, cc.Enable(PKE), "Enable PKE")
+	mustT(t, cc.Enable(KEYSWITCH), "Enable KEYSWITCH")
+	mustT(t, cc.Enable(LEVELEDSHE), "Enable LEVELEDSHE")
+	mustT(t, cc.Enable(ADVANCEDSHE), "Enable ADVANCEDSHE")
+
+	keyPair, err := cc.KeyGen()
+	mustT(t, err, "KeyGen")
+	defer keyPair.Close()
+
+	mustT(t, cc.EvalMultKeyGen(keyPair), "EvalMultKeyGen")
+
+	input := []float64{-4.0, -3.0, -2.0, -1.0, 0.0, 1.0, 2.0, 3.0, 4.0}
+	plaintext, err := cc.MakeCKKSPackedPlaintext(input)
+	mustT(t, err, "MakeCKKSPackedPlaintext")
+	defer plaintext.Close()
+
+	ciphertext, err := cc.Encrypt(keyPair, plaintext)
+	mustT(t, err, "Encrypt")
+	defer ciphertext.Close()
+
+	lowerBound := -5.0
+	upperBound := 5.0
+	result, err := cc.EvalLogistic(ciphertext, lowerBound, upperBound, polyDegree)
+	mustT(t, err, "EvalLogistic")
+	defer result.Close()
+
+	plaintextDec, err := cc.Decrypt(keyPair, result)
+	mustT(t, err, "Decrypt")
+	defer plaintextDec.Close()
+
+	mustT(t, plaintextDec.SetLength(len(input)), "SetLength")
+	finalResult, err := plaintextDec.GetRealPackedValue()
+	mustT(t, err, "GetRealPackedValue")
+
+	// Expected output from the C++ example
+	expectedOutput := []float64{0.0179885, 0.0474289, 0.119205, 0.268936, 0.5, 0.731064, 0.880795, 0.952571, 0.982011}
+
+	// Check results with tolerance
+	tolerance := 0.01
+	for i := 0; i < len(input); i++ {
+		diff := math.Abs(finalResult[i] - expectedOutput[i])
+		if diff > tolerance {
+			t.Errorf("Result mismatch at index %d: expected %.6f, got %.6f (diff: %.6f)",
+				i, expectedOutput[i], finalResult[i], diff)
+		}
+	}
+}
+
+// TestCKKS_EvalLogistic_ErrorCases tests error handling
+func TestCKKS_EvalLogistic_ErrorCases(t *testing.T) {
+	params, err := NewParamsCKKSRNS()
+	mustT(t, err, "NewParamsCKKSRNS")
+	defer params.Close()
+
+	mustT(t, params.SetMultiplicativeDepth(6), "SetMultiplicativeDepth")
+	mustT(t, params.SetScalingModSize(50), "SetScalingModSize")
+
+	cc, err := NewCryptoContextCKKS(params)
+	mustT(t, err, "NewCryptoContextCKKS")
+	defer cc.Close()
+
+	// Test with null ciphertext
+	_, err = cc.EvalLogistic(nil, -5.0, 5.0, 16)
+	if err == nil {
+		t.Error("Expected error with null ciphertext")
+	}
+
+	// Test with closed context
+	cc.Close()
+	keyPair, _ := cc.KeyGen()
+	if keyPair != nil {
+		defer keyPair.Close()
+	}
+	_, err = cc.EvalLogistic(nil, -5.0, 5.0, 16)
+	if err == nil {
+		t.Error("Expected error with closed context")
+	}
+}

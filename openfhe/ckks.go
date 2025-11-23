@@ -507,3 +507,110 @@ func (cc *CryptoContext) EvalInnerProduct(ct1, ct2 *Ciphertext, batchSize uint32
 	resCt := &Ciphertext{ptr: ctH}
 	return resCt, nil
 }
+
+// --- CKKS Function Evaluation (Chebyshev Approximation) ---
+
+// EvalLogistic evaluates the logistic function 1/(1+exp(-x)) on encrypted data
+// using Chebyshev approximation. This is commonly used as an activation function
+// in machine learning applications.
+//
+// The function approximates the logistic (sigmoid) function over the interval
+// [lowerBound, upperBound] using a Chebyshev polynomial of the specified degree.
+// Higher polynomial degrees provide better accuracy but require more multiplicative depth.
+//
+// IMPORTANT: Before calling this function, you must:
+//  1. Enable ADVANCEDSHE on the CryptoContext: cc.Enable(ADVANCEDSHE)
+//  2. Generate multiplication keys: cc.EvalMultKeyGen(secretKey)
+//
+// Parameters:
+//   - ct: Input ciphertext containing values to evaluate
+//   - lowerBound: Lower bound of the approximation interval
+//   - upperBound: Upper bound of the approximation interval
+//   - polyDegree: Degree of the Chebyshev polynomial (higher = more accurate, more depth)
+//
+// The multiplicative depth required depends on the polynomial degree:
+//   - polyDegree 16 requires depth ~6
+//   - polyDegree 32 requires depth ~6
+//   - polyDegree 64 requires depth ~7
+//   - See OpenFHE documentation for complete mapping
+//
+// Example:
+//
+//	// Evaluate logistic function on values in range [-5, 5]
+//	result, err := cc.EvalLogistic(ciphertext, -5.0, 5.0, 16)
+//	// Input:  [-4, -3, -2, -1, 0, 1, 2, 3, 4]
+//	// Output: [0.018, 0.047, 0.119, 0.269, 0.5, 0.731, 0.881, 0.953, 0.982]
+func (cc *CryptoContext) EvalLogistic(ct *Ciphertext, lowerBound, upperBound float64, polyDegree uint32) (*Ciphertext, error) {
+	if cc.ptr == nil {
+		return nil, errors.New("CryptoContext is closed or invalid")
+	}
+	if ct == nil || ct.ptr == nil {
+		return nil, errors.New("Input Ciphertext is closed or invalid")
+	}
+
+	var ctH C.CiphertextPtr
+	status := C.CryptoContext_EvalLogistic(cc.ptr, ct.ptr, C.double(lowerBound),
+		C.double(upperBound), C.uint32_t(polyDegree), &ctH)
+	err := checkPKEErrorMsg(status)
+	if err != nil {
+		return nil, err
+	}
+
+	if ctH == nil {
+		return nil, errors.New("EvalLogistic returned OK but null handle")
+	}
+
+	resCt := &Ciphertext{ptr: ctH}
+	return resCt, nil
+}
+
+// EvalDivide evaluates the division function f(x) = 1/x on encrypted data
+// using Chebyshev approximation. This can be used for computing reciprocals
+// or division operations in homomorphic encryption.
+//
+// The function approximates 1/x over the interval [lowerBound, upperBound]
+// using a Chebyshev polynomial of the specified degree.
+// Higher polynomial degrees provide better accuracy but require more multiplicative depth.
+//
+// IMPORTANT: Before calling this function, you must:
+//  1. Enable ADVANCEDSHE on the CryptoContext: cc.Enable(ADVANCEDSHE)
+//  2. Generate multiplication keys: cc.EvalMultKeyGen(secretKey)
+//
+// Parameters:
+//   - ct: Input ciphertext containing values to evaluate (must be non-zero in interval)
+//   - lowerBound: Lower bound of the approximation interval (must be > 0)
+//   - upperBound: Upper bound of the approximation interval
+//   - polyDegree: Degree of the Chebyshev polynomial (higher = more accurate, more depth)
+//
+// Note: The input values must be strictly positive (non-zero) as division by zero
+// is undefined. The interval [lowerBound, upperBound] should not include zero.
+//
+// Example:
+//
+//	// Evaluate 1/x for values in range [0.5, 10]
+//	result, err := cc.EvalDivide(ciphertext, 0.5, 10.0, 50)
+//	// Input:  [1, 2, 3, 4, 5]
+//	// Output: [1.0, 0.5, 0.333, 0.25, 0.2]
+func (cc *CryptoContext) EvalDivide(ct *Ciphertext, lowerBound, upperBound float64, polyDegree uint32) (*Ciphertext, error) {
+	if cc.ptr == nil {
+		return nil, errors.New("CryptoContext is closed or invalid")
+	}
+	if ct == nil || ct.ptr == nil {
+		return nil, errors.New("Input Ciphertext is closed or invalid")
+	}
+
+	var ctH C.CiphertextPtr
+	status := C.CryptoContext_EvalDivide(cc.ptr, ct.ptr, C.double(lowerBound),
+		C.double(upperBound), C.uint32_t(polyDegree), &ctH)
+	err := checkPKEErrorMsg(status)
+	if err != nil {
+		return nil, err
+	}
+
+	if ctH == nil {
+		return nil, errors.New("EvalDivide returned OK but null handle")
+	}
+
+	resCt := &Ciphertext{ptr: ctH}
+	return resCt, nil
+}

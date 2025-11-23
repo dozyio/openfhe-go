@@ -78,6 +78,14 @@ PKEErr CryptoContext_EvalInnerProduct(CryptoContextPtr cc, CiphertextPtr ct1,
                                       CiphertextPtr ct2, uint32_t batchSize,
                                       CiphertextPtr *out);
 
+// --- CKKS Function Evaluation (Chebyshev Approximation) ---
+PKEErr CryptoContext_EvalLogistic(CryptoContextPtr cc, CiphertextPtr ct,
+                                  double lowerBound, double upperBound,
+                                  uint32_t polyDegree, CiphertextPtr *out);
+PKEErr CryptoContext_EvalDivide(CryptoContextPtr cc, CiphertextPtr ct,
+                                double lowerBound, double upperBound,
+                                uint32_t polyDegree, CiphertextPtr *out);
+
 #ifdef __cplusplus
 }
 #endif

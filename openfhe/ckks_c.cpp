@@ -589,4 +589,60 @@ PKEErr ParamsCKKS_SetMultipartyMode(ParamsCKKSPtr p_ptr_to_sptr, int mode) {
   PKE_CATCH_RETURN()
 }
 
+PKEErr CryptoContext_EvalLogistic(CryptoContextPtr cc_ptr_to_sptr,
+                                  CiphertextPtr ct_ptr_to_sptr,
+                                  double lowerBound, double upperBound,
+                                  uint32_t polyDegree, CiphertextPtr *out) {
+  try {
+    if (!cc_ptr_to_sptr) {
+      return MakePKEError("CryptoContext_EvalLogistic: null context");
+    }
+    if (!ct_ptr_to_sptr) {
+      return MakePKEError("CryptoContext_EvalLogistic: null input ciphertext");
+    }
+    if (!out) {
+      return MakePKEError("CryptoContext_EvalLogistic: null output pointer");
+    }
+
+    auto &cc_sptr = GetCCSharedPtr(cc_ptr_to_sptr);
+    auto &ct_sptr = GetCTSharedPtr(ct_ptr_to_sptr);
+
+    Ciphertext<DCRTPoly> result_ct_sptr =
+        cc_sptr->EvalLogistic(ct_sptr, lowerBound, upperBound, polyDegree);
+    *out = reinterpret_cast<CiphertextPtr>(
+        new CiphertextSharedPtr(result_ct_sptr));
+
+    return MakePKEOk();
+  }
+  PKE_CATCH_RETURN()
+}
+
+PKEErr CryptoContext_EvalDivide(CryptoContextPtr cc_ptr_to_sptr,
+                                CiphertextPtr ct_ptr_to_sptr,
+                                double lowerBound, double upperBound,
+                                uint32_t polyDegree, CiphertextPtr *out) {
+  try {
+    if (!cc_ptr_to_sptr) {
+      return MakePKEError("CryptoContext_EvalDivide: null context");
+    }
+    if (!ct_ptr_to_sptr) {
+      return MakePKEError("CryptoContext_EvalDivide: null input ciphertext");
+    }
+    if (!out) {
+      return MakePKEError("CryptoContext_EvalDivide: null output pointer");
+    }
+
+    auto &cc_sptr = GetCCSharedPtr(cc_ptr_to_sptr);
+    auto &ct_sptr = GetCTSharedPtr(ct_ptr_to_sptr);
+
+    Ciphertext<DCRTPoly> result_ct_sptr =
+        cc_sptr->EvalDivide(ct_sptr, lowerBound, upperBound, polyDegree);
+    *out = reinterpret_cast<CiphertextPtr>(
+        new CiphertextSharedPtr(result_ct_sptr));
+
+    return MakePKEOk();
+  }
+  PKE_CATCH_RETURN()
+}
+
 } // extern "C"
