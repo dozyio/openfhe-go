@@ -15,16 +15,69 @@ Target: OpenFHE v1.4.2
 - **Proxy Re-Encryption (PRE)**: Delegate decryption rights without revealing keys
 - **Comparison Operations**: Find min/max values and argmin/argmax indices via scheme switching
 - **Bootstrapping**: CKKS and BinFHE bootstrapping for unlimited depth computations
+- **Function Evaluation**: Evaluate arbitrary smooth functions on encrypted data using Chebyshev approximation
+  - Pre-defined functions: `EvalLogistic`, `EvalSin`, `EvalCos`, `EvalDivide`
+  - Custom functions: `EvalChebyshevFunction` with Go callbacks (any `func(float64) float64`)
+  - Batch optimization: `EvalChebyshevCoefficients` + `EvalChebyshevSeries` for reusing coefficients
 
 ## Build
 
+### Prerequisites
+
+For faster compilation (recommended), install ccache:
+```bash
+brew install ccache  # macOS
+# or
+apt install ccache   # Linux
 ```
+
+### Build the project
+
+```bash
 make build
 ```
 
+**Build times:**
+- First build: ~15 seconds (with ccache, cold cache)
+- Rebuild: ~8 seconds (with ccache, warm cache)
+- No-op build: ~0.1 seconds (fully cached)
+- Without ccache: ~100 seconds
+
+**Important:** ccache is automatically used when building through `make`. If you run `go build` or `go test` directly, you need to either:
+
+1. **Use make targets** (recommended):
+   ```bash
+   make build
+   make test
+   ```
+
+2. **Set environment variables** in your shell/IDE:
+   ```bash
+   export CC="ccache clang"
+   export CXX="ccache clang++"
+   go build ./openfhe
+   go test ./openfhe
+   ```
+
+3. **Configure your editor/IDE** (for gopls and test runners):
+   - **VS Code** (`settings.json`):
+     ```json
+     {
+       "go.toolsEnvVars": {
+         "CC": "ccache clang",
+         "CXX": "ccache clang++"
+       }
+     }
+     ```
+   - **Neovim/Vim**:
+     ```lua
+     vim.env.CC = "ccache clang"
+     vim.env.CXX = "ccache clang++"
+     ```
+
 ## Run tests
 
-```
+```bash
 make test
 ```
 
@@ -48,7 +101,7 @@ See examples and tests for usage
 - [x] advanced-real-numbers-128
 - [x] advanced-real-numbers
 - [x] comparison-argmin (min/max with argmin/argmax via scheme switching)
-- [ ] function-evaluation
+- [x] function-evaluation (logistic, sin, cos, custom functions, batch optimization)
 - [x] inner-product
 - [ ] interactive-bootstrapping
 - [ ] iterative-ckks-bootstrapping

@@ -1,8 +1,13 @@
 #include "ckks_c.h"
 #include "pke_helpers_c.h"
 #include <complex>
+#include <functional>
+#include "math/chebyshev.h"
 
 using namespace lbcrypto;
+
+// Forward declaration of Go callback function
+extern "C" double goChebyshevCallback(int callbackID, double x);
 
 extern "C" {
 
@@ -584,6 +589,240 @@ PKEErr ParamsCKKS_SetMultipartyMode(ParamsCKKSPtr p_ptr_to_sptr, int mode) {
     }
     auto &params = *reinterpret_cast<CCParams<CryptoContextCKKSRNS> *>(p_ptr_to_sptr);
     params.SetMultipartyMode(static_cast<MultipartyMode>(mode));
+    return MakePKEOk();
+  }
+  PKE_CATCH_RETURN()
+}
+
+PKEErr CryptoContext_EvalLogistic(CryptoContextPtr cc_ptr_to_sptr,
+                                  CiphertextPtr ct_ptr_to_sptr,
+                                  double lowerBound, double upperBound,
+                                  uint32_t polyDegree, CiphertextPtr *out) {
+  try {
+    if (!cc_ptr_to_sptr) {
+      return MakePKEError("CryptoContext_EvalLogistic: null context");
+    }
+    if (!ct_ptr_to_sptr) {
+      return MakePKEError("CryptoContext_EvalLogistic: null input ciphertext");
+    }
+    if (!out) {
+      return MakePKEError("CryptoContext_EvalLogistic: null output pointer");
+    }
+
+    auto &cc_sptr = GetCCSharedPtr(cc_ptr_to_sptr);
+    auto &ct_sptr = GetCTSharedPtr(ct_ptr_to_sptr);
+
+    Ciphertext<DCRTPoly> result_ct_sptr =
+        cc_sptr->EvalLogistic(ct_sptr, lowerBound, upperBound, polyDegree);
+    *out = reinterpret_cast<CiphertextPtr>(
+        new CiphertextSharedPtr(result_ct_sptr));
+
+    return MakePKEOk();
+  }
+  PKE_CATCH_RETURN()
+}
+
+PKEErr CryptoContext_EvalDivide(CryptoContextPtr cc_ptr_to_sptr,
+                                CiphertextPtr ct_ptr_to_sptr,
+                                double lowerBound, double upperBound,
+                                uint32_t polyDegree, CiphertextPtr *out) {
+  try {
+    if (!cc_ptr_to_sptr) {
+      return MakePKEError("CryptoContext_EvalDivide: null context");
+    }
+    if (!ct_ptr_to_sptr) {
+      return MakePKEError("CryptoContext_EvalDivide: null input ciphertext");
+    }
+    if (!out) {
+      return MakePKEError("CryptoContext_EvalDivide: null output pointer");
+    }
+
+    auto &cc_sptr = GetCCSharedPtr(cc_ptr_to_sptr);
+    auto &ct_sptr = GetCTSharedPtr(ct_ptr_to_sptr);
+
+    Ciphertext<DCRTPoly> result_ct_sptr =
+        cc_sptr->EvalDivide(ct_sptr, lowerBound, upperBound, polyDegree);
+    *out = reinterpret_cast<CiphertextPtr>(
+        new CiphertextSharedPtr(result_ct_sptr));
+
+    return MakePKEOk();
+  }
+  PKE_CATCH_RETURN()
+}
+
+PKEErr CryptoContext_EvalSin(CryptoContextPtr cc_ptr_to_sptr,
+                             CiphertextPtr ct_ptr_to_sptr,
+                             double lowerBound, double upperBound,
+                             uint32_t polyDegree, CiphertextPtr *out) {
+  try {
+    if (!cc_ptr_to_sptr) {
+      return MakePKEError("CryptoContext_EvalSin: null context");
+    }
+    if (!ct_ptr_to_sptr) {
+      return MakePKEError("CryptoContext_EvalSin: null input ciphertext");
+    }
+    if (!out) {
+      return MakePKEError("CryptoContext_EvalSin: null output pointer");
+    }
+
+    auto &cc_sptr = GetCCSharedPtr(cc_ptr_to_sptr);
+    auto &ct_sptr = GetCTSharedPtr(ct_ptr_to_sptr);
+
+    Ciphertext<DCRTPoly> result_ct_sptr =
+        cc_sptr->EvalSin(ct_sptr, lowerBound, upperBound, polyDegree);
+    *out = reinterpret_cast<CiphertextPtr>(
+        new CiphertextSharedPtr(result_ct_sptr));
+
+    return MakePKEOk();
+  }
+  PKE_CATCH_RETURN()
+}
+
+PKEErr CryptoContext_EvalCos(CryptoContextPtr cc_ptr_to_sptr,
+                             CiphertextPtr ct_ptr_to_sptr,
+                             double lowerBound, double upperBound,
+                             uint32_t polyDegree, CiphertextPtr *out) {
+  try {
+    if (!cc_ptr_to_sptr) {
+      return MakePKEError("CryptoContext_EvalCos: null context");
+    }
+    if (!ct_ptr_to_sptr) {
+      return MakePKEError("CryptoContext_EvalCos: null input ciphertext");
+    }
+    if (!out) {
+      return MakePKEError("CryptoContext_EvalCos: null output pointer");
+    }
+
+    auto &cc_sptr = GetCCSharedPtr(cc_ptr_to_sptr);
+    auto &ct_sptr = GetCTSharedPtr(ct_ptr_to_sptr);
+
+    Ciphertext<DCRTPoly> result_ct_sptr =
+        cc_sptr->EvalCos(ct_sptr, lowerBound, upperBound, polyDegree);
+    *out = reinterpret_cast<CiphertextPtr>(
+        new CiphertextSharedPtr(result_ct_sptr));
+
+    return MakePKEOk();
+  }
+  PKE_CATCH_RETURN()
+}
+
+// EvalChebyshevFunction with callback support
+PKEErr CryptoContext_EvalChebyshevFunction(CryptoContextPtr cc_ptr_to_sptr,
+                                           int callbackID,
+                                           CiphertextPtr ct_ptr_to_sptr,
+                                           double lowerBound, double upperBound,
+                                           uint32_t polyDegree,
+                                           CiphertextPtr *out) {
+  try {
+    if (!cc_ptr_to_sptr) {
+      return MakePKEError("CryptoContext_EvalChebyshevFunction: null context");
+    }
+    if (!ct_ptr_to_sptr) {
+      return MakePKEError(
+          "CryptoContext_EvalChebyshevFunction: null input ciphertext");
+    }
+    if (!out) {
+      return MakePKEError(
+          "CryptoContext_EvalChebyshevFunction: null output pointer");
+    }
+
+    auto &cc_sptr = GetCCSharedPtr(cc_ptr_to_sptr);
+    auto &ct_sptr = GetCTSharedPtr(ct_ptr_to_sptr);
+
+    // Create a lambda that calls back to Go through the extern function
+    auto func = [callbackID](double x) -> double {
+      return goChebyshevCallback(callbackID, x);
+    };
+
+    Ciphertext<DCRTPoly> result_ct_sptr =
+        cc_sptr->EvalChebyshevFunction(func, ct_sptr, lowerBound, upperBound,
+                                       polyDegree);
+    *out = reinterpret_cast<CiphertextPtr>(
+        new CiphertextSharedPtr(result_ct_sptr));
+
+    return MakePKEOk();
+  }
+  PKE_CATCH_RETURN()
+}
+
+// --- Chebyshev Coefficient Computation ---
+
+PKEErr EvalChebyshevCoefficients(int callbackID, double lowerBound,
+                                 double upperBound, uint32_t degree,
+                                 ChebyshevCoeffs *out) {
+  try {
+    if (!out) {
+      return MakePKEError("EvalChebyshevCoefficients: null output pointer");
+    }
+    if (degree == 0) {
+      return MakePKEError("EvalChebyshevCoefficients: degree cannot be zero");
+    }
+
+    // Create a lambda that calls back to Go
+    auto func = [callbackID](double x) -> double {
+      return goChebyshevCallback(callbackID, x);
+    };
+
+    // Call OpenFHE's EvalChebyshevCoefficients
+    std::vector<double> coeffs_vec =
+        lbcrypto::EvalChebyshevCoefficients(func, lowerBound, upperBound, degree);
+
+    // Allocate memory for coefficients (caller must free with FreeChebyshevCoeffs)
+    size_t len = coeffs_vec.size();
+    double *coeffs_array = new double[len];
+    for (size_t i = 0; i < len; i++) {
+      coeffs_array[i] = coeffs_vec[i];
+    }
+
+    out->coeffs = coeffs_array;
+    out->length = len;
+
+    return MakePKEOk();
+  }
+  PKE_CATCH_RETURN()
+}
+
+void FreeChebyshevCoeffs(ChebyshevCoeffs *coeffs) {
+  if (coeffs && coeffs->coeffs) {
+    delete[] coeffs->coeffs;
+    coeffs->coeffs = nullptr;
+    coeffs->length = 0;
+  }
+}
+
+PKEErr CryptoContext_EvalChebyshevSeries(CryptoContextPtr cc_ptr_to_sptr,
+                                         CiphertextPtr ct_ptr_to_sptr,
+                                         const double *coefficients,
+                                         size_t numCoeffs, double lowerBound,
+                                         double upperBound, CiphertextPtr *out) {
+  try {
+    if (!cc_ptr_to_sptr) {
+      return MakePKEError("CryptoContext_EvalChebyshevSeries: null context");
+    }
+    if (!ct_ptr_to_sptr) {
+      return MakePKEError(
+          "CryptoContext_EvalChebyshevSeries: null input ciphertext");
+    }
+    if (!coefficients) {
+      return MakePKEError(
+          "CryptoContext_EvalChebyshevSeries: null coefficients");
+    }
+    if (!out) {
+      return MakePKEError("CryptoContext_EvalChebyshevSeries: null output pointer");
+    }
+
+    auto &cc_sptr = GetCCSharedPtr(cc_ptr_to_sptr);
+    auto &ct_sptr = GetCTSharedPtr(ct_ptr_to_sptr);
+
+    // Convert C array to std::vector
+    std::vector<double> coeffs_vec(coefficients, coefficients + numCoeffs);
+
+    // Call OpenFHE's EvalChebyshevSeries
+    Ciphertext<DCRTPoly> result_ct_sptr =
+        cc_sptr->EvalChebyshevSeries(ct_sptr, coeffs_vec, lowerBound, upperBound);
+    *out = reinterpret_cast<CiphertextPtr>(
+        new CiphertextSharedPtr(result_ct_sptr));
+
     return MakePKEOk();
   }
   PKE_CATCH_RETURN()
