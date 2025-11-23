@@ -2,6 +2,20 @@
 
 Target: OpenFHE v1.4.2
 
+## Features
+
+### Supported Schemes
+- **CKKS**: Approximate arithmetic on encrypted real/complex numbers
+- **BFV**: Exact arithmetic on encrypted integers
+- **BGV**: Exact arithmetic on encrypted integers (SIMD)
+- **BinFHE**: Boolean operations on encrypted bits
+- **Scheme Switching**: Switch between CKKS and FHEW for hybrid operations
+
+### Advanced Operations
+- **Proxy Re-Encryption (PRE)**: Delegate decryption rights without revealing keys
+- **Comparison Operations**: Find min/max values and argmin/argmax indices via scheme switching
+- **Bootstrapping**: CKKS and BinFHE bootstrapping for unlimited depth computations
+
 ## Build
 
 ```
@@ -33,6 +47,7 @@ See examples and tests for usage
 ### PKE FHE
 - [x] advanced-real-numbers-128
 - [x] advanced-real-numbers
+- [x] comparison-argmin (min/max with argmin/argmax via scheme switching)
 - [ ] function-evaluation
 - [x] inner-product
 - [ ] interactive-bootstrapping
