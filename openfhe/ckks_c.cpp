@@ -577,4 +577,16 @@ PKEErr CryptoContext_EvalInnerProduct(CryptoContextPtr cc_ptr_to_sptr,
   PKE_CATCH_RETURN()
 }
 
+PKEErr ParamsCKKS_SetMultipartyMode(ParamsCKKSPtr p_ptr_to_sptr, int mode) {
+  try {
+    if (!p_ptr_to_sptr) {
+      return MakePKEError("ParamsCKKS_SetMultipartyMode: null params");
+    }
+    auto &params = *reinterpret_cast<CCParams<CryptoContextCKKSRNS> *>(p_ptr_to_sptr);
+    params.SetMultipartyMode(static_cast<MultipartyMode>(mode));
+    return MakePKEOk();
+  }
+  PKE_CATCH_RETURN()
+}
+
 } // extern "C"

@@ -66,6 +66,18 @@ func (p *ParamsBGV) SetScalingTechnique(technique int) error {
 	return nil
 }
 
+func (p *ParamsBGV) SetMultipartyMode(mode int) error {
+	if p.ptr == nil {
+		return errors.New("ParamsBGV is closed or invalid")
+	}
+	status := C.ParamsBGV_SetMultipartyMode(p.ptr, C.int(mode))
+	err := checkPKEErrorMsg(status)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 // Close method for ParamsBGV
 func (p *ParamsBGV) Close() {
 	if p.ptr != nil {

@@ -133,6 +133,111 @@ CiphertextPtr DeserializeCiphertextFromBytes(const char *inData, int inLen);
 
 PKEErr CryptoContext_GetParameterElementString(CryptoContextPtr cc,
                                                 char **outString);
+
+// --- Multiparty / Threshold FHE ---
+typedef void *PrivateKeyPtr;
+typedef void *PublicKeyPtr;
+typedef void *EvalKeyPtr;
+typedef void *EvalKeyMapPtr;
+
+// Multiparty key generation
+PKEErr CryptoContext_MultipartyKeyGen_FromPrivateKeys(
+    CryptoContextPtr cc, PrivateKeyPtr *privateKeys, size_t numKeys,
+    KeyPairPtr *out);
+PKEErr CryptoContext_MultipartyKeyGen_FromPublicKey(CryptoContextPtr cc,
+                                                    PublicKeyPtr publicKey,
+                                                    int makeSparse, int fresh,
+                                                    KeyPairPtr *out);
+
+// Multiparty decryption
+PKEErr CryptoContext_MultipartyDecryptLead(CryptoContextPtr cc,
+                                           CiphertextPtr *ciphertexts,
+                                           size_t numCiphertexts,
+                                           PrivateKeyPtr privateKey,
+                                           CiphertextPtr *outPartials);
+PKEErr CryptoContext_MultipartyDecryptMain(CryptoContextPtr cc,
+                                           CiphertextPtr *ciphertexts,
+                                           size_t numCiphertexts,
+                                           PrivateKeyPtr privateKey,
+                                           CiphertextPtr *outPartials);
+PKEErr CryptoContext_MultipartyDecryptFusion(CryptoContextPtr cc,
+                                             CiphertextPtr *partialCiphertexts,
+                                             size_t numPartials,
+                                             PlaintextPtr *out);
+
+// Multiparty evaluation key generation
+PKEErr CryptoContext_MultiKeySwitchGen(CryptoContextPtr cc,
+                                       PrivateKeyPtr oldPrivateKey,
+                                       PrivateKeyPtr newPrivateKey,
+                                       EvalKeyPtr evalKey, EvalKeyPtr *out);
+PKEErr CryptoContext_MultiEvalSumKeyGen(CryptoContextPtr cc,
+                                        PrivateKeyPtr privateKey,
+                                        EvalKeyMapPtr evalKeyMap,
+                                        const char *keyTag,
+                                        EvalKeyMapPtr *out);
+PKEErr CryptoContext_MultiEvalAtIndexKeyGen(CryptoContextPtr cc,
+                                            PrivateKeyPtr privateKey,
+                                            EvalKeyMapPtr evalKeyMap,
+                                            int32_t *indices, size_t numIndices,
+                                            const char *keyTag,
+                                            EvalKeyMapPtr *out);
+PKEErr CryptoContext_MultiMultEvalKey(CryptoContextPtr cc,
+                                      PrivateKeyPtr privateKey,
+                                      EvalKeyPtr evalKey, const char *keyTag,
+                                      EvalKeyPtr *out);
+
+// Key aggregation
+PKEErr CryptoContext_MultiAddPubKeys(CryptoContextPtr cc, PublicKeyPtr pk1,
+                                     PublicKeyPtr pk2, const char *keyTag,
+                                     PublicKeyPtr *out);
+PKEErr CryptoContext_MultiAddEvalKeys(CryptoContextPtr cc, EvalKeyPtr ek1,
+                                      EvalKeyPtr ek2, const char *keyTag,
+                                      EvalKeyPtr *out);
+PKEErr CryptoContext_MultiAddEvalMultKeys(CryptoContextPtr cc, EvalKeyPtr ek1,
+                                          EvalKeyPtr ek2, const char *keyTag,
+                                          EvalKeyPtr *out);
+PKEErr CryptoContext_MultiAddEvalSumKeys(CryptoContextPtr cc,
+                                         EvalKeyMapPtr ekm1, EvalKeyMapPtr ekm2,
+                                         const char *keyTag,
+                                         EvalKeyMapPtr *out);
+PKEErr CryptoContext_MultiAddEvalAutomorphismKeys(CryptoContextPtr cc,
+                                                  EvalKeyMapPtr ekm1,
+                                                  EvalKeyMapPtr ekm2,
+                                                  const char *keyTag,
+                                                  EvalKeyMapPtr *out);
+
+// Base evaluation key generation (required for multiparty eval key workflow)
+PKEErr CryptoContext_KeySwitchGen(CryptoContextPtr cc,
+                                  PrivateKeyPtr oldPrivateKey,
+                                  PrivateKeyPtr newPrivateKey,
+                                  EvalKeyPtr *out);
+PKEErr CryptoContext_InsertEvalMultKey(CryptoContextPtr cc,
+                                       EvalKeyPtr *evalKeys, size_t numKeys);
+PKEErr CryptoContext_InsertEvalSumKey(CryptoContextPtr cc,
+                                      EvalKeyMapPtr evalKeyMap);
+PKEErr CryptoContext_EvalSumKeyGenPrivate(CryptoContextPtr cc,
+                                          PrivateKeyPtr privateKey,
+                                          PublicKeyPtr publicKey);
+PKEErr CryptoContext_EvalAtIndexKeyGenPrivate(CryptoContextPtr cc,
+                                              PrivateKeyPtr privateKey,
+                                              const int32_t *indices,
+                                              size_t numIndices,
+                                              PublicKeyPtr publicKey);
+PKEErr CryptoContext_GetEvalSumKeyMap(CryptoContextPtr cc,
+                                      const char *keyTag,
+                                      EvalKeyMapPtr *out);
+
+// Key tag functions
+PKEErr PrivateKey_GetKeyTag(PrivateKeyPtr sk, char **outKeyTag);
+PKEErr PublicKey_GetKeyTag(PublicKeyPtr pk, char **outKeyTag);
+PKEErr EvalKey_GetKeyTag(EvalKeyPtr ek, char **outKeyTag);
+
+// Cleanup functions for multiparty types
+void DestroyPrivateKey(PrivateKeyPtr sk);
+void DestroyPublicKey(PublicKeyPtr pk);
+void DestroyEvalKey(EvalKeyPtr ek);
+void DestroyEvalKeyMap(EvalKeyMapPtr ekm);
+
 #ifdef __cplusplus
 }
 #endif

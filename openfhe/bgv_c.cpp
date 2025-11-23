@@ -93,4 +93,16 @@ PKEErr Plaintext_SetLength(PlaintextPtr pt_ptr_to_sptr, int len) {
   PKE_CATCH_RETURN()
 }
 
+PKEErr ParamsBGV_SetMultipartyMode(ParamsBGVPtr p_ptr_to_sptr, int mode) {
+  try {
+    if (!p_ptr_to_sptr) {
+      return MakePKEError("ParamsBGV_SetMultipartyMode: null params");
+    }
+    auto &params = *reinterpret_cast<CCParams<CryptoContextBGVRNS> *>(p_ptr_to_sptr);
+    params.SetMultipartyMode(static_cast<MultipartyMode>(mode));
+    return MakePKEOk();
+  }
+  PKE_CATCH_RETURN()
+}
+
 } // extern "C"
