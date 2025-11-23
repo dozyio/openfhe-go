@@ -24,6 +24,10 @@ CMAKE_OPTIONS := -DBUILD_SHARED=OFF \
                  -DCMAKE_BUILD_TYPE=Release \
                  -DWITH_OPENMP=OFF # Disable OpenMP if not needed/causing issues
 
+# Enable ccache for CGO compilation to speed up rebuilds
+export CC := ccache clang
+export CXX := ccache clang++
+
 # --- Targets ---
 
 .PHONY: all build run clean fetch_openfhe build_openfhe clean_openfhe test test-coverage benchmark
