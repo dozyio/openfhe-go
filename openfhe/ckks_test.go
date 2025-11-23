@@ -595,3 +595,137 @@ func TestCKKS_EvalLogistic_ErrorCases(t *testing.T) {
 		t.Error("Expected error with closed context")
 	}
 }
+
+// TestCKKS_EvalSin tests the sine function evaluation using Chebyshev approximation
+func TestCKKS_EvalSin(t *testing.T) {
+	params, err := NewParamsCKKSRNS()
+	mustT(t, err, "NewParamsCKKSRNS")
+	defer params.Close()
+
+	mustT(t, params.SetSecurityLevel(HEStdNotSet), "SetSecurityLevel")
+	mustT(t, params.SetRingDim(1<<10), "SetRingDim")
+	mustT(t, params.SetScalingModSize(50), "SetScalingModSize")
+	mustT(t, params.SetFirstModSize(60), "SetFirstModSize")
+
+	polyDegree := uint32(32)
+	multDepth := 7
+	mustT(t, params.SetMultiplicativeDepth(multDepth), "SetMultiplicativeDepth")
+
+	cc, err := NewCryptoContextCKKS(params)
+	mustT(t, err, "NewCryptoContextCKKS")
+	defer cc.Close()
+
+	mustT(t, cc.Enable(PKE), "Enable PKE")
+	mustT(t, cc.Enable(KEYSWITCH), "Enable KEYSWITCH")
+	mustT(t, cc.Enable(LEVELEDSHE), "Enable LEVELEDSHE")
+	mustT(t, cc.Enable(ADVANCEDSHE), "Enable ADVANCEDSHE")
+
+	keyPair, err := cc.KeyGen()
+	mustT(t, err, "KeyGen")
+	defer keyPair.Close()
+
+	mustT(t, cc.EvalMultKeyGen(keyPair), "EvalMultKeyGen")
+
+	// Test values: 0, π/4, π/2, 3π/4, π
+	input := []float64{0, math.Pi / 4, math.Pi / 2, 3 * math.Pi / 4, math.Pi}
+	plaintext, err := cc.MakeCKKSPackedPlaintext(input)
+	mustT(t, err, "MakeCKKSPackedPlaintext")
+	defer plaintext.Close()
+
+	ciphertext, err := cc.Encrypt(keyPair, plaintext)
+	mustT(t, err, "Encrypt")
+	defer ciphertext.Close()
+
+	lowerBound := -math.Pi
+	upperBound := math.Pi
+	result, err := cc.EvalSin(ciphertext, lowerBound, upperBound, polyDegree)
+	mustT(t, err, "EvalSin")
+	defer result.Close()
+
+	plaintextDec, err := cc.Decrypt(keyPair, result)
+	mustT(t, err, "Decrypt")
+	defer plaintextDec.Close()
+
+	mustT(t, plaintextDec.SetLength(len(input)), "SetLength")
+	finalResult, err := plaintextDec.GetRealPackedValue()
+	mustT(t, err, "GetRealPackedValue")
+
+	// Expected: sin(0)=0, sin(π/4)≈0.707, sin(π/2)=1, sin(3π/4)≈0.707, sin(π)≈0
+	expectedOutput := []float64{0.0, 0.707107, 1.0, 0.707107, 0.0}
+
+	tolerance := 0.01
+	for i := 0; i < len(input); i++ {
+		diff := math.Abs(finalResult[i] - expectedOutput[i])
+		if diff > tolerance {
+			t.Errorf("Sin result mismatch at index %d: expected %.6f, got %.6f (diff: %.6f)",
+				i, expectedOutput[i], finalResult[i], diff)
+		}
+	}
+}
+
+// TestCKKS_EvalCos tests the cosine function evaluation using Chebyshev approximation
+func TestCKKS_EvalCos(t *testing.T) {
+	params, err := NewParamsCKKSRNS()
+	mustT(t, err, "NewParamsCKKSRNS")
+	defer params.Close()
+
+	mustT(t, params.SetSecurityLevel(HEStdNotSet), "SetSecurityLevel")
+	mustT(t, params.SetRingDim(1<<10), "SetRingDim")
+	mustT(t, params.SetScalingModSize(50), "SetScalingModSize")
+	mustT(t, params.SetFirstModSize(60), "SetFirstModSize")
+
+	polyDegree := uint32(32)
+	multDepth := 7
+	mustT(t, params.SetMultiplicativeDepth(multDepth), "SetMultiplicativeDepth")
+
+	cc, err := NewCryptoContextCKKS(params)
+	mustT(t, err, "NewCryptoContextCKKS")
+	defer cc.Close()
+
+	mustT(t, cc.Enable(PKE), "Enable PKE")
+	mustT(t, cc.Enable(KEYSWITCH), "Enable KEYSWITCH")
+	mustT(t, cc.Enable(LEVELEDSHE), "Enable LEVELEDSHE")
+	mustT(t, cc.Enable(ADVANCEDSHE), "Enable ADVANCEDSHE")
+
+	keyPair, err := cc.KeyGen()
+	mustT(t, err, "KeyGen")
+	defer keyPair.Close()
+
+	mustT(t, cc.EvalMultKeyGen(keyPair), "EvalMultKeyGen")
+
+	// Test values: 0, π/4, π/2, 3π/4, π
+	input := []float64{0, math.Pi / 4, math.Pi / 2, 3 * math.Pi / 4, math.Pi}
+	plaintext, err := cc.MakeCKKSPackedPlaintext(input)
+	mustT(t, err, "MakeCKKSPackedPlaintext")
+	defer plaintext.Close()
+
+	ciphertext, err := cc.Encrypt(keyPair, plaintext)
+	mustT(t, err, "Encrypt")
+	defer ciphertext.Close()
+
+	lowerBound := -math.Pi
+	upperBound := math.Pi
+	result, err := cc.EvalCos(ciphertext, lowerBound, upperBound, polyDegree)
+	mustT(t, err, "EvalCos")
+	defer result.Close()
+
+	plaintextDec, err := cc.Decrypt(keyPair, result)
+	mustT(t, err, "Decrypt")
+	defer plaintextDec.Close()
+
+	mustT(t, plaintextDec.SetLength(len(input)), "SetLength")
+	finalResult, err := plaintextDec.GetRealPackedValue()
+	mustT(t, err, "GetRealPackedValue")
+
+	// Expected: cos(0)=1, cos(π/4)≈0.707, cos(π/2)=0, cos(3π/4)≈-0.707, cos(π)=-1
+	expectedOutput := []float64{1.0, 0.707107, 0.0, -0.707107, -1.0}
+
+	tolerance := 0.01
+	for i := 0; i < len(input); i++ {
+		diff := math.Abs(finalResult[i] - expectedOutput[i])
+		if diff > tolerance {
+			t.Errorf("Cos result mismatch at index %d: expected %.6f, got %.6f (diff: %.6f)",
+				i, expectedOutput[i], finalResult[i], diff)
+		}
+	}
+}

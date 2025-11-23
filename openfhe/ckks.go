@@ -614,3 +614,107 @@ func (cc *CryptoContext) EvalDivide(ct *Ciphertext, lowerBound, upperBound float
 	resCt := &Ciphertext{ptr: ctH}
 	return resCt, nil
 }
+
+// EvalSin evaluates the sine function sin(x) on encrypted data
+// using Chebyshev approximation. This is useful for trigonometric operations
+// and signal processing applications on encrypted data.
+//
+// The function approximates sin(x) over the interval [lowerBound, upperBound]
+// using a Chebyshev polynomial of the specified degree.
+// Higher polynomial degrees provide better accuracy but require more multiplicative depth.
+//
+// IMPORTANT: Before calling this function, you must:
+//  1. Enable ADVANCEDSHE on the CryptoContext: cc.Enable(ADVANCEDSHE)
+//  2. Generate multiplication keys: cc.EvalMultKeyGen(secretKey)
+//
+// Parameters:
+//   - ct: Input ciphertext containing values to evaluate
+//   - lowerBound: Lower bound of the approximation interval (typically -π to π)
+//   - upperBound: Upper bound of the approximation interval
+//   - polyDegree: Degree of the Chebyshev polynomial (higher = more accurate, more depth)
+//
+// Common intervals for sine approximation:
+//   - [-π, π] for full period approximation
+//   - [-π/2, π/2] for better accuracy in restricted range
+//
+// Example:
+//
+//	// Evaluate sine function on values in range [-π, π]
+//	result, err := cc.EvalSin(ciphertext, -math.Pi, math.Pi, 32)
+//	// Input:  [0, π/4, π/2, 3π/4, π]
+//	// Output: [0, 0.707, 1.0, 0.707, 0]
+func (cc *CryptoContext) EvalSin(ct *Ciphertext, lowerBound, upperBound float64, polyDegree uint32) (*Ciphertext, error) {
+	if cc.ptr == nil {
+		return nil, errors.New("CryptoContext is closed or invalid")
+	}
+	if ct == nil || ct.ptr == nil {
+		return nil, errors.New("Input Ciphertext is closed or invalid")
+	}
+
+	var ctH C.CiphertextPtr
+	status := C.CryptoContext_EvalSin(cc.ptr, ct.ptr, C.double(lowerBound),
+		C.double(upperBound), C.uint32_t(polyDegree), &ctH)
+	err := checkPKEErrorMsg(status)
+	if err != nil {
+		return nil, err
+	}
+
+	if ctH == nil {
+		return nil, errors.New("EvalSin returned OK but null handle")
+	}
+
+	resCt := &Ciphertext{ptr: ctH}
+	return resCt, nil
+}
+
+// EvalCos evaluates the cosine function cos(x) on encrypted data
+// using Chebyshev approximation. This is useful for trigonometric operations
+// and signal processing applications on encrypted data.
+//
+// The function approximates cos(x) over the interval [lowerBound, upperBound]
+// using a Chebyshev polynomial of the specified degree.
+// Higher polynomial degrees provide better accuracy but require more multiplicative depth.
+//
+// IMPORTANT: Before calling this function, you must:
+//  1. Enable ADVANCEDSHE on the CryptoContext: cc.Enable(ADVANCEDSHE)
+//  2. Generate multiplication keys: cc.EvalMultKeyGen(secretKey)
+//
+// Parameters:
+//   - ct: Input ciphertext containing values to evaluate
+//   - lowerBound: Lower bound of the approximation interval (typically -π to π)
+//   - upperBound: Upper bound of the approximation interval
+//   - polyDegree: Degree of the Chebyshev polynomial (higher = more accurate, more depth)
+//
+// Common intervals for cosine approximation:
+//   - [-π, π] for full period approximation
+//   - [0, π] for better accuracy in restricted range
+//
+// Example:
+//
+//	// Evaluate cosine function on values in range [-π, π]
+//	result, err := cc.EvalCos(ciphertext, -math.Pi, math.Pi, 32)
+//	// Input:  [0, π/4, π/2, 3π/4, π]
+//	// Output: [1.0, 0.707, 0, -0.707, -1.0]
+func (cc *CryptoContext) EvalCos(ct *Ciphertext, lowerBound, upperBound float64, polyDegree uint32) (*Ciphertext, error) {
+	if cc.ptr == nil {
+		return nil, errors.New("CryptoContext is closed or invalid")
+	}
+	if ct == nil || ct.ptr == nil {
+		return nil, errors.New("Input Ciphertext is closed or invalid")
+	}
+
+	var ctH C.CiphertextPtr
+	status := C.CryptoContext_EvalCos(cc.ptr, ct.ptr, C.double(lowerBound),
+		C.double(upperBound), C.uint32_t(polyDegree), &ctH)
+	err := checkPKEErrorMsg(status)
+	if err != nil {
+		return nil, err
+	}
+
+	if ctH == nil {
+		return nil, errors.New("EvalCos returned OK but null handle")
+	}
+
+	resCt := &Ciphertext{ptr: ctH}
+	return resCt, nil
+}

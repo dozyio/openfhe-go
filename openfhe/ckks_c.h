@@ -85,6 +85,12 @@ PKEErr CryptoContext_EvalLogistic(CryptoContextPtr cc, CiphertextPtr ct,
 PKEErr CryptoContext_EvalDivide(CryptoContextPtr cc, CiphertextPtr ct,
                                 double lowerBound, double upperBound,
                                 uint32_t polyDegree, CiphertextPtr *out);
+PKEErr CryptoContext_EvalSin(CryptoContextPtr cc, CiphertextPtr ct,
+                             double lowerBound, double upperBound,
+                             uint32_t polyDegree, CiphertextPtr *out);
+PKEErr CryptoContext_EvalCos(CryptoContextPtr cc, CiphertextPtr ct,
+                             double lowerBound, double upperBound,
+                             uint32_t polyDegree, CiphertextPtr *out);
 
 #ifdef __cplusplus
 }
