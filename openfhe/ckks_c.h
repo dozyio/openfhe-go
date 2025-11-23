@@ -49,6 +49,7 @@ PKEErr CryptoContext_Rescale(CryptoContextPtr cc, CiphertextPtr ct,
 
 PKEErr CryptoContext_ModReduce(CryptoContextPtr cc, CiphertextPtr ct,
                                CiphertextPtr *out);
+PKEErr CryptoContext_ModReduceInPlace(CryptoContextPtr cc, CiphertextPtr ct);
 
 // --- CKKS Bootstrapping ---
 PKEErr CryptoContext_EvalBootstrapSetup_Simple(CryptoContextPtr cc,

@@ -380,6 +380,27 @@ PKEErr CryptoContext_ModReduce(CryptoContextPtr cc_ptr_to_sptr,
   PKE_CATCH_RETURN()
 }
 
+PKEErr CryptoContext_ModReduceInPlace(CryptoContextPtr cc_ptr_to_sptr,
+                                      CiphertextPtr ct_ptr_to_sptr) {
+  try {
+    if (!cc_ptr_to_sptr) {
+      return MakePKEError("CryptoContext_ModReduceInPlace: null context");
+    }
+
+    if (!ct_ptr_to_sptr) {
+      return MakePKEError("CryptoContext_ModReduceInPlace: null ciphertext");
+    }
+
+    auto &cc_sptr = GetCCSharedPtr(cc_ptr_to_sptr);
+    auto &ct_sptr = GetCTSharedPtr(ct_ptr_to_sptr);
+
+    cc_sptr->ModReduceInPlace(ct_sptr);
+
+    return MakePKEOk();
+  }
+  PKE_CATCH_RETURN()
+}
+
 PKEErr CryptoContext_EvalPoly(CryptoContextPtr cc_ptr_to_sptr,
                               CiphertextPtr ct_ptr_to_sptr,
                               const double *coefficients, size_t count,
