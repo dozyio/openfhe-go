@@ -67,6 +67,17 @@ PKEErr ParamsBFV_SetRingDim(ParamsBFVPtr p, uint64_t ringDim) {
   PKE_CATCH_RETURN()
 }
 
+PKEErr ParamsBFV_SetMaxRelinSkDeg(ParamsBFVPtr p, uint32_t maxRelinSkDeg) {
+  try {
+    if (!p) {
+      return MakePKEError("ParamsBFV_SetMaxRelinSkDeg: null params");
+    }
+    reinterpret_cast<CCParams<CryptoContextBFVRNS> *>(p)->SetMaxRelinSkDeg(maxRelinSkDeg);
+    return MakePKEOk();
+  }
+  PKE_CATCH_RETURN()
+}
+
 void DestroyParamsBFV(ParamsBFVPtr p) {
   delete reinterpret_cast<CCParams<CryptoContextBFVRNS> *>(p);
 }

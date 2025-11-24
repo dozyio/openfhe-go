@@ -16,6 +16,7 @@ PKEErr ParamsBFV_SetPlaintextModulus(ParamsBFVPtr p, uint64_t mod);
 PKEErr ParamsBFV_SetMultiplicativeDepth(ParamsBFVPtr p, int depth);
 PKEErr ParamsBFV_SetSecurityLevel(ParamsBFVPtr p, OFHESecurityLevel level);
 PKEErr ParamsBFV_SetRingDim(ParamsBFVPtr p, uint64_t ringDim);
+PKEErr ParamsBFV_SetMaxRelinSkDeg(ParamsBFVPtr p, uint32_t maxRelinSkDeg);
 PKEErr ParamsBFV_SetMultipartyMode(ParamsBFVPtr p, int mode);
 void DestroyParamsBFV(ParamsBFVPtr p);
 

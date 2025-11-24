@@ -109,6 +109,7 @@ See examples and tests for usage
 - [x] polynomial-evaluation
 - [x] pre-buffer
 - [x] pre-hra-secure
+- [x] rotation
 - [x] scheme-switching
 - [x] simple-ckks-bootstrapping
 - [x] simple-integers-bgvrns

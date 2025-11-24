@@ -332,6 +332,36 @@ func (cc *CryptoContext) EvalRotate(ct *Ciphertext, index int32) (*Ciphertext, e
 	return resCt, nil
 }
 
+func (cc *CryptoContext) EvalMerge(ciphertexts []*Ciphertext) (*Ciphertext, error) {
+	if cc.ptr == nil {
+		return nil, errors.New("CryptoContext is closed or invalid")
+	}
+	if len(ciphertexts) == 0 {
+		return nil, errors.New("ciphertext array is empty")
+	}
+
+	// Convert Go slice to C array
+	cCts := make([]C.CiphertextPtr, len(ciphertexts))
+	for i, ct := range ciphertexts {
+		if ct == nil || ct.ptr == nil {
+			return nil, errors.New("Ciphertext in array is closed or invalid")
+		}
+		cCts[i] = ct.ptr
+	}
+
+	var ctH C.CiphertextPtr
+	status := C.CryptoContext_EvalMerge(cc.ptr, &cCts[0], C.int(len(ciphertexts)), &ctH)
+	err := checkPKEErrorMsg(status)
+	if err != nil {
+		return nil, err
+	}
+	if ctH == nil {
+		return nil, errors.New("EvalMerge returned OK but null handle")
+	}
+	resCt := &Ciphertext{ptr: ctH}
+	return resCt, nil
+}
+
 // FastRotationPrecompute holds precomputed values for fast rotation
 type FastRotationPrecompute struct {
 	ptr unsafe.Pointer
