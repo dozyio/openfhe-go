@@ -92,7 +92,7 @@ See examples and tests for usage
 ## Examples
 
 ### Boolean FHE
-- [ ] boolean-ap
+- [x] boolean-ap
 - [ ] boolean-lmkcdey
 - [x] boolean-truth-tables
 - [x] boolean
