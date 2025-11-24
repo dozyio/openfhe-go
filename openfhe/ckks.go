@@ -261,6 +261,14 @@ func (cc *CryptoContext) GetRingDimension() uint64 {
 	return uint64(C.CryptoContext_GetRingDimension(cc.ptr))
 }
 
+func (cc *CryptoContext) GetCyclotomicOrder() uint64 {
+	if cc.ptr == nil {
+		return 0
+	}
+
+	return uint64(C.CryptoContext_GetCyclotomicOrder(cc.ptr))
+}
+
 // --- CKKS CryptoContext ---
 func NewCryptoContextCKKS(p *ParamsCKKS) (*CryptoContext, error) {
 	if p == nil || p.ptr == nil {

@@ -119,6 +119,16 @@ uint64_t CryptoContext_GetRingDimension(CryptoContextPtr cc_ptr_to_sptr) {
   return cc->GetRingDimension();
 }
 
+uint64_t CryptoContext_GetCyclotomicOrder(CryptoContextPtr cc_ptr_to_sptr) {
+  // This is a simple getter, no error handling needed
+  if (!cc_ptr_to_sptr)
+    return 0;
+
+  auto &cc = GetCCSharedPtr(cc_ptr_to_sptr);
+
+  return cc->GetCyclotomicOrder();
+}
+
 void DestroyCryptoContext(CryptoContextPtr cc_ptr_to_sptr) {
   delete reinterpret_cast<CryptoContextSharedPtr *>(cc_ptr_to_sptr);
 }
@@ -374,6 +384,43 @@ PKEErr CryptoContext_EvalRotate(CryptoContextPtr cc_ptr_to_sptr,
     auto &cc_sptr = GetCCSharedPtr(cc_ptr_to_sptr);
     auto &ct_sptr = GetCTSharedPtr(ct_ptr_to_sptr);
     Ciphertext<DCRTPoly> result_ct_sptr = cc_sptr->EvalRotate(ct_sptr, index);
+    *out = reinterpret_cast<CiphertextPtr>(
+        new CiphertextSharedPtr(result_ct_sptr));
+    return MakePKEOk();
+  }
+  PKE_CATCH_RETURN()
+}
+
+PKEErr CryptoContext_EvalMerge(CryptoContextPtr cc_ptr_to_sptr,
+                                CiphertextPtr *cts, int ct_count,
+                                CiphertextPtr *out) {
+  try {
+    if (!cc_ptr_to_sptr) {
+      return MakePKEError("CryptoContext_EvalMerge: null context");
+    }
+    if (!cts) {
+      return MakePKEError("CryptoContext_EvalMerge: null ciphertext array");
+    }
+    if (ct_count <= 0) {
+      return MakePKEError("CryptoContext_EvalMerge: invalid ciphertext count");
+    }
+    if (!out) {
+      return MakePKEError("CryptoContext_EvalMerge: null output pointer");
+    }
+    auto &cc_sptr = GetCCSharedPtr(cc_ptr_to_sptr);
+    
+    // Convert the array of CiphertextPtr to vector of shared_ptr
+    std::vector<Ciphertext<DCRTPoly>> ct_vec;
+    ct_vec.reserve(ct_count);
+    for (int i = 0; i < ct_count; i++) {
+      if (!cts[i]) {
+        return MakePKEError("CryptoContext_EvalMerge: null ciphertext in array");
+      }
+      auto &ct_sptr = GetCTSharedPtr(cts[i]);
+      ct_vec.push_back(ct_sptr);
+    }
+    
+    Ciphertext<DCRTPoly> result_ct_sptr = cc_sptr->EvalMerge(ct_vec);
     *out = reinterpret_cast<CiphertextPtr>(
         new CiphertextSharedPtr(result_ct_sptr));
     return MakePKEOk();

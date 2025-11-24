@@ -76,6 +76,18 @@ func (p *ParamsBFV) SetRingDim(ringDim uint64) error {
 	return nil
 }
 
+func (p *ParamsBFV) SetMaxRelinSkDeg(maxRelinSkDeg uint32) error {
+	if p.ptr == nil {
+		return errors.New("ParamsBFV is closed or invalid")
+	}
+	status := C.ParamsBFV_SetMaxRelinSkDeg(p.ptr, C.uint32_t(maxRelinSkDeg))
+	err := checkPKEErrorMsg(status)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func (p *ParamsBFV) SetMultipartyMode(mode int) error {
 	if p.ptr == nil {
 		return errors.New("ParamsBFV is closed or invalid")
