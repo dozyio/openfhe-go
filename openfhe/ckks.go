@@ -578,6 +578,75 @@ func (cc *CryptoContext) EvalInnerProduct(ct1, ct2 *Ciphertext, batchSize uint32
 	return resCt, nil
 }
 
+// EvalLinearWSum computes a linear weighted sum of ciphertexts with scalar constants.
+// Returns a ciphertext containing: sum(constants[i] * ciphertexts[i]) for all i.
+// Requires EvalMultKeyGen to have been called first.
+//
+// This is useful for computing weighted averages, linear combinations, and other
+// operations common in machine learning and statistical applications.
+//
+// Parameters:
+//   - ciphertexts: A slice of input ciphertexts
+//   - constants: A slice of scalar weights (must have same length as ciphertexts)
+//
+// Example:
+//
+//	ct1:      [1, 2, 3]
+//	ct2:      [4, 5, 6]
+//	ct3:      [7, 8, 9]
+//	constants: [0.5, 0.25, 0.25]
+//	output:   [2.75, 3.75, 4.75]  // 0.5*[1,2,3] + 0.25*[4,5,6] + 0.25*[7,8,9]
+func (cc *CryptoContext) EvalLinearWSum(ciphertexts []*Ciphertext, constants []float64) (*Ciphertext, error) {
+	if cc.ptr == nil {
+		return nil, errors.New("CryptoContext is closed or invalid")
+	}
+	if len(ciphertexts) == 0 {
+		return nil, errors.New("ciphertexts slice cannot be empty")
+	}
+	if len(constants) == 0 {
+		return nil, errors.New("constants slice cannot be empty")
+	}
+	if len(ciphertexts) != len(constants) {
+		return nil, errors.New("ciphertexts and constants must have the same length")
+	}
+
+	// Create array of ciphertext pointers
+	ctPtrs := make([]C.CiphertextPtr, len(ciphertexts))
+	for i, ct := range ciphertexts {
+		if ct == nil || ct.ptr == nil {
+			return nil, errors.New("Input Ciphertext is closed or invalid")
+		}
+		ctPtrs[i] = ct.ptr
+	}
+
+	// Convert Go float64 slice to C double array
+	constPtrs := make([]C.double, len(constants))
+	for i, c := range constants {
+		constPtrs[i] = C.double(c)
+	}
+
+	var ctH C.CiphertextPtr
+	status := C.CryptoContext_EvalLinearWSum(
+		cc.ptr,
+		(*C.CiphertextPtr)(unsafe.Pointer(&ctPtrs[0])),
+		C.int(len(ctPtrs)),
+		(*C.double)(unsafe.Pointer(&constPtrs[0])),
+		C.int(len(constPtrs)),
+		&ctH,
+	)
+	err := checkPKEErrorMsg(status)
+	if err != nil {
+		return nil, err
+	}
+
+	if ctH == nil {
+		return nil, errors.New("EvalLinearWSum returned OK but null handle")
+	}
+
+	resCt := &Ciphertext{ptr: ctH}
+	return resCt, nil
+}
+
 // --- CKKS Function Evaluation (Chebyshev Approximation) ---
 
 // EvalLogistic evaluates the logistic function 1/(1+exp(-x)) on encrypted data

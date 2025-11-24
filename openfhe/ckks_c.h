@@ -79,6 +79,11 @@ PKEErr CryptoContext_EvalInnerProduct(CryptoContextPtr cc, CiphertextPtr ct1,
                                       CiphertextPtr ct2, uint32_t batchSize,
                                       CiphertextPtr *out);
 
+// --- CKKS Linear Weighted Sum ---
+PKEErr CryptoContext_EvalLinearWSum(CryptoContextPtr cc, CiphertextPtr *ctVec,
+                                    int ctCount, const double *constants,
+                                    int constCount, CiphertextPtr *out);
+
 // --- CKKS Function Evaluation (Chebyshev Approximation) ---
 PKEErr CryptoContext_EvalLogistic(CryptoContextPtr cc, CiphertextPtr ct,
                                   double lowerBound, double upperBound,

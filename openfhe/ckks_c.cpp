@@ -298,7 +298,7 @@ PKEErr Plaintext_GetComplexPackedValueLength(PlaintextPtr pt_ptr_to_sptr,
 PKEErr Plaintext_GetComplexPackedValueAt(PlaintextPtr pt_ptr_to_sptr, int i,
                                          complex_double_t *out) {
   try {
-    if (!!pt_ptr_to_sptr) {
+    if (!pt_ptr_to_sptr) {
       return MakePKEError("Plaintext_GetComplexPackedValueAt: null plaintext");
     }
 
@@ -610,6 +610,50 @@ PKEErr ParamsCKKS_SetMultipartyMode(ParamsCKKSPtr p_ptr_to_sptr, int mode) {
     }
     auto &params = *reinterpret_cast<CCParams<CryptoContextCKKSRNS> *>(p_ptr_to_sptr);
     params.SetMultipartyMode(static_cast<MultipartyMode>(mode));
+    return MakePKEOk();
+  }
+  PKE_CATCH_RETURN()
+}
+
+PKEErr CryptoContext_EvalLinearWSum(CryptoContextPtr cc_ptr_to_sptr,
+                                    CiphertextPtr *ctVec, int ctCount,
+                                    const double *constants, int constCount,
+                                    CiphertextPtr *out) {
+  try {
+    if (!cc_ptr_to_sptr) {
+      return MakePKEError("CryptoContext_EvalLinearWSum: null context");
+    }
+    if (!ctVec || ctCount <= 0) {
+      return MakePKEError("CryptoContext_EvalLinearWSum: invalid ciphertext vector");
+    }
+    if (!constants || constCount <= 0) {
+      return MakePKEError("CryptoContext_EvalLinearWSum: invalid constants vector");
+    }
+    if (ctCount != constCount) {
+      return MakePKEError("CryptoContext_EvalLinearWSum: ciphertext and constant counts must match");
+    }
+    if (!out) {
+      return MakePKEError("CryptoContext_EvalLinearWSum: null output pointer");
+    }
+
+    auto &cc_sptr = GetCCSharedPtr(cc_ptr_to_sptr);
+    
+    // Convert the array of ciphertext pointers to a vector of ReadOnlyCiphertext
+    std::vector<ReadOnlyCiphertext<DCRTPoly>> ct_vec;
+    ct_vec.reserve(ctCount);
+    for (int i = 0; i < ctCount; i++) {
+      auto &ct_sptr = GetCTSharedPtr(ctVec[i]);
+      ct_vec.push_back(ct_sptr);
+    }
+    
+    // Convert the constants array to a vector
+    std::vector<double> const_vec(constants, constants + constCount);
+    
+    // Call EvalLinearWSum
+    Ciphertext<DCRTPoly> result_ct_sptr = cc_sptr->EvalLinearWSum(ct_vec, const_vec);
+    *out = reinterpret_cast<CiphertextPtr>(
+        new CiphertextSharedPtr(result_ct_sptr));
+
     return MakePKEOk();
   }
   PKE_CATCH_RETURN()

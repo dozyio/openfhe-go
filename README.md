@@ -105,6 +105,7 @@ See examples and tests for usage
 - [x] inner-product
 - [ ] interactive-bootstrapping
 - [ ] iterative-ckks-bootstrapping
+- [x] linearwsum-evaluation
 - [x] plaintext-operations
 - [x] polynomial-evaluation
 - [x] pre-buffer
