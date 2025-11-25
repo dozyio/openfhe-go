@@ -244,6 +244,26 @@ func (p *ParamsCKKS) SetMultipartyMode(mode int) error {
 	return nil
 }
 
+// CKKSDataType constants
+const (
+	CKKS_DATA_TYPE_REAL    = 0
+	CKKS_DATA_TYPE_COMPLEX = 1
+)
+
+func (p *ParamsCKKS) SetCKKSDataType(dataType int) error {
+	if p.ptr == nil {
+		return errors.New("ParamsCKKS is closed or invalid")
+	}
+
+	status := C.ParamsCKKS_SetCKKSDataType(p.ptr, C.int(dataType))
+	err := checkPKEErrorMsg(status)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // Close method for ParamsCKKS
 func (p *ParamsCKKS) Close() {
 	if p.ptr != nil {
@@ -322,6 +342,36 @@ func (cc *CryptoContext) MakeCKKSPackedPlaintext(vec []float64) (*Plaintext, err
 	return pt, nil
 }
 
+// MakeCKKSPackedPlaintextWithParams creates a CKKS plaintext with specified scale and level.
+func (cc *CryptoContext) MakeCKKSPackedPlaintextWithParams(vec []float64, scaleDeg float64, level int) (*Plaintext, error) {
+	if cc.ptr == nil {
+		return nil, errors.New("CryptoContext is closed or invalid")
+	}
+
+	if len(vec) == 0 {
+		return nil, errors.New("MakeCKKSPackedPlaintextWithParams: input vector is empty")
+	}
+
+	cVec := (*C.double)(unsafe.Pointer(&vec[0]))
+	cLen := C.int(len(vec))
+
+	var ptH C.PlaintextPtr
+
+	status := C.CryptoContext_MakeCKKSPackedPlaintextWithParams(cc.ptr, cVec, cLen, C.double(scaleDeg), C.int(level), &ptH)
+	err := checkPKEErrorMsg(status)
+	if err != nil {
+		return nil, err
+	}
+
+	if ptH == nil {
+		return nil, errors.New("MakeCKKSPackedPlaintextWithParams returned OK but null handle")
+	}
+
+	pt := &Plaintext{ptr: ptH}
+
+	return pt, nil
+}
+
 // MakeCKKSComplexPackedPlaintext creates a CKKS plaintext from a slice of complex128.
 func (cc *CryptoContext) MakeCKKSComplexPackedPlaintext(vec []complex128) (*Plaintext, error) {
 	if cc.ptr == nil {
@@ -351,6 +401,42 @@ func (cc *CryptoContext) MakeCKKSComplexPackedPlaintext(vec []complex128) (*Plai
 
 	if ptH == nil {
 		return nil, errors.New("MakeCKKSComplexPackedPlaintext returned OK but null handle")
+	}
+
+	pt := &Plaintext{ptr: ptH}
+
+	return pt, nil
+}
+
+// MakeCKKSComplexPackedPlaintextWithParams creates a CKKS plaintext from complex numbers with specified scale and level.
+func (cc *CryptoContext) MakeCKKSComplexPackedPlaintextWithParams(vec []complex128, scaleDeg float64, level int) (*Plaintext, error) {
+	if cc.ptr == nil {
+		return nil, errors.New("CryptoContext is closed or invalid")
+	}
+
+	if len(vec) == 0 {
+		return nil, errors.New("MakeCKKSComplexPackedPlaintextWithParams: input vector is empty")
+	}
+
+	// Convert Go []complex128 to C []complex_double_t
+	cVec := make([]C.complex_double_t, len(vec))
+	for i, v := range vec {
+		cVec[i].real = C.double(real(v))
+		cVec[i].imag = C.double(imag(v))
+	}
+
+	cLen := C.int(len(vec))
+
+	var ptH C.PlaintextPtr
+
+	status := C.CryptoContext_MakeCKKSComplexPackedPlaintextWithParams(cc.ptr, &cVec[0], cLen, C.double(scaleDeg), C.int(level), &ptH)
+	err := checkPKEErrorMsg(status)
+	if err != nil {
+		return nil, err
+	}
+
+	if ptH == nil {
+		return nil, errors.New("MakeCKKSComplexPackedPlaintextWithParams returned OK but null handle")
 	}
 
 	pt := &Plaintext{ptr: ptH}
@@ -424,6 +510,219 @@ func (cc *CryptoContext) ModReduceInPlace(ct *Ciphertext) error {
 	}
 
 	status := C.CryptoContext_ModReduceInPlace(cc.ptr, ct.ptr)
+	err := checkPKEErrorMsg(status)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// --- Scalar and Complex Constant Operations ---
+
+// EvalMultDouble multiplies a ciphertext by a scalar double value.
+func (cc *CryptoContext) EvalMultDouble(ct *Ciphertext, constant float64) (*Ciphertext, error) {
+	if cc.ptr == nil {
+		return nil, errors.New("CryptoContext is closed or invalid")
+	}
+	if ct == nil || ct.ptr == nil {
+		return nil, errors.New("Input Ciphertext is closed or invalid")
+	}
+
+	var ctH C.CiphertextPtr
+	status := C.CryptoContext_EvalMultDouble(cc.ptr, ct.ptr, C.double(constant), &ctH)
+	err := checkPKEErrorMsg(status)
+	if err != nil {
+		return nil, err
+	}
+	if ctH == nil {
+		return nil, errors.New("EvalMultDouble returned OK but null handle")
+	}
+
+	return &Ciphertext{ptr: ctH}, nil
+}
+
+// EvalMultComplex multiplies a ciphertext by a complex constant.
+func (cc *CryptoContext) EvalMultComplex(ct *Ciphertext, constant complex128) (*Ciphertext, error) {
+	if cc.ptr == nil {
+		return nil, errors.New("CryptoContext is closed or invalid")
+	}
+	if ct == nil || ct.ptr == nil {
+		return nil, errors.New("Input Ciphertext is closed or invalid")
+	}
+
+	var ctH C.CiphertextPtr
+	cConst := C.complex_double_t{real: C.double(real(constant)), imag: C.double(imag(constant))}
+	status := C.CryptoContext_EvalMultComplex(cc.ptr, ct.ptr, cConst, &ctH)
+	err := checkPKEErrorMsg(status)
+	if err != nil {
+		return nil, err
+	}
+	if ctH == nil {
+		return nil, errors.New("EvalMultComplex returned OK but null handle")
+	}
+
+	return &Ciphertext{ptr: ctH}, nil
+}
+
+// EvalAddDouble adds a scalar double value to a ciphertext.
+func (cc *CryptoContext) EvalAddDouble(ct *Ciphertext, constant float64) (*Ciphertext, error) {
+	if cc.ptr == nil {
+		return nil, errors.New("CryptoContext is closed or invalid")
+	}
+	if ct == nil || ct.ptr == nil {
+		return nil, errors.New("Input Ciphertext is closed or invalid")
+	}
+
+	var ctH C.CiphertextPtr
+	status := C.CryptoContext_EvalAddDouble(cc.ptr, ct.ptr, C.double(constant), &ctH)
+	err := checkPKEErrorMsg(status)
+	if err != nil {
+		return nil, err
+	}
+	if ctH == nil {
+		return nil, errors.New("EvalAddDouble returned OK but null handle")
+	}
+
+	return &Ciphertext{ptr: ctH}, nil
+}
+
+// EvalAddComplex adds a complex constant to a ciphertext.
+func (cc *CryptoContext) EvalAddComplex(ct *Ciphertext, constant complex128) (*Ciphertext, error) {
+	if cc.ptr == nil {
+		return nil, errors.New("CryptoContext is closed or invalid")
+	}
+	if ct == nil || ct.ptr == nil {
+		return nil, errors.New("Input Ciphertext is closed or invalid")
+	}
+
+	var ctH C.CiphertextPtr
+	cConst := C.complex_double_t{real: C.double(real(constant)), imag: C.double(imag(constant))}
+	status := C.CryptoContext_EvalAddComplex(cc.ptr, ct.ptr, cConst, &ctH)
+	err := checkPKEErrorMsg(status)
+	if err != nil {
+		return nil, err
+	}
+	if ctH == nil {
+		return nil, errors.New("EvalAddComplex returned OK but null handle")
+	}
+
+	return &Ciphertext{ptr: ctH}, nil
+}
+
+// EvalSubDouble subtracts a scalar double value from a ciphertext.
+func (cc *CryptoContext) EvalSubDouble(ct *Ciphertext, constant float64) (*Ciphertext, error) {
+	if cc.ptr == nil {
+		return nil, errors.New("CryptoContext is closed or invalid")
+	}
+	if ct == nil || ct.ptr == nil {
+		return nil, errors.New("Input Ciphertext is closed or invalid")
+	}
+
+	var ctH C.CiphertextPtr
+	status := C.CryptoContext_EvalSubDouble(cc.ptr, ct.ptr, C.double(constant), &ctH)
+	err := checkPKEErrorMsg(status)
+	if err != nil {
+		return nil, err
+	}
+	if ctH == nil {
+		return nil, errors.New("EvalSubDouble returned OK but null handle")
+	}
+
+	return &Ciphertext{ptr: ctH}, nil
+}
+
+// EvalSubComplex subtracts a complex constant from a ciphertext.
+func (cc *CryptoContext) EvalSubComplex(ct *Ciphertext, constant complex128) (*Ciphertext, error) {
+	if cc.ptr == nil {
+		return nil, errors.New("CryptoContext is closed or invalid")
+	}
+	if ct == nil || ct.ptr == nil {
+		return nil, errors.New("Input Ciphertext is closed or invalid")
+	}
+
+	var ctH C.CiphertextPtr
+	cConst := C.complex_double_t{real: C.double(real(constant)), imag: C.double(imag(constant))}
+	status := C.CryptoContext_EvalSubComplex(cc.ptr, ct.ptr, cConst, &ctH)
+	err := checkPKEErrorMsg(status)
+	if err != nil {
+		return nil, err
+	}
+	if ctH == nil {
+		return nil, errors.New("EvalSubComplex returned OK but null handle")
+	}
+
+	return &Ciphertext{ptr: ctH}, nil
+}
+
+// --- In-Place Operations ---
+
+// EvalAddInPlaceDouble adds a scalar double value to a ciphertext in place.
+func (cc *CryptoContext) EvalAddInPlaceDouble(ct *Ciphertext, constant float64) error {
+	if cc.ptr == nil {
+		return errors.New("CryptoContext is closed or invalid")
+	}
+	if ct == nil || ct.ptr == nil {
+		return errors.New("Input Ciphertext is closed or invalid")
+	}
+
+	status := C.CryptoContext_EvalAddInPlaceDouble(cc.ptr, ct.ptr, C.double(constant))
+	err := checkPKEErrorMsg(status)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// EvalAddInPlaceComplex adds a complex constant to a ciphertext in place.
+func (cc *CryptoContext) EvalAddInPlaceComplex(ct *Ciphertext, constant complex128) error {
+	if cc.ptr == nil {
+		return errors.New("CryptoContext is closed or invalid")
+	}
+	if ct == nil || ct.ptr == nil {
+		return errors.New("Input Ciphertext is closed or invalid")
+	}
+
+	cConst := C.complex_double_t{real: C.double(real(constant)), imag: C.double(imag(constant))}
+	status := C.CryptoContext_EvalAddInPlaceComplex(cc.ptr, ct.ptr, cConst)
+	err := checkPKEErrorMsg(status)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// EvalSubInPlaceDouble subtracts a scalar double value from a ciphertext in place.
+func (cc *CryptoContext) EvalSubInPlaceDouble(ct *Ciphertext, constant float64) error {
+	if cc.ptr == nil {
+		return errors.New("CryptoContext is closed or invalid")
+	}
+	if ct == nil || ct.ptr == nil {
+		return errors.New("Input Ciphertext is closed or invalid")
+	}
+
+	status := C.CryptoContext_EvalSubInPlaceDouble(cc.ptr, ct.ptr, C.double(constant))
+	err := checkPKEErrorMsg(status)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// EvalSubInPlaceComplex subtracts a complex constant from a ciphertext in place.
+func (cc *CryptoContext) EvalSubInPlaceComplex(ct *Ciphertext, constant complex128) error {
+	if cc.ptr == nil {
+		return errors.New("CryptoContext is closed or invalid")
+	}
+	if ct == nil || ct.ptr == nil {
+		return errors.New("Input Ciphertext is closed or invalid")
+	}
+
+	cConst := C.complex_double_t{real: C.double(real(constant)), imag: C.double(imag(constant))}
+	status := C.CryptoContext_EvalSubInPlaceComplex(cc.ptr, ct.ptr, cConst)
 	err := checkPKEErrorMsg(status)
 	if err != nil {
 		return err

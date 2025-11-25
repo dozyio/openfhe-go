@@ -27,6 +27,10 @@ typedef void *CryptoContextPtr;
 typedef void *KeyPairPtr;
 typedef void *PlaintextPtr;
 typedef void *CiphertextPtr;
+typedef void *PrivateKeyPtr;
+typedef void *PublicKeyPtr;
+typedef void *EvalKeyPtr;
+typedef void *EvalKeyMapPtr;
 // Note: Scheme-specific params (ParamsBFVPtr, etc.) are in their own headers.
 
 // --- Enums ---
@@ -59,9 +63,15 @@ PKEErr CryptoContext_KeyGen(CryptoContextPtr cc, KeyPairPtr *out);
 PKEErr CryptoContext_EvalMultKeyGen(CryptoContextPtr cc, KeyPairPtr keys);
 PKEErr CryptoContext_EvalRotateKeyGen(CryptoContextPtr cc, KeyPairPtr keys,
                                        int32_t *indices, int len);
+PKEErr CryptoContext_EvalAutomorphismKeyGen(CryptoContextPtr cc, KeyPairPtr keys,
+                                             uint32_t *indices, int len);
+EvalKeyMapPtr CryptoContext_GetEvalAutomorphismKeyMap(CryptoContextPtr cc,
+                                                       const char *keyTag);
 uint64_t CryptoContext_GetRingDimension(CryptoContextPtr cc);
 uint64_t CryptoContext_GetCyclotomicOrder(CryptoContextPtr cc);
 int Ciphertext_GetLevel(CiphertextPtr ct);
+uint32_t Ciphertext_GetNoiseScaleDeg(CiphertextPtr ct);
+PKEErr Ciphertext_GetKeyTag(CiphertextPtr ct, char **outString);
 void DestroyCryptoContext(CryptoContextPtr cc);
 int GetNativeInt();
 
@@ -78,6 +88,9 @@ PKEErr CryptoContext_EvalMult(CryptoContextPtr cc, CiphertextPtr ct1,
                                CiphertextPtr ct2, CiphertextPtr *out);
 PKEErr CryptoContext_EvalRotate(CryptoContextPtr cc, CiphertextPtr ct,
                                  int32_t index, CiphertextPtr *out);
+PKEErr CryptoContext_EvalAutomorphism(CryptoContextPtr cc, CiphertextPtr ct,
+                                      uint32_t index, EvalKeyMapPtr evalKeyMap,
+                                      CiphertextPtr *out);
 PKEErr CryptoContext_EvalMerge(CryptoContextPtr cc, CiphertextPtr *cts,
                                 int ct_count, CiphertextPtr *out);
 PKEErr CryptoContext_EvalFastRotationPrecompute(CryptoContextPtr cc,
@@ -138,11 +151,6 @@ PKEErr CryptoContext_GetParameterElementString(CryptoContextPtr cc,
                                                 char **outString);
 
 // --- Multiparty / Threshold FHE ---
-typedef void *PrivateKeyPtr;
-typedef void *PublicKeyPtr;
-typedef void *EvalKeyPtr;
-typedef void *EvalKeyMapPtr;
-
 // Multiparty key generation
 PKEErr CryptoContext_MultipartyKeyGen_FromPrivateKeys(
     CryptoContextPtr cc, PrivateKeyPtr *privateKeys, size_t numKeys,

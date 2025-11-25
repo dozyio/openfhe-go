@@ -30,6 +30,7 @@ PKEErr ParamsCKKS_SetSecretKeyDist(ParamsCKKSPtr p, OFHESecretKeyDist dist);
 PKEErr ParamsCKKS_SetDigitSize(ParamsCKKSPtr p, int digitSize);
 PKEErr ParamsCKKS_SetKeySwitchTechnique(ParamsCKKSPtr p, int technique);
 PKEErr ParamsCKKS_SetMultipartyMode(ParamsCKKSPtr p, int mode);
+PKEErr ParamsCKKS_SetCKKSDataType(ParamsCKKSPtr p, int dataType);
 void DestroyParamsCKKS(ParamsCKKSPtr p);
 
 // --- CKKS CryptoContext ---
@@ -39,9 +40,18 @@ PKEErr NewCryptoContextCKKS(ParamsCKKSPtr p, CryptoContextPtr *out);
 PKEErr CryptoContext_MakeCKKSPackedPlaintext(CryptoContextPtr cc,
                                              double *values, int len,
                                              PlaintextPtr *out);
+PKEErr CryptoContext_MakeCKKSPackedPlaintextWithParams(CryptoContextPtr cc,
+                                                       double *values, int len,
+                                                       double scaleDeg, int level,
+                                                       PlaintextPtr *out);
 PKEErr CryptoContext_MakeCKKSComplexPackedPlaintext(CryptoContextPtr cc,
                                                     complex_double_t *values,
                                                     int len, PlaintextPtr *out);
+PKEErr CryptoContext_MakeCKKSComplexPackedPlaintextWithParams(CryptoContextPtr cc,
+                                                              complex_double_t *values,
+                                                              int len,
+                                                              double scaleDeg, int level,
+                                                              PlaintextPtr *out);
 
 // --- CKKS Operations ---
 PKEErr CryptoContext_Rescale(CryptoContextPtr cc, CiphertextPtr ct,
@@ -50,6 +60,30 @@ PKEErr CryptoContext_Rescale(CryptoContextPtr cc, CiphertextPtr ct,
 PKEErr CryptoContext_ModReduce(CryptoContextPtr cc, CiphertextPtr ct,
                                CiphertextPtr *out);
 PKEErr CryptoContext_ModReduceInPlace(CryptoContextPtr cc, CiphertextPtr ct);
+
+// Scalar and complex constant operations
+PKEErr CryptoContext_EvalMultDouble(CryptoContextPtr cc, CiphertextPtr ct,
+                                    double constant, CiphertextPtr *out);
+PKEErr CryptoContext_EvalMultComplex(CryptoContextPtr cc, CiphertextPtr ct,
+                                     complex_double_t constant, CiphertextPtr *out);
+PKEErr CryptoContext_EvalAddDouble(CryptoContextPtr cc, CiphertextPtr ct,
+                                   double constant, CiphertextPtr *out);
+PKEErr CryptoContext_EvalAddComplex(CryptoContextPtr cc, CiphertextPtr ct,
+                                    complex_double_t constant, CiphertextPtr *out);
+PKEErr CryptoContext_EvalSubDouble(CryptoContextPtr cc, CiphertextPtr ct,
+                                   double constant, CiphertextPtr *out);
+PKEErr CryptoContext_EvalSubComplex(CryptoContextPtr cc, CiphertextPtr ct,
+                                    complex_double_t constant, CiphertextPtr *out);
+
+// In-place operations
+PKEErr CryptoContext_EvalAddInPlaceDouble(CryptoContextPtr cc, CiphertextPtr ct,
+                                          double constant);
+PKEErr CryptoContext_EvalAddInPlaceComplex(CryptoContextPtr cc, CiphertextPtr ct,
+                                           complex_double_t constant);
+PKEErr CryptoContext_EvalSubInPlaceDouble(CryptoContextPtr cc, CiphertextPtr ct,
+                                          double constant);
+PKEErr CryptoContext_EvalSubInPlaceComplex(CryptoContextPtr cc, CiphertextPtr ct,
+                                           complex_double_t constant);
 
 // --- CKKS Bootstrapping ---
 PKEErr CryptoContext_EvalBootstrapSetup_Simple(CryptoContextPtr cc,

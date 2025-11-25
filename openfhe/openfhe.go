@@ -135,6 +135,41 @@ func (cc *CryptoContext) EvalRotateKeyGen(keys *KeyPair, indices []int32) error 
 	return nil
 }
 
+func (cc *CryptoContext) EvalAutomorphismKeyGen(keys *KeyPair, indices []uint32) error {
+	if cc.ptr == nil {
+		return errors.New("CryptoContext is closed or invalid")
+	}
+	if keys == nil || keys.ptr == nil {
+		return errors.New("KeyPair is closed or invalid")
+	}
+	if len(indices) == 0 {
+		return nil // Nothing to do
+	}
+	cIndices := (*C.uint32_t)(unsafe.Pointer(&indices[0]))
+	cLen := C.int(len(indices))
+	status := C.CryptoContext_EvalAutomorphismKeyGen(cc.ptr, keys.ptr, cIndices, cLen)
+	err := checkPKEErrorMsg(status)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (cc *CryptoContext) GetEvalAutomorphismKeyMap(keyTag string) *EvalKeyMap {
+	if cc.ptr == nil {
+		return nil
+	}
+	cKeyTag := C.CString(keyTag)
+	defer C.free(unsafe.Pointer(cKeyTag))
+
+	mapPtr := C.CryptoContext_GetEvalAutomorphismKeyMap(cc.ptr, cKeyTag)
+	if mapPtr == nil {
+		return nil
+	}
+
+	return &EvalKeyMap{ptr: mapPtr}
+}
+
 func (cc *CryptoContext) Encrypt(keys *KeyPair, pt *Plaintext) (*Ciphertext, error) {
 	if cc.ptr == nil {
 		return nil, errors.New("CryptoContext is closed or invalid")
@@ -327,6 +362,29 @@ func (cc *CryptoContext) EvalRotate(ct *Ciphertext, index int32) (*Ciphertext, e
 	}
 	if ctH == nil {
 		return nil, errors.New("EvalRotate returned OK but null handle")
+	}
+	resCt := &Ciphertext{ptr: ctH}
+	return resCt, nil
+}
+
+func (cc *CryptoContext) EvalAutomorphism(ct *Ciphertext, index uint32, evalKeyMap *EvalKeyMap) (*Ciphertext, error) {
+	if cc.ptr == nil {
+		return nil, errors.New("CryptoContext is closed or invalid")
+	}
+	if ct == nil || ct.ptr == nil {
+		return nil, errors.New("Input Ciphertext is closed or invalid")
+	}
+	if evalKeyMap == nil || evalKeyMap.ptr == nil {
+		return nil, errors.New("EvalKeyMap is closed or invalid")
+	}
+	var ctH C.CiphertextPtr
+	status := C.CryptoContext_EvalAutomorphism(cc.ptr, ct.ptr, C.uint32_t(index), evalKeyMap.ptr, &ctH)
+	err := checkPKEErrorMsg(status)
+	if err != nil {
+		return nil, err
+	}
+	if ctH == nil {
+		return nil, errors.New("EvalAutomorphism returned OK but null handle")
 	}
 	resCt := &Ciphertext{ptr: ctH}
 	return resCt, nil
@@ -535,6 +593,33 @@ func (ct *Ciphertext) GetLevel() (int, bool) {
 	}
 
 	return int(level), true
+}
+
+func (ct *Ciphertext) GetNoiseScaleDeg() uint32 {
+	if ct.ptr == nil {
+		return 0
+	}
+	return uint32(C.Ciphertext_GetNoiseScaleDeg(ct.ptr))
+}
+
+func (ct *Ciphertext) GetKeyTag() (string, error) {
+	if ct.ptr == nil {
+		return "", errors.New("Ciphertext is closed or invalid")
+	}
+
+	var cKeyTag *C.char
+	status := C.Ciphertext_GetKeyTag(ct.ptr, &cKeyTag)
+	err := checkPKEErrorMsg(status)
+	if err != nil {
+		return "", err
+	}
+
+	if cKeyTag == nil {
+		return "", errors.New("GetKeyTag returned null string")
+	}
+	defer C.free(unsafe.Pointer(cKeyTag))
+
+	return C.GoString(cKeyTag), nil
 }
 
 func (cc *CryptoContext) GetParameterElementString() (string, error) {
