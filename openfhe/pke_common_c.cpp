@@ -109,6 +109,48 @@ PKEErr CryptoContext_EvalRotateKeyGen(CryptoContextPtr cc_ptr_to_sptr,
   PKE_CATCH_RETURN()
 }
 
+PKEErr CryptoContext_EvalAutomorphismKeyGen(CryptoContextPtr cc_ptr_to_sptr,
+                                      KeyPairPtr keys_raw_ptr, uint32_t *indices,
+                                      int len) {
+  try {
+    if (!cc_ptr_to_sptr) {
+      return MakePKEError("CryptoContext_EvalAutomorphismKeyGen: null context");
+    }
+    if (!keys_raw_ptr) {
+      return MakePKEError("CryptoContext_EvalAutomorphismKeyGen: null keypair");
+    }
+    auto &cc_sptr = GetCCSharedPtr(cc_ptr_to_sptr);
+    auto kp_raw = reinterpret_cast<KeyPairRawPtr>(keys_raw_ptr);
+    if (!kp_raw->secretKey) {
+      return MakePKEError(
+          "CryptoContext_EvalAutomorphismKeyGen: keypair has no secret key");
+    }
+    if (len > 0 && !indices) {
+      return MakePKEError(
+          "CryptoContext_EvalAutomorphismKeyGen: non-zero length with null indices");
+    }
+    std::vector<uint32_t> vec(indices, indices + len);
+    cc_sptr->EvalAutomorphismKeyGen(kp_raw->secretKey, vec);
+    return MakePKEOk();
+  }
+  PKE_CATCH_RETURN()
+}
+
+EvalKeyMapPtr CryptoContext_GetEvalAutomorphismKeyMap(CryptoContextPtr cc_ptr_to_sptr,
+                                                       const char *keyTag) {
+  if (!cc_ptr_to_sptr)
+    return nullptr;
+
+  auto &cc = GetCCSharedPtr(cc_ptr_to_sptr);
+  
+  std::string tag = keyTag ? keyTag : "";
+  auto evalKeyMap = cc->GetEvalAutomorphismKeyMap(tag);
+  
+  // Create a new map on the heap and copy the contents
+  auto mapPtr = new std::map<uint32_t, EvalKey<DCRTPoly>>(evalKeyMap);
+  return reinterpret_cast<EvalKeyMapPtr>(mapPtr);
+}
+
 uint64_t CryptoContext_GetRingDimension(CryptoContextPtr cc_ptr_to_sptr) {
   // This is a simple getter, no error handling needed
   if (!cc_ptr_to_sptr)
@@ -384,6 +426,34 @@ PKEErr CryptoContext_EvalRotate(CryptoContextPtr cc_ptr_to_sptr,
     auto &cc_sptr = GetCCSharedPtr(cc_ptr_to_sptr);
     auto &ct_sptr = GetCTSharedPtr(ct_ptr_to_sptr);
     Ciphertext<DCRTPoly> result_ct_sptr = cc_sptr->EvalRotate(ct_sptr, index);
+    *out = reinterpret_cast<CiphertextPtr>(
+        new CiphertextSharedPtr(result_ct_sptr));
+    return MakePKEOk();
+  }
+  PKE_CATCH_RETURN()
+}
+
+PKEErr CryptoContext_EvalAutomorphism(CryptoContextPtr cc_ptr_to_sptr,
+                                CiphertextPtr ct_ptr_to_sptr, uint32_t index,
+                                EvalKeyMapPtr evalKeyMap,
+                                CiphertextPtr *out) {
+  try {
+    if (!cc_ptr_to_sptr) {
+      return MakePKEError("CryptoContext_EvalAutomorphism: null context");
+    }
+    if (!ct_ptr_to_sptr) {
+      return MakePKEError("CryptoContext_EvalAutomorphism: null ciphertext");
+    }
+    if (!evalKeyMap) {
+      return MakePKEError("CryptoContext_EvalAutomorphism: null evalKeyMap");
+    }
+    if (!out) {
+      return MakePKEError("CryptoContext_EvalAutomorphism: null output pointer");
+    }
+    auto &cc_sptr = GetCCSharedPtr(cc_ptr_to_sptr);
+    auto &ct_sptr = GetCTSharedPtr(ct_ptr_to_sptr);
+    auto mapPtr = reinterpret_cast<std::map<uint32_t, EvalKey<DCRTPoly>>*>(evalKeyMap);
+    Ciphertext<DCRTPoly> result_ct_sptr = cc_sptr->EvalAutomorphism(ct_sptr, index, *mapPtr);
     *out = reinterpret_cast<CiphertextPtr>(
         new CiphertextSharedPtr(result_ct_sptr));
     return MakePKEOk();
@@ -688,6 +758,41 @@ int Ciphertext_GetLevel(CiphertextPtr ct_ptr_to_sptr) {
   }
 
   return static_cast<int>(ct_sptr->GetLevel()); // Cast size_t to int
+}
+
+uint32_t Ciphertext_GetNoiseScaleDeg(CiphertextPtr ct_ptr_to_sptr) {
+  if (!ct_ptr_to_sptr) {
+    return 0;
+  }
+
+  auto &ct_sptr = GetCTSharedPtr(ct_ptr_to_sptr);
+  if (!ct_sptr) {
+    return 0;
+  }
+
+  return static_cast<uint32_t>(ct_sptr->GetNoiseScaleDeg());
+}
+
+PKEErr Ciphertext_GetKeyTag(CiphertextPtr ct_ptr_to_sptr, char **outString) {
+  try {
+    if (!ct_ptr_to_sptr) {
+      return MakePKEError("Ciphertext_GetKeyTag: null ciphertext");
+    }
+    if (!outString) {
+      return MakePKEError("Ciphertext_GetKeyTag: null output pointer");
+    }
+
+    auto &ct_sptr = GetCTSharedPtr(ct_ptr_to_sptr);
+    if (!ct_sptr) {
+      return MakePKEError("Ciphertext_GetKeyTag: invalid ciphertext");
+    }
+
+    std::string keyTag = ct_sptr->GetKeyTag();
+    *outString = strdup(keyTag.c_str());
+
+    return MakePKEOk();
+  }
+  PKE_CATCH_RETURN()
 }
 
 void DestroyCiphertext(CiphertextPtr ct_ptr_to_sptr) {

@@ -181,6 +181,21 @@ PKEErr ParamsCKKS_SetKeySwitchTechnique(ParamsCKKSPtr p, int technique) {
   PKE_CATCH_RETURN()
 }
 
+PKEErr ParamsCKKS_SetCKKSDataType(ParamsCKKSPtr p, int dataType) {
+  try {
+    if (!p) {
+      return MakePKEError("ParamsCKKS_SetCKKSDataType: null params");
+    }
+    // Map int to CKKSDataType enum
+    // REAL = 0, COMPLEX = 1 (from OpenFHE)
+    reinterpret_cast<CCParams<CryptoContextCKKSRNS> *>(p)
+        ->SetCKKSDataType(static_cast<CKKSDataType>(dataType));
+
+    return MakePKEOk();
+  }
+  PKE_CATCH_RETURN()
+}
+
 void DestroyParamsCKKS(ParamsCKKSPtr p) {
   delete reinterpret_cast<CCParams<CryptoContextCKKSRNS> *>(p);
 }
@@ -234,6 +249,35 @@ PKEErr CryptoContext_MakeCKKSPackedPlaintext(CryptoContextPtr cc_ptr_to_sptr,
   PKE_CATCH_RETURN()
 }
 
+PKEErr CryptoContext_MakeCKKSPackedPlaintextWithParams(
+    CryptoContextPtr cc_ptr_to_sptr, double *values, int len, double scaleDeg,
+    int level, PlaintextPtr *out) {
+  try {
+    if (!cc_ptr_to_sptr) {
+      return MakePKEError(
+          "CryptoContext_MakeCKKSPackedPlaintextWithParams: null context");
+    }
+
+    if (len > 0 && !values) {
+      return MakePKEError("CryptoContext_MakeCKKSPackedPlaintextWithParams: "
+                          "non-zero length with null values");
+    }
+
+    if (!out) {
+      return MakePKEError(
+          "CryptoContext_MakeCKKSPackedPlaintextWithParams: null output pointer");
+    }
+
+    auto &cc_sptr = GetCCSharedPtr(cc_ptr_to_sptr);
+    std::vector<double> vec(values, values + len);
+    Plaintext pt_sptr = cc_sptr->MakeCKKSPackedPlaintext(vec, scaleDeg, level);
+    *out = reinterpret_cast<PlaintextPtr>(new PlaintextSharedPtr(pt_sptr));
+
+    return MakePKEOk();
+  }
+  PKE_CATCH_RETURN()
+}
+
 PKEErr
 CryptoContext_MakeCKKSComplexPackedPlaintext(CryptoContextPtr cc_ptr_to_sptr,
                                              complex_double_t *values, int len,
@@ -270,56 +314,81 @@ CryptoContext_MakeCKKSComplexPackedPlaintext(CryptoContextPtr cc_ptr_to_sptr,
   PKE_CATCH_RETURN()
 }
 
+PKEErr CryptoContext_MakeCKKSComplexPackedPlaintextWithParams(
+    CryptoContextPtr cc_ptr_to_sptr, complex_double_t *values, int len,
+    double scaleDeg, int level, PlaintextPtr *out) {
+  try {
+    if (!cc_ptr_to_sptr) {
+      return MakePKEError(
+          "CryptoContext_MakeCKKSComplexPackedPlaintextWithParams: null context");
+    }
+
+    if (len > 0 && !values) {
+      return MakePKEError("CryptoContext_MakeCKKSComplexPackedPlaintextWithParams: "
+                          "non-zero length with null values");
+    }
+
+    if (!out) {
+      return MakePKEError(
+          "CryptoContext_MakeCKKSComplexPackedPlaintextWithParams: null output pointer");
+    }
+
+    auto &cc_sptr = GetCCSharedPtr(cc_ptr_to_sptr);
+
+    // Convert C struct array to std::vector<std::complex<double>>
+    std::vector<std::complex<double>> vec(len);
+    for (int i = 0; i < len; ++i) {
+      vec[i] = std::complex<double>(values[i].real, values[i].imag);
+    }
+
+    Plaintext pt_sptr = cc_sptr->MakeCKKSPackedPlaintext(vec, scaleDeg, level);
+    *out = reinterpret_cast<PlaintextPtr>(new PlaintextSharedPtr(pt_sptr));
+
+    return MakePKEOk();
+  }
+  PKE_CATCH_RETURN()
+}
+
 PKEErr Plaintext_GetComplexPackedValueLength(PlaintextPtr pt_ptr_to_sptr,
-                                             int *out_len) {
+                                              int *out_len) {
   try {
     if (!pt_ptr_to_sptr) {
       return MakePKEError(
           "Plaintext_GetComplexPackedValueLength: null plaintext");
     }
-
     if (!out_len) {
       return MakePKEError(
           "Plaintext_GetComplexPackedValueLength: null output pointer");
     }
 
     auto &pt_sptr = GetPTSharedPtr(pt_ptr_to_sptr);
-
-    // Assuming GetCKKSPackedValue is the method for complex (check OpenFHE
-    // source if needed)
-    *out_len = pt_sptr->GetCKKSPackedValue().size();
-
+    *out_len = static_cast<int>(pt_sptr->GetLength());
     return MakePKEOk();
   }
-
   PKE_CATCH_RETURN()
 }
 
 PKEErr Plaintext_GetComplexPackedValueAt(PlaintextPtr pt_ptr_to_sptr, int i,
-                                         complex_double_t *out) {
+                                          complex_double_t *out_val) {
   try {
     if (!pt_ptr_to_sptr) {
       return MakePKEError("Plaintext_GetComplexPackedValueAt: null plaintext");
     }
-
-    if (!out) {
+    if (!out_val) {
       return MakePKEError(
           "Plaintext_GetComplexPackedValueAt: null output pointer");
     }
 
     auto &pt_sptr = GetPTSharedPtr(pt_ptr_to_sptr);
-    const auto &complex_vec =
-        pt_sptr->GetCKKSPackedValue(); // Assuming this is correct
+    const std::vector<std::complex<double>> &vec =
+        pt_sptr->GetCKKSPackedValue();
 
-    // bounds check
-    if (i < 0 || (size_t)i >= complex_vec.size()) {
-      return MakePKEError(
-          "Plaintext_GetComplexPackedValueAt: index out of bounds");
+    if (i < 0 || static_cast<size_t>(i) >= vec.size()) {
+      return MakePKEError("Plaintext_GetComplexPackedValueAt: index out of range");
     }
 
-    out->real = complex_vec[i].real();
-    out->imag = complex_vec[i].imag();
-
+    out_val->real = vec[i].real();
+    out_val->imag = vec[i].imag();
     return MakePKEOk();
   }
   PKE_CATCH_RETURN()
@@ -395,6 +464,246 @@ PKEErr CryptoContext_ModReduceInPlace(CryptoContextPtr cc_ptr_to_sptr,
     auto &ct_sptr = GetCTSharedPtr(ct_ptr_to_sptr);
 
     cc_sptr->ModReduceInPlace(ct_sptr);
+
+    return MakePKEOk();
+  }
+  PKE_CATCH_RETURN()
+}
+
+// Scalar and complex constant operations
+PKEErr CryptoContext_EvalMultDouble(CryptoContextPtr cc_ptr_to_sptr,
+                                    CiphertextPtr ct_ptr_to_sptr, double constant,
+                                    CiphertextPtr *out) {
+  try {
+    if (!cc_ptr_to_sptr) {
+      return MakePKEError("CryptoContext_EvalMultDouble: null context");
+    }
+    if (!ct_ptr_to_sptr) {
+      return MakePKEError("CryptoContext_EvalMultDouble: null ciphertext");
+    }
+    if (!out) {
+      return MakePKEError("CryptoContext_EvalMultDouble: null output pointer");
+    }
+
+    auto &cc_sptr = GetCCSharedPtr(cc_ptr_to_sptr);
+    auto &ct_sptr = GetCTSharedPtr(ct_ptr_to_sptr);
+    Ciphertext<DCRTPoly> result_ct_sptr = cc_sptr->EvalMult(ct_sptr, constant);
+    *out = reinterpret_cast<CiphertextPtr>(
+        new CiphertextSharedPtr(result_ct_sptr));
+
+    return MakePKEOk();
+  }
+  PKE_CATCH_RETURN()
+}
+
+PKEErr CryptoContext_EvalMultComplex(CryptoContextPtr cc_ptr_to_sptr,
+                                     CiphertextPtr ct_ptr_to_sptr,
+                                     complex_double_t constant,
+                                     CiphertextPtr *out) {
+  try {
+    if (!cc_ptr_to_sptr) {
+      return MakePKEError("CryptoContext_EvalMultComplex: null context");
+    }
+    if (!ct_ptr_to_sptr) {
+      return MakePKEError("CryptoContext_EvalMultComplex: null ciphertext");
+    }
+    if (!out) {
+      return MakePKEError("CryptoContext_EvalMultComplex: null output pointer");
+    }
+
+    auto &cc_sptr = GetCCSharedPtr(cc_ptr_to_sptr);
+    auto &ct_sptr = GetCTSharedPtr(ct_ptr_to_sptr);
+    std::complex<double> c(constant.real, constant.imag);
+    Ciphertext<DCRTPoly> result_ct_sptr = cc_sptr->EvalMult(ct_sptr, c);
+    *out = reinterpret_cast<CiphertextPtr>(
+        new CiphertextSharedPtr(result_ct_sptr));
+
+    return MakePKEOk();
+  }
+  PKE_CATCH_RETURN()
+}
+
+PKEErr CryptoContext_EvalAddDouble(CryptoContextPtr cc_ptr_to_sptr,
+                                   CiphertextPtr ct_ptr_to_sptr, double constant,
+                                   CiphertextPtr *out) {
+  try {
+    if (!cc_ptr_to_sptr) {
+      return MakePKEError("CryptoContext_EvalAddDouble: null context");
+    }
+    if (!ct_ptr_to_sptr) {
+      return MakePKEError("CryptoContext_EvalAddDouble: null ciphertext");
+    }
+    if (!out) {
+      return MakePKEError("CryptoContext_EvalAddDouble: null output pointer");
+    }
+
+    auto &cc_sptr = GetCCSharedPtr(cc_ptr_to_sptr);
+    auto &ct_sptr = GetCTSharedPtr(ct_ptr_to_sptr);
+    Ciphertext<DCRTPoly> result_ct_sptr = cc_sptr->EvalAdd(ct_sptr, constant);
+    *out = reinterpret_cast<CiphertextPtr>(
+        new CiphertextSharedPtr(result_ct_sptr));
+
+    return MakePKEOk();
+  }
+  PKE_CATCH_RETURN()
+}
+
+PKEErr CryptoContext_EvalAddComplex(CryptoContextPtr cc_ptr_to_sptr,
+                                    CiphertextPtr ct_ptr_to_sptr,
+                                    complex_double_t constant,
+                                    CiphertextPtr *out) {
+  try {
+    if (!cc_ptr_to_sptr) {
+      return MakePKEError("CryptoContext_EvalAddComplex: null context");
+    }
+    if (!ct_ptr_to_sptr) {
+      return MakePKEError("CryptoContext_EvalAddComplex: null ciphertext");
+    }
+    if (!out) {
+      return MakePKEError("CryptoContext_EvalAddComplex: null output pointer");
+    }
+
+    auto &cc_sptr = GetCCSharedPtr(cc_ptr_to_sptr);
+    auto &ct_sptr = GetCTSharedPtr(ct_ptr_to_sptr);
+    std::complex<double> c(constant.real, constant.imag);
+    Ciphertext<DCRTPoly> result_ct_sptr = cc_sptr->EvalAdd(ct_sptr, c);
+    *out = reinterpret_cast<CiphertextPtr>(
+        new CiphertextSharedPtr(result_ct_sptr));
+
+    return MakePKEOk();
+  }
+  PKE_CATCH_RETURN()
+}
+
+PKEErr CryptoContext_EvalSubDouble(CryptoContextPtr cc_ptr_to_sptr,
+                                   CiphertextPtr ct_ptr_to_sptr, double constant,
+                                   CiphertextPtr *out) {
+  try {
+    if (!cc_ptr_to_sptr) {
+      return MakePKEError("CryptoContext_EvalSubDouble: null context");
+    }
+    if (!ct_ptr_to_sptr) {
+      return MakePKEError("CryptoContext_EvalSubDouble: null ciphertext");
+    }
+    if (!out) {
+      return MakePKEError("CryptoContext_EvalSubDouble: null output pointer");
+    }
+
+    auto &cc_sptr = GetCCSharedPtr(cc_ptr_to_sptr);
+    auto &ct_sptr = GetCTSharedPtr(ct_ptr_to_sptr);
+    Ciphertext<DCRTPoly> result_ct_sptr = cc_sptr->EvalSub(ct_sptr, constant);
+    *out = reinterpret_cast<CiphertextPtr>(
+        new CiphertextSharedPtr(result_ct_sptr));
+
+    return MakePKEOk();
+  }
+  PKE_CATCH_RETURN()
+}
+
+PKEErr CryptoContext_EvalSubComplex(CryptoContextPtr cc_ptr_to_sptr,
+                                    CiphertextPtr ct_ptr_to_sptr,
+                                    complex_double_t constant,
+                                    CiphertextPtr *out) {
+  try {
+    if (!cc_ptr_to_sptr) {
+      return MakePKEError("CryptoContext_EvalSubComplex: null context");
+    }
+    if (!ct_ptr_to_sptr) {
+      return MakePKEError("CryptoContext_EvalSubComplex: null ciphertext");
+    }
+    if (!out) {
+      return MakePKEError("CryptoContext_EvalSubComplex: null output pointer");
+    }
+
+    auto &cc_sptr = GetCCSharedPtr(cc_ptr_to_sptr);
+    auto &ct_sptr = GetCTSharedPtr(ct_ptr_to_sptr);
+    std::complex<double> c(constant.real, constant.imag);
+    Ciphertext<DCRTPoly> result_ct_sptr = cc_sptr->EvalSub(ct_sptr, c);
+    *out = reinterpret_cast<CiphertextPtr>(
+        new CiphertextSharedPtr(result_ct_sptr));
+
+    return MakePKEOk();
+  }
+  PKE_CATCH_RETURN()
+}
+
+// In-place operations
+PKEErr CryptoContext_EvalAddInPlaceDouble(CryptoContextPtr cc_ptr_to_sptr,
+                                          CiphertextPtr ct_ptr_to_sptr,
+                                          double constant) {
+  try {
+    if (!cc_ptr_to_sptr) {
+      return MakePKEError("CryptoContext_EvalAddInPlaceDouble: null context");
+    }
+    if (!ct_ptr_to_sptr) {
+      return MakePKEError("CryptoContext_EvalAddInPlaceDouble: null ciphertext");
+    }
+
+    auto &cc_sptr = GetCCSharedPtr(cc_ptr_to_sptr);
+    auto &ct_sptr = GetCTSharedPtr(ct_ptr_to_sptr);
+    cc_sptr->EvalAddInPlace(ct_sptr, constant);
+
+    return MakePKEOk();
+  }
+  PKE_CATCH_RETURN()
+}
+
+PKEErr CryptoContext_EvalAddInPlaceComplex(CryptoContextPtr cc_ptr_to_sptr,
+                                           CiphertextPtr ct_ptr_to_sptr,
+                                           complex_double_t constant) {
+  try {
+    if (!cc_ptr_to_sptr) {
+      return MakePKEError("CryptoContext_EvalAddInPlaceComplex: null context");
+    }
+    if (!ct_ptr_to_sptr) {
+      return MakePKEError("CryptoContext_EvalAddInPlaceComplex: null ciphertext");
+    }
+
+    auto &cc_sptr = GetCCSharedPtr(cc_ptr_to_sptr);
+    auto &ct_sptr = GetCTSharedPtr(ct_ptr_to_sptr);
+    std::complex<double> c(constant.real, constant.imag);
+    cc_sptr->EvalAddInPlace(ct_sptr, c);
+
+    return MakePKEOk();
+  }
+  PKE_CATCH_RETURN()
+}
+
+PKEErr CryptoContext_EvalSubInPlaceDouble(CryptoContextPtr cc_ptr_to_sptr,
+                                          CiphertextPtr ct_ptr_to_sptr,
+                                          double constant) {
+  try {
+    if (!cc_ptr_to_sptr) {
+      return MakePKEError("CryptoContext_EvalSubInPlaceDouble: null context");
+    }
+    if (!ct_ptr_to_sptr) {
+      return MakePKEError("CryptoContext_EvalSubInPlaceDouble: null ciphertext");
+    }
+
+    auto &cc_sptr = GetCCSharedPtr(cc_ptr_to_sptr);
+    auto &ct_sptr = GetCTSharedPtr(ct_ptr_to_sptr);
+    cc_sptr->EvalSubInPlace(ct_sptr, constant);
+
+    return MakePKEOk();
+  }
+  PKE_CATCH_RETURN()
+}
+
+PKEErr CryptoContext_EvalSubInPlaceComplex(CryptoContextPtr cc_ptr_to_sptr,
+                                           CiphertextPtr ct_ptr_to_sptr,
+                                           complex_double_t constant) {
+  try {
+    if (!cc_ptr_to_sptr) {
+      return MakePKEError("CryptoContext_EvalSubInPlaceComplex: null context");
+    }
+    if (!ct_ptr_to_sptr) {
+      return MakePKEError("CryptoContext_EvalSubInPlaceComplex: null ciphertext");
+    }
+
+    auto &cc_sptr = GetCCSharedPtr(cc_ptr_to_sptr);
+    auto &ct_sptr = GetCTSharedPtr(ct_ptr_to_sptr);
+    std::complex<double> c(constant.real, constant.imag);
+    cc_sptr->EvalSubInPlace(ct_sptr, c);
 
     return MakePKEOk();
   }
