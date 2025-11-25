@@ -750,4 +750,117 @@ void DestroyEvalKeyMap(EvalKeyMapPtr ekm) {
   delete reinterpret_cast<EvalKeyMapSharedPtr *>(ekm);
 }
 
+// --- Interactive Bootstrapping Functions ---
+
+PKEErr CryptoContext_IntBootAdjustScale(CryptoContextPtr cc_ptr_to_sptr,
+                                        CiphertextPtr ciphertext,
+                                        CiphertextPtr *out) {
+  try {
+    if (!cc_ptr_to_sptr) {
+      return MakePKEError("CryptoContext_IntBootAdjustScale: null context");
+    }
+    if (!ciphertext) {
+      return MakePKEError("CryptoContext_IntBootAdjustScale: null ciphertext");
+    }
+    if (!out) {
+      return MakePKEError("CryptoContext_IntBootAdjustScale: null output pointer");
+    }
+
+    auto &cc_sptr = GetCCSharedPtr(cc_ptr_to_sptr);
+    auto &ct_sptr = GetCTSharedPtr(ciphertext);
+
+    auto result = cc_sptr->IntBootAdjustScale(ct_sptr);
+    *out = new CiphertextSharedPtr(result);
+    return MakePKEOk();
+  }
+  PKE_CATCH_RETURN()
+}
+
+PKEErr CryptoContext_IntBootDecrypt(CryptoContextPtr cc_ptr_to_sptr,
+                                    PrivateKeyPtr privateKey,
+                                    CiphertextPtr ciphertext,
+                                    CiphertextPtr *out) {
+  try {
+    if (!cc_ptr_to_sptr) {
+      return MakePKEError("CryptoContext_IntBootDecrypt: null context");
+    }
+    if (!privateKey) {
+      return MakePKEError("CryptoContext_IntBootDecrypt: null private key");
+    }
+    if (!ciphertext) {
+      return MakePKEError("CryptoContext_IntBootDecrypt: null ciphertext");
+    }
+    if (!out) {
+      return MakePKEError("CryptoContext_IntBootDecrypt: null output pointer");
+    }
+
+    auto &cc_sptr = GetCCSharedPtr(cc_ptr_to_sptr);
+    auto &sk_sptr = GetSKSharedPtr(privateKey);
+    auto &ct_sptr = GetCTSharedPtr(ciphertext);
+
+    auto result = cc_sptr->IntBootDecrypt(sk_sptr, ct_sptr);
+    *out = new CiphertextSharedPtr(result);
+    return MakePKEOk();
+  }
+  PKE_CATCH_RETURN()
+}
+
+PKEErr CryptoContext_IntBootEncrypt(CryptoContextPtr cc_ptr_to_sptr,
+                                    PublicKeyPtr publicKey,
+                                    CiphertextPtr ciphertext,
+                                    CiphertextPtr *out) {
+  try {
+    if (!cc_ptr_to_sptr) {
+      return MakePKEError("CryptoContext_IntBootEncrypt: null context");
+    }
+    if (!publicKey) {
+      return MakePKEError("CryptoContext_IntBootEncrypt: null public key");
+    }
+    if (!ciphertext) {
+      return MakePKEError("CryptoContext_IntBootEncrypt: null ciphertext");
+    }
+    if (!out) {
+      return MakePKEError("CryptoContext_IntBootEncrypt: null output pointer");
+    }
+
+    auto &cc_sptr = GetCCSharedPtr(cc_ptr_to_sptr);
+    auto &pk_sptr = GetPKSharedPtr(publicKey);
+    auto &ct_sptr = GetCTSharedPtr(ciphertext);
+
+    auto result = cc_sptr->IntBootEncrypt(pk_sptr, ct_sptr);
+    *out = new CiphertextSharedPtr(result);
+    return MakePKEOk();
+  }
+  PKE_CATCH_RETURN()
+}
+
+PKEErr CryptoContext_IntBootAdd(CryptoContextPtr cc_ptr_to_sptr,
+                                CiphertextPtr ciphertext1,
+                                CiphertextPtr ciphertext2,
+                                CiphertextPtr *out) {
+  try {
+    if (!cc_ptr_to_sptr) {
+      return MakePKEError("CryptoContext_IntBootAdd: null context");
+    }
+    if (!ciphertext1) {
+      return MakePKEError("CryptoContext_IntBootAdd: null ciphertext1");
+    }
+    if (!ciphertext2) {
+      return MakePKEError("CryptoContext_IntBootAdd: null ciphertext2");
+    }
+    if (!out) {
+      return MakePKEError("CryptoContext_IntBootAdd: null output pointer");
+    }
+
+    auto &cc_sptr = GetCCSharedPtr(cc_ptr_to_sptr);
+    auto &ct1_sptr = GetCTSharedPtr(ciphertext1);
+    auto &ct2_sptr = GetCTSharedPtr(ciphertext2);
+
+    auto result = cc_sptr->IntBootAdd(ct1_sptr, ct2_sptr);
+    *out = new CiphertextSharedPtr(result);
+    return MakePKEOk();
+  }
+  PKE_CATCH_RETURN()
+}
+
 } // extern "C"

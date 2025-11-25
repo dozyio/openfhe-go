@@ -673,6 +673,53 @@ func (ct *Ciphertext) Close() {
 	}
 }
 
+// Clone creates a deep copy of the ciphertext.
+// This is useful for interactive bootstrapping when you need to manipulate
+// ciphertext elements independently.
+func (ct *Ciphertext) Clone() (*Ciphertext, error) {
+	if ct.ptr == nil {
+		return nil, errors.New("Ciphertext is closed or invalid")
+	}
+
+	var outCT C.CiphertextPtr
+	status := C.Ciphertext_Clone(ct.ptr, &outCT)
+
+	err := checkPKEErrorMsg(status)
+	if err != nil {
+		return nil, err
+	}
+
+	if outCT == nil {
+		return nil, errors.New("Clone returned null ciphertext")
+	}
+
+	return &Ciphertext{ptr: outCT}, nil
+}
+
+// GetNumElements returns the number of ring elements in the ciphertext.
+// For a fresh ciphertext, this is typically 2 (c0, c1).
+func (ct *Ciphertext) GetNumElements() (int, error) {
+	if ct.ptr == nil {
+		return 0, errors.New("Ciphertext is closed or invalid")
+	}
+
+	numElements := C.Ciphertext_GetNumElements(ct.ptr)
+	return int(numElements), nil
+}
+
+// SetElementAtIndex keeps only the element at the specified index,
+// discarding all other elements. This is used in interactive bootstrapping
+// to extract specific ciphertext components.
+// For example, SetElementAtIndex(1) extracts just the second element (c1 = a*s).
+func (ct *Ciphertext) SetElementAtIndex(index int) error {
+	if ct.ptr == nil {
+		return errors.New("Ciphertext is closed or invalid")
+	}
+
+	status := C.Ciphertext_SetElementAtIndex(ct.ptr, C.size_t(index))
+	return checkPKEErrorMsg(status)
+}
+
 // EvalSumKeyGen generates evaluation keys for summation operations.
 // This must be called before using MultiEvalSumKeyGen in multiparty scenarios.
 func (cc *CryptoContext) EvalSumKeyGenPrivate(privateKey *PrivateKey, publicKey *PublicKey) error {

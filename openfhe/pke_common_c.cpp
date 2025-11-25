@@ -1025,5 +1025,59 @@ int GetNativeInt() {
 #endif
 }
 
+// Ciphertext manipulation functions for interactive bootstrapping
+PKEErr Ciphertext_Clone(CiphertextPtr ct_ptr_to_sptr, CiphertextPtr *out) {
+  try {
+    if (!ct_ptr_to_sptr) {
+      return MakePKEError("Ciphertext_Clone: null ciphertext");
+    }
+    if (!out) {
+      return MakePKEError("Ciphertext_Clone: null output pointer");
+    }
+
+    auto &ct_sptr = GetCTSharedPtr(ct_ptr_to_sptr);
+    auto cloned = ct_sptr->Clone();
+    *out = new CiphertextSharedPtr(cloned);
+    return MakePKEOk();
+  }
+  PKE_CATCH_RETURN()
+}
+
+size_t Ciphertext_GetNumElements(CiphertextPtr ct_ptr_to_sptr) {
+  if (!ct_ptr_to_sptr) {
+    return 0;
+  }
+
+  auto &ct_sptr = GetCTSharedPtr(ct_ptr_to_sptr);
+  if (!ct_sptr) {
+    return 0;
+  }
+
+  return ct_sptr->GetElements().size();
+}
+
+PKEErr Ciphertext_SetElementAtIndex(CiphertextPtr ct_ptr_to_sptr, size_t index) {
+  try {
+    if (!ct_ptr_to_sptr) {
+      return MakePKEError("Ciphertext_SetElementAtIndex: null ciphertext");
+    }
+
+    auto &ct_sptr = GetCTSharedPtr(ct_ptr_to_sptr);
+    auto &elements = ct_sptr->GetElements();
+    
+    if (index >= elements.size()) {
+      return MakePKEError("Ciphertext_SetElementAtIndex: index out of range");
+    }
+
+    // Keep only the element at the specified index
+    std::vector<lbcrypto::DCRTPoly> newElements;
+    newElements.push_back(elements[index]);
+    ct_sptr->SetElements(std::move(newElements));
+    
+    return MakePKEOk();
+  }
+  PKE_CATCH_RETURN()
+}
+
 
 } // extern "C"

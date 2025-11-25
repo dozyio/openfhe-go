@@ -243,6 +243,28 @@ PKEErr PrivateKey_GetKeyTag(PrivateKeyPtr sk, char **outKeyTag);
 PKEErr PublicKey_GetKeyTag(PublicKeyPtr pk, char **outKeyTag);
 PKEErr EvalKey_GetKeyTag(EvalKeyPtr ek, char **outKeyTag);
 
+// Interactive Bootstrapping functions (2-party method)
+PKEErr CryptoContext_IntBootAdjustScale(CryptoContextPtr cc,
+                                        CiphertextPtr ciphertext,
+                                        CiphertextPtr *out);
+PKEErr CryptoContext_IntBootDecrypt(CryptoContextPtr cc,
+                                    PrivateKeyPtr privateKey,
+                                    CiphertextPtr ciphertext,
+                                    CiphertextPtr *out);
+PKEErr CryptoContext_IntBootEncrypt(CryptoContextPtr cc,
+                                    PublicKeyPtr publicKey,
+                                    CiphertextPtr ciphertext,
+                                    CiphertextPtr *out);
+PKEErr CryptoContext_IntBootAdd(CryptoContextPtr cc,
+                                CiphertextPtr ciphertext1,
+                                CiphertextPtr ciphertext2,
+                                CiphertextPtr *out);
+
+// Ciphertext manipulation functions (for interactive bootstrapping)
+PKEErr Ciphertext_Clone(CiphertextPtr ct, CiphertextPtr *out);
+size_t Ciphertext_GetNumElements(CiphertextPtr ct);
+PKEErr Ciphertext_SetElementAtIndex(CiphertextPtr ct, size_t index);
+
 // Cleanup functions for multiparty types
 void DestroyPrivateKey(PrivateKeyPtr sk);
 void DestroyPublicKey(PublicKeyPtr pk);
