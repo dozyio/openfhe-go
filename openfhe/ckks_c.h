@@ -89,10 +89,19 @@ PKEErr CryptoContext_EvalSubInPlaceComplex(CryptoContextPtr cc, CiphertextPtr ct
 PKEErr CryptoContext_EvalBootstrapSetup_Simple(CryptoContextPtr cc,
                                                const uint32_t *levelBudget,
                                                int len);
+PKEErr CryptoContext_EvalBootstrapSetup(CryptoContextPtr cc,
+                                        const uint32_t *levelBudget, int lbLen,
+                                        const uint32_t *bsgsDim, int bsgsLen,
+                                        uint32_t numSlots);
 PKEErr CryptoContext_EvalBootstrapKeyGen(CryptoContextPtr cc, KeyPairPtr keys,
                                          uint32_t slots);
 PKEErr CryptoContext_EvalBootstrap(CryptoContextPtr cc, CiphertextPtr ct,
                                    CiphertextPtr *out);
+PKEErr CryptoContext_EvalBootstrapWithIterations(CryptoContextPtr cc,
+                                                 CiphertextPtr ct,
+                                                 uint32_t numIterations,
+                                                 uint32_t precision,
+                                                 CiphertextPtr *out);
 PKEErr CryptoContext_EvalPoly(CryptoContextPtr cc, CiphertextPtr ct,
                               const double *coefficients, size_t count,
                               CiphertextPtr *out);
