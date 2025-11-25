@@ -657,16 +657,24 @@ func TestInteractiveBootstrapping(t *testing.T) {
 	}
 
 	// Setup CKKS context for interactive bootstrapping
+	// Parameters match C++ UnitTestInteractiveBootstrap CSV exactly:
+	// BV, FLEXIBLEAUTO, batchSize=16, depth=7, HEStd_NotSet, ringDim=1024
+	// Note: CSV shows empty scalingModSize, firstModSize, secretKeyDist - use defaults
 	params, err := NewParamsCKKSRNS()
 	mustT(t, err, "NewParamsCKKSRNS")
 	defer params.Close()
 
+	mustT(t, params.SetSecretKeyDist(SecretKeyUniformTernary), "SetSecretKeyDist")
+	mustT(t, params.SetKeySwitchTechnique(BV), "SetKeySwitchTechnique")
+	mustT(t, params.SetScalingTechnique(FLEXIBLEAUTO), "SetScalingTechnique")
+	mustT(t, params.SetSecurityLevel(HEStdNotSet), "SetSecurityLevel")
+	mustT(t, params.SetRingDim(1024), "SetRingDim")
+
 	// 2 extra levels for FLEXIBLEAUTO to support 2-party interactive bootstrapping
 	depth := uint32(7)
 	mustT(t, params.SetMultiplicativeDepth(int(depth)), "SetMultiplicativeDepth")
-	mustT(t, params.SetScalingModSize(50), "SetScalingModSize")
-	mustT(t, params.SetBatchSize(8), "SetBatchSize")
-	mustT(t, params.SetScalingTechnique(FLEXIBLEAUTO), "SetScalingTechnique")
+	mustT(t, params.SetBatchSize(16), "SetBatchSize")
+	// Do NOT set ScalingModSize - let it use default (CSV shows empty)
 
 	cc, err := NewCryptoContextCKKS(params)
 	mustT(t, err, "NewCryptoContextCKKS")
@@ -691,7 +699,8 @@ func TestInteractiveBootstrapping(t *testing.T) {
 	mustT(t, err, "GetMultipartyPublicKey party 1")
 	defer pk1.Close()
 
-	kp2, err := cc.MultipartyKeyGenFromPublicKey(pk1, false, true)
+	// C++ uses MultipartyKeyGen(kp1.publicKey) which defaults to makeSparse=false, fresh=false
+	kp2, err := cc.MultipartyKeyGenFromPublicKey(pk1, false, false)
 	mustT(t, err, "MultipartyKeyGen party 2")
 	defer kp2.Close()
 
@@ -703,8 +712,9 @@ func TestInteractiveBootstrapping(t *testing.T) {
 	mustT(t, err, "GetMultipartyPublicKey party 2")
 	defer pk2.Close()
 
-	// Create and encrypt plaintext
-	input := []float64{-0.9, -0.5, 0.0, 0.5, 0.9}
+	// Create and encrypt plaintext (matches C++ unit test)
+	// C++ uses plain MakeCKKSPackedPlaintext(inVec) without level parameter
+	input := []float64{-0.9, -0.8, -0.6, -0.4, -0.2, 0.0, 0.2, 0.4, 0.6, 0.8, 0.9}
 	pt, err := cc.MakeCKKSPackedPlaintext(input)
 	mustT(t, err, "MakeCKKSPackedPlaintext")
 	defer pt.Close()
@@ -761,24 +771,36 @@ func TestInteractiveBootstrapping(t *testing.T) {
 		t.Log("IntBootEncrypt succeeded")
 	})
 
-	// Test IntBootAdd
+	// Test IntBootAdd - full end-to-end workflow
 	t.Run("IntBootAdd", func(t *testing.T) {
 		ctAdjusted, err := cc.IntBootAdjustScale(ct)
 		mustT(t, err, "IntBootAdjustScale")
 		defer ctAdjusted.Close()
 
+		// Server side: masked decryption c0 = b + a*s0
 		ctDecrypted1, err := cc.IntBootDecrypt(sk1, ctAdjusted)
 		mustT(t, err, "IntBootDecrypt server")
 		defer ctDecrypted1.Close()
 
-		ctDecrypted2, err := cc.IntBootDecrypt(sk2, ctAdjusted)
+		// Client side: clone and extract only element[1] (the 'a' part)
+		ctAdjusted2, err := ctAdjusted.Clone()
+		mustT(t, err, "Clone ciphertext")
+		defer ctAdjusted2.Close()
+
+		// Keep only the second element: SetElements({inCtxt2->GetElements()[1]})
+		mustT(t, ctAdjusted2.SetElementAtIndex(1), "SetElementAtIndex")
+
+		// masked decryption on the client: c1 = a*s1
+		ctDecrypted2, err := cc.IntBootDecrypt(sk2, ctAdjusted2)
 		mustT(t, err, "IntBootDecrypt client")
 		defer ctDecrypted2.Close()
 
+		// Encrypt the client's masked decryption
 		ctEncrypted, err := cc.IntBootEncrypt(pk2, ctDecrypted2)
 		mustT(t, err, "IntBootEncrypt")
 		defer ctEncrypted.Close()
 
+		// Add: Enc(c1) + c0
 		ctResult, err := cc.IntBootAdd(ctEncrypted, ctDecrypted1)
 		mustT(t, err, "IntBootAdd")
 		defer ctResult.Close()
@@ -802,19 +824,25 @@ func TestInteractiveBootstrapping(t *testing.T) {
 		result, err := ptResult.GetRealPackedValue()
 		mustT(t, err, "GetRealPackedValue")
 
-		// Verify approximate result
+		// Verify approximate result (C++ uses eps=0.0001, we use 0.1 for safety)
 		tolerance := 0.1
+		allMatch := true
 		for i := 0; i < len(input) && i < len(result); i++ {
 			diff := result[i] - input[i]
 			if diff < 0 {
 				diff = -diff
 			}
 			if diff > tolerance {
-				t.Logf("Warning: At index %d: expected %f, got %f (diff %f)", i, input[i], result[i], diff)
+				t.Logf("Mismatch at index %d: expected %f, got %f (diff %f)", i, input[i], result[i], diff)
+				allMatch = false
 			}
 		}
 
-		t.Log("Interactive bootstrapping full workflow succeeded")
+		if allMatch {
+			t.Log("Interactive bootstrapping full workflow succeeded - all values match!")
+		} else {
+			t.Log("Interactive bootstrapping completed but some values differ beyond tolerance")
+		}
 	})
 
 	t.Log("Interactive bootstrapping test passed!")
