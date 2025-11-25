@@ -794,3 +794,126 @@ func (cc *CryptoContext) MultiAddEvalAutomorphismKeys(ekm1, ekm2 *EvalKeyMap, ke
 
 	return &EvalKeyMap{ptr: outEKM}, nil
 }
+
+// --- Interactive Bootstrapping Functions ---
+
+// IntBootAdjustScale adjusts the ciphertext scale for interactive bootstrapping.
+// This is the first step in the 2-party interactive bootstrapping protocol.
+// It reduces the ciphertext to two towers (RNS limbs).
+func (cc *CryptoContext) IntBootAdjustScale(ciphertext *Ciphertext) (*Ciphertext, error) {
+	if cc.ptr == nil {
+		return nil, errors.New("CryptoContext is closed or invalid")
+	}
+
+	if ciphertext == nil || ciphertext.ptr == nil {
+		return nil, errors.New("ciphertext is nil")
+	}
+
+	var outCT C.CiphertextPtr
+	status := C.CryptoContext_IntBootAdjustScale(cc.ptr, ciphertext.ptr, &outCT)
+
+	err := checkPKEErrorMsg(status)
+	if err != nil {
+		return nil, err
+	}
+
+	if outCT == nil {
+		return nil, errors.New("IntBootAdjustScale returned null ciphertext")
+	}
+
+	return &Ciphertext{ptr: outCT}, nil
+}
+
+// IntBootDecrypt performs masked decryption for interactive bootstrapping.
+// For the server (lead party): c0 = b + a*s0
+// For the client (main party): c1 = a*s1
+// This is the second step in the 2-party interactive bootstrapping protocol.
+func (cc *CryptoContext) IntBootDecrypt(privateKey *PrivateKey, ciphertext *Ciphertext) (*Ciphertext, error) {
+	if cc.ptr == nil {
+		return nil, errors.New("CryptoContext is closed or invalid")
+	}
+
+	if privateKey == nil || privateKey.ptr == nil {
+		return nil, errors.New("privateKey is nil")
+	}
+
+	if ciphertext == nil || ciphertext.ptr == nil {
+		return nil, errors.New("ciphertext is nil")
+	}
+
+	var outCT C.CiphertextPtr
+	status := C.CryptoContext_IntBootDecrypt(cc.ptr, privateKey.ptr, ciphertext.ptr, &outCT)
+
+	err := checkPKEErrorMsg(status)
+	if err != nil {
+		return nil, err
+	}
+
+	if outCT == nil {
+		return nil, errors.New("IntBootDecrypt returned null ciphertext")
+	}
+
+	return &Ciphertext{ptr: outCT}, nil
+}
+
+// IntBootEncrypt encrypts the masked decryption result from the client.
+// This encrypts the result of IntBootDecrypt (c1 = a*s1) using the client's public key.
+// This is the third step in the 2-party interactive bootstrapping protocol (client-side).
+func (cc *CryptoContext) IntBootEncrypt(publicKey *PublicKey, ciphertext *Ciphertext) (*Ciphertext, error) {
+	if cc.ptr == nil {
+		return nil, errors.New("CryptoContext is closed or invalid")
+	}
+
+	if publicKey == nil || publicKey.ptr == nil {
+		return nil, errors.New("publicKey is nil")
+	}
+
+	if ciphertext == nil || ciphertext.ptr == nil {
+		return nil, errors.New("ciphertext is nil")
+	}
+
+	var outCT C.CiphertextPtr
+	status := C.CryptoContext_IntBootEncrypt(cc.ptr, publicKey.ptr, ciphertext.ptr, &outCT)
+
+	err := checkPKEErrorMsg(status)
+	if err != nil {
+		return nil, err
+	}
+
+	if outCT == nil {
+		return nil, errors.New("IntBootEncrypt returned null ciphertext")
+	}
+
+	return &Ciphertext{ptr: outCT}, nil
+}
+
+// IntBootAdd adds the encrypted masked decryption to the server's masked decryption.
+// Computes: Enc(c1) + c0
+// This is the final step in the 2-party interactive bootstrapping protocol (server-side).
+func (cc *CryptoContext) IntBootAdd(ciphertext1, ciphertext2 *Ciphertext) (*Ciphertext, error) {
+	if cc.ptr == nil {
+		return nil, errors.New("CryptoContext is closed or invalid")
+	}
+
+	if ciphertext1 == nil || ciphertext1.ptr == nil {
+		return nil, errors.New("ciphertext1 is nil")
+	}
+
+	if ciphertext2 == nil || ciphertext2.ptr == nil {
+		return nil, errors.New("ciphertext2 is nil")
+	}
+
+	var outCT C.CiphertextPtr
+	status := C.CryptoContext_IntBootAdd(cc.ptr, ciphertext1.ptr, ciphertext2.ptr, &outCT)
+
+	err := checkPKEErrorMsg(status)
+	if err != nil {
+		return nil, err
+	}
+
+	if outCT == nil {
+		return nil, errors.New("IntBootAdd returned null ciphertext")
+	}
+
+	return &Ciphertext{ptr: outCT}, nil
+}

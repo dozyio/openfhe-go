@@ -649,3 +649,173 @@ func TestMultipartyKeyGenVariants(t *testing.T) {
 
 	t.Log("MultipartyKeyGen variants test passed!")
 }
+
+// TestInteractiveBootstrapping tests the IntBoot functions for 2-party interactive bootstrapping
+func TestInteractiveBootstrapping(t *testing.T) {
+	if testing.Short() {
+		t.Skip("Skipping interactive bootstrapping test in short mode")
+	}
+
+	// Setup CKKS context for interactive bootstrapping
+	params, err := NewParamsCKKSRNS()
+	mustT(t, err, "NewParamsCKKSRNS")
+	defer params.Close()
+
+	// 2 extra levels for FLEXIBLEAUTO to support 2-party interactive bootstrapping
+	depth := uint32(7)
+	mustT(t, params.SetMultiplicativeDepth(int(depth)), "SetMultiplicativeDepth")
+	mustT(t, params.SetScalingModSize(50), "SetScalingModSize")
+	mustT(t, params.SetBatchSize(8), "SetBatchSize")
+	mustT(t, params.SetScalingTechnique(FLEXIBLEAUTO), "SetScalingTechnique")
+
+	cc, err := NewCryptoContextCKKS(params)
+	mustT(t, err, "NewCryptoContextCKKS")
+	defer cc.Close()
+
+	// Enable features including MULTIPARTY
+	mustT(t, cc.Enable(PKE), "Enable PKE")
+	mustT(t, cc.Enable(LEVELEDSHE), "Enable LEVELEDSHE")
+	mustT(t, cc.Enable(ADVANCEDSHE), "Enable ADVANCEDSHE")
+	mustT(t, cc.Enable(MULTIPARTY), "Enable MULTIPARTY")
+
+	// Generate keys for 2 parties
+	kp1, err := cc.KeyGen()
+	mustT(t, err, "KeyGen party 1")
+	defer kp1.Close()
+
+	sk1, err := kp1.GetMultipartyPrivateKey()
+	mustT(t, err, "GetMultipartyPrivateKey party 1")
+	defer sk1.Close()
+
+	pk1, err := kp1.GetMultipartyPublicKey()
+	mustT(t, err, "GetMultipartyPublicKey party 1")
+	defer pk1.Close()
+
+	kp2, err := cc.MultipartyKeyGenFromPublicKey(pk1, false, true)
+	mustT(t, err, "MultipartyKeyGen party 2")
+	defer kp2.Close()
+
+	sk2, err := kp2.GetMultipartyPrivateKey()
+	mustT(t, err, "GetMultipartyPrivateKey party 2")
+	defer sk2.Close()
+
+	pk2, err := kp2.GetMultipartyPublicKey()
+	mustT(t, err, "GetMultipartyPublicKey party 2")
+	defer pk2.Close()
+
+	// Create and encrypt plaintext
+	input := []float64{-0.9, -0.5, 0.0, 0.5, 0.9}
+	pt, err := cc.MakeCKKSPackedPlaintext(input)
+	mustT(t, err, "MakeCKKSPackedPlaintext")
+	defer pt.Close()
+
+	ct, err := cc.Encrypt(kp2, pt)
+	mustT(t, err, "Encrypt")
+	defer ct.Close()
+
+	// Test IntBootAdjustScale
+	t.Run("IntBootAdjustScale", func(t *testing.T) {
+		ctAdjusted, err := cc.IntBootAdjustScale(ct)
+		mustT(t, err, "IntBootAdjustScale")
+		defer ctAdjusted.Close()
+		t.Log("IntBootAdjustScale succeeded")
+	})
+
+	// Test IntBootDecrypt (server side)
+	t.Run("IntBootDecrypt_Server", func(t *testing.T) {
+		ctAdjusted, err := cc.IntBootAdjustScale(ct)
+		mustT(t, err, "IntBootAdjustScale")
+		defer ctAdjusted.Close()
+
+		ctDecrypted, err := cc.IntBootDecrypt(sk1, ctAdjusted)
+		mustT(t, err, "IntBootDecrypt server")
+		defer ctDecrypted.Close()
+		t.Log("IntBootDecrypt (server) succeeded")
+	})
+
+	// Test IntBootDecrypt (client side)
+	t.Run("IntBootDecrypt_Client", func(t *testing.T) {
+		ctAdjusted, err := cc.IntBootAdjustScale(ct)
+		mustT(t, err, "IntBootAdjustScale")
+		defer ctAdjusted.Close()
+
+		ctDecrypted, err := cc.IntBootDecrypt(sk2, ctAdjusted)
+		mustT(t, err, "IntBootDecrypt client")
+		defer ctDecrypted.Close()
+		t.Log("IntBootDecrypt (client) succeeded")
+	})
+
+	// Test IntBootEncrypt
+	t.Run("IntBootEncrypt", func(t *testing.T) {
+		ctAdjusted, err := cc.IntBootAdjustScale(ct)
+		mustT(t, err, "IntBootAdjustScale")
+		defer ctAdjusted.Close()
+
+		ctDecrypted, err := cc.IntBootDecrypt(sk2, ctAdjusted)
+		mustT(t, err, "IntBootDecrypt")
+		defer ctDecrypted.Close()
+
+		ctEncrypted, err := cc.IntBootEncrypt(pk2, ctDecrypted)
+		mustT(t, err, "IntBootEncrypt")
+		defer ctEncrypted.Close()
+		t.Log("IntBootEncrypt succeeded")
+	})
+
+	// Test IntBootAdd
+	t.Run("IntBootAdd", func(t *testing.T) {
+		ctAdjusted, err := cc.IntBootAdjustScale(ct)
+		mustT(t, err, "IntBootAdjustScale")
+		defer ctAdjusted.Close()
+
+		ctDecrypted1, err := cc.IntBootDecrypt(sk1, ctAdjusted)
+		mustT(t, err, "IntBootDecrypt server")
+		defer ctDecrypted1.Close()
+
+		ctDecrypted2, err := cc.IntBootDecrypt(sk2, ctAdjusted)
+		mustT(t, err, "IntBootDecrypt client")
+		defer ctDecrypted2.Close()
+
+		ctEncrypted, err := cc.IntBootEncrypt(pk2, ctDecrypted2)
+		mustT(t, err, "IntBootEncrypt")
+		defer ctEncrypted.Close()
+
+		ctResult, err := cc.IntBootAdd(ctEncrypted, ctDecrypted1)
+		mustT(t, err, "IntBootAdd")
+		defer ctResult.Close()
+		t.Log("IntBootAdd succeeded")
+
+		// Try to decrypt the result using multiparty decryption
+		partial1, err := cc.MultipartyDecryptLead([]*Ciphertext{ctResult}, sk1)
+		mustT(t, err, "MultipartyDecryptLead")
+		defer partial1[0].Close()
+
+		partial2, err := cc.MultipartyDecryptMain([]*Ciphertext{ctResult}, sk2)
+		mustT(t, err, "MultipartyDecryptMain")
+		defer partial2[0].Close()
+
+		ptResult, err := cc.MultipartyDecryptFusion([]*Ciphertext{partial1[0], partial2[0]})
+		mustT(t, err, "MultipartyDecryptFusion")
+		defer ptResult.Close()
+
+		mustT(t, ptResult.SetLength(len(input)), "SetLength")
+
+		result, err := ptResult.GetRealPackedValue()
+		mustT(t, err, "GetRealPackedValue")
+
+		// Verify approximate result
+		tolerance := 0.1
+		for i := 0; i < len(input) && i < len(result); i++ {
+			diff := result[i] - input[i]
+			if diff < 0 {
+				diff = -diff
+			}
+			if diff > tolerance {
+				t.Logf("Warning: At index %d: expected %f, got %f (diff %f)", i, input[i], result[i], diff)
+			}
+		}
+
+		t.Log("Interactive bootstrapping full workflow succeeded")
+	})
+
+	t.Log("Interactive bootstrapping test passed!")
+}

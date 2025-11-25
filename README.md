@@ -103,7 +103,7 @@ See examples and tests for usage
 - [x] comparison-argmin (min/max with argmin/argmax via scheme switching)
 - [x] function-evaluation (logistic, sin, cos, custom functions, batch optimization)
 - [x] inner-product
-- [ ] interactive-bootstrapping
+- [x] interactive-bootstrapping
 - [ ] iterative-ckks-bootstrapping
 - [x] linearwsum-evaluation
 - [x] plaintext-operations
