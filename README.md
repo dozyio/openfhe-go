@@ -121,7 +121,7 @@ See examples and tests for usage
 - [x] simple-real-numbers-serial
 - [x] simple-real-numbers
 - [ ] tckks-interactive-mp-bootstrapping-Chebyschev
-- [ ] tckks-interactive-mp-bootstrapping
+- [x] tckks-interactive-mp-bootstrapping
 - [x] threshold-fhe-5p
 - [x] threshold-fhe
 
