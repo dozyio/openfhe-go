@@ -104,7 +104,7 @@ See examples and tests for usage
 - [x] function-evaluation (logistic, sin, cos, custom functions, batch optimization)
 - [x] inner-product
 - [x] interactive-bootstrapping
-- [ ] iterative-ckks-bootstrapping
+- [x] iterative-ckks-bootstrapping
 - [x] linearwsum-evaluation
 - [x] plaintext-operations
 - [x] polynomial-evaluation
