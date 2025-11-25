@@ -516,6 +516,29 @@ func (cc *CryptoContext) EvalBootstrap(ct *Ciphertext) (*Ciphertext, error) {
 	return res, nil
 }
 
+// EvalBootstrapWithIterations performs iterative bootstrapping with specified number of iterations and precision.
+// numIterations: number of bootstrapping iterations (typically 1 or 2)
+// precision: measured precision from first iteration (set to 0 if unknown)
+func (cc *CryptoContext) EvalBootstrapWithIterations(ct *Ciphertext, numIterations, precision uint32) (*Ciphertext, error) {
+	if cc.ptr == nil {
+		return nil, errors.New("CryptoContext is closed or invalid")
+	}
+	if ct == nil || ct.ptr == nil {
+		return nil, errors.New("Input Ciphertext is closed or invalid")
+	}
+	var ctH C.CiphertextPtr
+	status := C.CryptoContext_EvalBootstrapWithIterations(cc.ptr, ct.ptr, C.uint32_t(numIterations), C.uint32_t(precision), &ctH)
+	err := checkPKEErrorMsg(status)
+	if err != nil {
+		return nil, err
+	}
+	if ctH == nil {
+		return nil, errors.New("EvalBootstrapWithIterations returned OK but null handle")
+	}
+	res := &Ciphertext{ptr: ctH}
+	return res, nil
+}
+
 func (cc *CryptoContext) EvalBootstrapSetupSimple(levelBudget []uint32) error {
 	if cc.ptr == nil {
 		return errors.New("CryptoContext is closed or invalid")
@@ -528,6 +551,37 @@ func (cc *CryptoContext) EvalBootstrapSetupSimple(levelBudget []uint32) error {
 	}
 
 	status := C.CryptoContext_EvalBootstrapSetup_Simple(cc.ptr, ptr, n)
+	err := checkPKEErrorMsg(status)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// EvalBootstrapSetup performs precomputations for bootstrapping with full control over parameters.
+// levelBudget: budget for levels used in bootstrapping
+// bsgsDim: BSGS dimensions for baby-step giant-step algorithm (pass nil or empty for defaults)
+// numSlots: number of slots to use for bootstrapping
+func (cc *CryptoContext) EvalBootstrapSetup(levelBudget []uint32, bsgsDim []uint32, numSlots uint32) error {
+	if cc.ptr == nil {
+		return errors.New("CryptoContext is closed or invalid")
+	}
+
+	var lbPtr *C.uint32_t
+	var lbLen C.int
+	if len(levelBudget) > 0 {
+		lbPtr = (*C.uint32_t)(unsafe.Pointer(&levelBudget[0]))
+		lbLen = C.int(len(levelBudget))
+	}
+
+	var bsgsPtr *C.uint32_t
+	var bsgsLen C.int
+	if len(bsgsDim) > 0 {
+		bsgsPtr = (*C.uint32_t)(unsafe.Pointer(&bsgsDim[0]))
+		bsgsLen = C.int(len(bsgsDim))
+	}
+
+	status := C.CryptoContext_EvalBootstrapSetup(cc.ptr, lbPtr, lbLen, bsgsPtr, bsgsLen, C.uint32_t(numSlots))
 	err := checkPKEErrorMsg(status)
 	if err != nil {
 		return err

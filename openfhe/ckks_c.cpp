@@ -1,8 +1,8 @@
 #include "ckks_c.h"
+#include "math/chebyshev.h"
 #include "pke_helpers_c.h"
 #include <complex>
 #include <functional>
-#include "math/chebyshev.h"
 
 using namespace lbcrypto;
 
@@ -188,8 +188,8 @@ PKEErr ParamsCKKS_SetCKKSDataType(ParamsCKKSPtr p, int dataType) {
     }
     // Map int to CKKSDataType enum
     // REAL = 0, COMPLEX = 1 (from OpenFHE)
-    reinterpret_cast<CCParams<CryptoContextCKKSRNS> *>(p)
-        ->SetCKKSDataType(static_cast<CKKSDataType>(dataType));
+    reinterpret_cast<CCParams<CryptoContextCKKSRNS> *>(p)->SetCKKSDataType(
+        static_cast<CKKSDataType>(dataType));
 
     return MakePKEOk();
   }
@@ -264,8 +264,8 @@ PKEErr CryptoContext_MakeCKKSPackedPlaintextWithParams(
     }
 
     if (!out) {
-      return MakePKEError(
-          "CryptoContext_MakeCKKSPackedPlaintextWithParams: null output pointer");
+      return MakePKEError("CryptoContext_MakeCKKSPackedPlaintextWithParams: "
+                          "null output pointer");
     }
 
     auto &cc_sptr = GetCCSharedPtr(cc_ptr_to_sptr);
@@ -320,17 +320,20 @@ PKEErr CryptoContext_MakeCKKSComplexPackedPlaintextWithParams(
   try {
     if (!cc_ptr_to_sptr) {
       return MakePKEError(
-          "CryptoContext_MakeCKKSComplexPackedPlaintextWithParams: null context");
+          "CryptoContext_MakeCKKSComplexPackedPlaintextWithParams: null "
+          "context");
     }
 
     if (len > 0 && !values) {
-      return MakePKEError("CryptoContext_MakeCKKSComplexPackedPlaintextWithParams: "
-                          "non-zero length with null values");
+      return MakePKEError(
+          "CryptoContext_MakeCKKSComplexPackedPlaintextWithParams: "
+          "non-zero length with null values");
     }
 
     if (!out) {
       return MakePKEError(
-          "CryptoContext_MakeCKKSComplexPackedPlaintextWithParams: null output pointer");
+          "CryptoContext_MakeCKKSComplexPackedPlaintextWithParams: null output "
+          "pointer");
     }
 
     auto &cc_sptr = GetCCSharedPtr(cc_ptr_to_sptr);
@@ -350,7 +353,7 @@ PKEErr CryptoContext_MakeCKKSComplexPackedPlaintextWithParams(
 }
 
 PKEErr Plaintext_GetComplexPackedValueLength(PlaintextPtr pt_ptr_to_sptr,
-                                              int *out_len) {
+                                             int *out_len) {
   try {
     if (!pt_ptr_to_sptr) {
       return MakePKEError(
@@ -369,7 +372,7 @@ PKEErr Plaintext_GetComplexPackedValueLength(PlaintextPtr pt_ptr_to_sptr,
 }
 
 PKEErr Plaintext_GetComplexPackedValueAt(PlaintextPtr pt_ptr_to_sptr, int i,
-                                          complex_double_t *out_val) {
+                                         complex_double_t *out_val) {
   try {
     if (!pt_ptr_to_sptr) {
       return MakePKEError("Plaintext_GetComplexPackedValueAt: null plaintext");
@@ -384,7 +387,8 @@ PKEErr Plaintext_GetComplexPackedValueAt(PlaintextPtr pt_ptr_to_sptr, int i,
         pt_sptr->GetCKKSPackedValue();
 
     if (i < 0 || static_cast<size_t>(i) >= vec.size()) {
-      return MakePKEError("Plaintext_GetComplexPackedValueAt: index out of range");
+      return MakePKEError(
+          "Plaintext_GetComplexPackedValueAt: index out of range");
     }
 
     out_val->real = vec[i].real();
@@ -472,8 +476,8 @@ PKEErr CryptoContext_ModReduceInPlace(CryptoContextPtr cc_ptr_to_sptr,
 
 // Scalar and complex constant operations
 PKEErr CryptoContext_EvalMultDouble(CryptoContextPtr cc_ptr_to_sptr,
-                                    CiphertextPtr ct_ptr_to_sptr, double constant,
-                                    CiphertextPtr *out) {
+                                    CiphertextPtr ct_ptr_to_sptr,
+                                    double constant, CiphertextPtr *out) {
   try {
     if (!cc_ptr_to_sptr) {
       return MakePKEError("CryptoContext_EvalMultDouble: null context");
@@ -524,8 +528,8 @@ PKEErr CryptoContext_EvalMultComplex(CryptoContextPtr cc_ptr_to_sptr,
 }
 
 PKEErr CryptoContext_EvalAddDouble(CryptoContextPtr cc_ptr_to_sptr,
-                                   CiphertextPtr ct_ptr_to_sptr, double constant,
-                                   CiphertextPtr *out) {
+                                   CiphertextPtr ct_ptr_to_sptr,
+                                   double constant, CiphertextPtr *out) {
   try {
     if (!cc_ptr_to_sptr) {
       return MakePKEError("CryptoContext_EvalAddDouble: null context");
@@ -576,8 +580,8 @@ PKEErr CryptoContext_EvalAddComplex(CryptoContextPtr cc_ptr_to_sptr,
 }
 
 PKEErr CryptoContext_EvalSubDouble(CryptoContextPtr cc_ptr_to_sptr,
-                                   CiphertextPtr ct_ptr_to_sptr, double constant,
-                                   CiphertextPtr *out) {
+                                   CiphertextPtr ct_ptr_to_sptr,
+                                   double constant, CiphertextPtr *out) {
   try {
     if (!cc_ptr_to_sptr) {
       return MakePKEError("CryptoContext_EvalSubDouble: null context");
@@ -636,7 +640,8 @@ PKEErr CryptoContext_EvalAddInPlaceDouble(CryptoContextPtr cc_ptr_to_sptr,
       return MakePKEError("CryptoContext_EvalAddInPlaceDouble: null context");
     }
     if (!ct_ptr_to_sptr) {
-      return MakePKEError("CryptoContext_EvalAddInPlaceDouble: null ciphertext");
+      return MakePKEError(
+          "CryptoContext_EvalAddInPlaceDouble: null ciphertext");
     }
 
     auto &cc_sptr = GetCCSharedPtr(cc_ptr_to_sptr);
@@ -656,7 +661,8 @@ PKEErr CryptoContext_EvalAddInPlaceComplex(CryptoContextPtr cc_ptr_to_sptr,
       return MakePKEError("CryptoContext_EvalAddInPlaceComplex: null context");
     }
     if (!ct_ptr_to_sptr) {
-      return MakePKEError("CryptoContext_EvalAddInPlaceComplex: null ciphertext");
+      return MakePKEError(
+          "CryptoContext_EvalAddInPlaceComplex: null ciphertext");
     }
 
     auto &cc_sptr = GetCCSharedPtr(cc_ptr_to_sptr);
@@ -677,7 +683,8 @@ PKEErr CryptoContext_EvalSubInPlaceDouble(CryptoContextPtr cc_ptr_to_sptr,
       return MakePKEError("CryptoContext_EvalSubInPlaceDouble: null context");
     }
     if (!ct_ptr_to_sptr) {
-      return MakePKEError("CryptoContext_EvalSubInPlaceDouble: null ciphertext");
+      return MakePKEError(
+          "CryptoContext_EvalSubInPlaceDouble: null ciphertext");
     }
 
     auto &cc_sptr = GetCCSharedPtr(cc_ptr_to_sptr);
@@ -697,7 +704,8 @@ PKEErr CryptoContext_EvalSubInPlaceComplex(CryptoContextPtr cc_ptr_to_sptr,
       return MakePKEError("CryptoContext_EvalSubInPlaceComplex: null context");
     }
     if (!ct_ptr_to_sptr) {
-      return MakePKEError("CryptoContext_EvalSubInPlaceComplex: null ciphertext");
+      return MakePKEError(
+          "CryptoContext_EvalSubInPlaceComplex: null ciphertext");
     }
 
     auto &cc_sptr = GetCCSharedPtr(cc_ptr_to_sptr);
@@ -771,6 +779,34 @@ PKEErr CryptoContext_EvalBootstrapSetup_Simple(CryptoContextPtr cc_ptr_to_sptr,
   PKE_CATCH_RETURN()
 }
 
+PKEErr CryptoContext_EvalBootstrapSetup(CryptoContextPtr cc_ptr_to_sptr,
+                                        const uint32_t *lb, int lbLen,
+                                        const uint32_t *bsgs, int bsgsLen,
+                                        uint32_t numSlots) {
+  try {
+    if (!cc_ptr_to_sptr) {
+      return MakePKEError("CryptoContext_EvalBootstrapSetup: null context");
+    }
+    auto &cc = GetCCSharedPtr(cc_ptr_to_sptr);
+
+    std::vector<uint32_t> levelBudget;
+    if (lb && lbLen > 0)
+      levelBudget.assign(lb, lb + lbLen);
+    else
+      levelBudget = {4, 4}; // Default
+
+    std::vector<uint32_t> bsgsDim;
+    if (bsgs && bsgsLen > 0)
+      bsgsDim.assign(bsgs, bsgs + bsgsLen);
+    else
+      bsgsDim = {0, 0}; // Default
+
+    cc->EvalBootstrapSetup(levelBudget, bsgsDim, numSlots);
+    return MakePKEOk();
+  }
+  PKE_CATCH_RETURN()
+}
+
 PKEErr CryptoContext_EvalBootstrapKeyGen(CryptoContextPtr cc_ptr_to_sptr,
                                          KeyPairPtr keys_raw_ptr,
                                          uint32_t slots) {
@@ -812,6 +848,32 @@ PKEErr CryptoContext_EvalBootstrap(CryptoContextPtr cc_ptr_to_sptr,
     }
 
     auto out_ct = cc->EvalBootstrap(ct);
+    *out = reinterpret_cast<CiphertextPtr>(new CiphertextSharedPtr(out_ct));
+    return MakePKEOk();
+  }
+  PKE_CATCH_RETURN()
+}
+
+PKEErr CryptoContext_EvalBootstrapWithIterations(
+    CryptoContextPtr cc_ptr_to_sptr, CiphertextPtr ct_ptr_to_sptr,
+    uint32_t numIterations, uint32_t precision, CiphertextPtr *out) {
+  try {
+    auto &cc = GetCCSharedPtr(cc_ptr_to_sptr);
+    auto &ct = GetCTSharedPtr(ct_ptr_to_sptr);
+    if (!cc) {
+      return MakePKEError(
+          "CryptoContext_EvalBootstrapWithIterations: null context");
+    }
+    if (!ct) {
+      return MakePKEError(
+          "CryptoContext_EvalBootstrapWithIterations: null ciphertext");
+    }
+    if (!out) {
+      return MakePKEError(
+          "CryptoContext_EvalBootstrapWithIterations: null output pointer");
+    }
+
+    auto out_ct = cc->EvalBootstrap(ct, numIterations, precision);
     *out = reinterpret_cast<CiphertextPtr>(new CiphertextSharedPtr(out_ct));
     return MakePKEOk();
   }
@@ -917,7 +979,8 @@ PKEErr ParamsCKKS_SetMultipartyMode(ParamsCKKSPtr p_ptr_to_sptr, int mode) {
     if (!p_ptr_to_sptr) {
       return MakePKEError("ParamsCKKS_SetMultipartyMode: null params");
     }
-    auto &params = *reinterpret_cast<CCParams<CryptoContextCKKSRNS> *>(p_ptr_to_sptr);
+    auto &params =
+        *reinterpret_cast<CCParams<CryptoContextCKKSRNS> *>(p_ptr_to_sptr);
     params.SetMultipartyMode(static_cast<MultipartyMode>(mode));
     return MakePKEOk();
   }
@@ -933,33 +996,38 @@ PKEErr CryptoContext_EvalLinearWSum(CryptoContextPtr cc_ptr_to_sptr,
       return MakePKEError("CryptoContext_EvalLinearWSum: null context");
     }
     if (!ctVec || ctCount <= 0) {
-      return MakePKEError("CryptoContext_EvalLinearWSum: invalid ciphertext vector");
+      return MakePKEError(
+          "CryptoContext_EvalLinearWSum: invalid ciphertext vector");
     }
     if (!constants || constCount <= 0) {
-      return MakePKEError("CryptoContext_EvalLinearWSum: invalid constants vector");
+      return MakePKEError(
+          "CryptoContext_EvalLinearWSum: invalid constants vector");
     }
     if (ctCount != constCount) {
-      return MakePKEError("CryptoContext_EvalLinearWSum: ciphertext and constant counts must match");
+      return MakePKEError("CryptoContext_EvalLinearWSum: ciphertext and "
+                          "constant counts must match");
     }
     if (!out) {
       return MakePKEError("CryptoContext_EvalLinearWSum: null output pointer");
     }
 
     auto &cc_sptr = GetCCSharedPtr(cc_ptr_to_sptr);
-    
-    // Convert the array of ciphertext pointers to a vector of ReadOnlyCiphertext
+
+    // Convert the array of ciphertext pointers to a vector of
+    // ReadOnlyCiphertext
     std::vector<ReadOnlyCiphertext<DCRTPoly>> ct_vec;
     ct_vec.reserve(ctCount);
     for (int i = 0; i < ctCount; i++) {
       auto &ct_sptr = GetCTSharedPtr(ctVec[i]);
       ct_vec.push_back(ct_sptr);
     }
-    
+
     // Convert the constants array to a vector
     std::vector<double> const_vec(constants, constants + constCount);
-    
+
     // Call EvalLinearWSum
-    Ciphertext<DCRTPoly> result_ct_sptr = cc_sptr->EvalLinearWSum(ct_vec, const_vec);
+    Ciphertext<DCRTPoly> result_ct_sptr =
+        cc_sptr->EvalLinearWSum(ct_vec, const_vec);
     *out = reinterpret_cast<CiphertextPtr>(
         new CiphertextSharedPtr(result_ct_sptr));
 
@@ -997,9 +1065,9 @@ PKEErr CryptoContext_EvalLogistic(CryptoContextPtr cc_ptr_to_sptr,
 }
 
 PKEErr CryptoContext_EvalDivide(CryptoContextPtr cc_ptr_to_sptr,
-                                CiphertextPtr ct_ptr_to_sptr,
-                                double lowerBound, double upperBound,
-                                uint32_t polyDegree, CiphertextPtr *out) {
+                                CiphertextPtr ct_ptr_to_sptr, double lowerBound,
+                                double upperBound, uint32_t polyDegree,
+                                CiphertextPtr *out) {
   try {
     if (!cc_ptr_to_sptr) {
       return MakePKEError("CryptoContext_EvalDivide: null context");
@@ -1025,9 +1093,9 @@ PKEErr CryptoContext_EvalDivide(CryptoContextPtr cc_ptr_to_sptr,
 }
 
 PKEErr CryptoContext_EvalSin(CryptoContextPtr cc_ptr_to_sptr,
-                             CiphertextPtr ct_ptr_to_sptr,
-                             double lowerBound, double upperBound,
-                             uint32_t polyDegree, CiphertextPtr *out) {
+                             CiphertextPtr ct_ptr_to_sptr, double lowerBound,
+                             double upperBound, uint32_t polyDegree,
+                             CiphertextPtr *out) {
   try {
     if (!cc_ptr_to_sptr) {
       return MakePKEError("CryptoContext_EvalSin: null context");
@@ -1053,9 +1121,9 @@ PKEErr CryptoContext_EvalSin(CryptoContextPtr cc_ptr_to_sptr,
 }
 
 PKEErr CryptoContext_EvalCos(CryptoContextPtr cc_ptr_to_sptr,
-                             CiphertextPtr ct_ptr_to_sptr,
-                             double lowerBound, double upperBound,
-                             uint32_t polyDegree, CiphertextPtr *out) {
+                             CiphertextPtr ct_ptr_to_sptr, double lowerBound,
+                             double upperBound, uint32_t polyDegree,
+                             CiphertextPtr *out) {
   try {
     if (!cc_ptr_to_sptr) {
       return MakePKEError("CryptoContext_EvalCos: null context");
@@ -1108,9 +1176,8 @@ PKEErr CryptoContext_EvalChebyshevFunction(CryptoContextPtr cc_ptr_to_sptr,
       return goChebyshevCallback(callbackID, x);
     };
 
-    Ciphertext<DCRTPoly> result_ct_sptr =
-        cc_sptr->EvalChebyshevFunction(func, ct_sptr, lowerBound, upperBound,
-                                       polyDegree);
+    Ciphertext<DCRTPoly> result_ct_sptr = cc_sptr->EvalChebyshevFunction(
+        func, ct_sptr, lowerBound, upperBound, polyDegree);
     *out = reinterpret_cast<CiphertextPtr>(
         new CiphertextSharedPtr(result_ct_sptr));
 
@@ -1138,10 +1205,11 @@ PKEErr EvalChebyshevCoefficients(int callbackID, double lowerBound,
     };
 
     // Call OpenFHE's EvalChebyshevCoefficients
-    std::vector<double> coeffs_vec =
-        lbcrypto::EvalChebyshevCoefficients(func, lowerBound, upperBound, degree);
+    std::vector<double> coeffs_vec = lbcrypto::EvalChebyshevCoefficients(
+        func, lowerBound, upperBound, degree);
 
-    // Allocate memory for coefficients (caller must free with FreeChebyshevCoeffs)
+    // Allocate memory for coefficients (caller must free with
+    // FreeChebyshevCoeffs)
     size_t len = coeffs_vec.size();
     double *coeffs_array = new double[len];
     for (size_t i = 0; i < len; i++) {
@@ -1168,7 +1236,8 @@ PKEErr CryptoContext_EvalChebyshevSeries(CryptoContextPtr cc_ptr_to_sptr,
                                          CiphertextPtr ct_ptr_to_sptr,
                                          const double *coefficients,
                                          size_t numCoeffs, double lowerBound,
-                                         double upperBound, CiphertextPtr *out) {
+                                         double upperBound,
+                                         CiphertextPtr *out) {
   try {
     if (!cc_ptr_to_sptr) {
       return MakePKEError("CryptoContext_EvalChebyshevSeries: null context");
@@ -1182,7 +1251,8 @@ PKEErr CryptoContext_EvalChebyshevSeries(CryptoContextPtr cc_ptr_to_sptr,
           "CryptoContext_EvalChebyshevSeries: null coefficients");
     }
     if (!out) {
-      return MakePKEError("CryptoContext_EvalChebyshevSeries: null output pointer");
+      return MakePKEError(
+          "CryptoContext_EvalChebyshevSeries: null output pointer");
     }
 
     auto &cc_sptr = GetCCSharedPtr(cc_ptr_to_sptr);
@@ -1192,8 +1262,8 @@ PKEErr CryptoContext_EvalChebyshevSeries(CryptoContextPtr cc_ptr_to_sptr,
     std::vector<double> coeffs_vec(coefficients, coefficients + numCoeffs);
 
     // Call OpenFHE's EvalChebyshevSeries
-    Ciphertext<DCRTPoly> result_ct_sptr =
-        cc_sptr->EvalChebyshevSeries(ct_sptr, coeffs_vec, lowerBound, upperBound);
+    Ciphertext<DCRTPoly> result_ct_sptr = cc_sptr->EvalChebyshevSeries(
+        ct_sptr, coeffs_vec, lowerBound, upperBound);
     *out = reinterpret_cast<CiphertextPtr>(
         new CiphertextSharedPtr(result_ct_sptr));
 
