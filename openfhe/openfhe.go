@@ -69,8 +69,8 @@ const (
 
 // --- Interactive Bootstrapping Compression Levels ---
 const (
-	COMPACT = 2 // More efficient with stronger security assumption
-	SLACK   = 3 // Less efficient with weaker security assumption (default, more secure)
+	COMPACT = 2 // More efficient but requires stronger security assumption (less conservative)
+	SLACK   = 3 // Less efficient but requires weaker security assumption (more conservative/secure, default)
 )
 
 // --- Common CryptoContext Methods ---

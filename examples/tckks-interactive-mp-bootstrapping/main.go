@@ -67,9 +67,11 @@ func main() {
 	batchSize := 4
 	must(params.SetBatchSize(batchSize), "SetBatchSize")
 
-	// Protocol-specific parameters: SLACK is more secure, COMPACT is more efficient
-	// SLACK: Larger masks, more secure (default)
-	// COMPACT: Smaller masks, more efficient
+	// Protocol-specific parameters for interactive bootstrapping:
+	// SLACK: Uses weaker security assumption = more conservative/secure (default, recommended)
+	//        Larger masks, requires 4 levels for interactive bootstrapping
+	// COMPACT: Uses stronger security assumption = less conservative but more efficient
+	//          Smaller masks, requires 3 levels for interactive bootstrapping
 	must(params.SetInteractiveBootCompressionLevel(openfhe.SLACK), "SetInteractiveBootCompressionLevel")
 
 	// B. Generate crypto context
