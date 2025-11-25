@@ -31,6 +31,7 @@ PKEErr ParamsCKKS_SetDigitSize(ParamsCKKSPtr p, int digitSize);
 PKEErr ParamsCKKS_SetKeySwitchTechnique(ParamsCKKSPtr p, int technique);
 PKEErr ParamsCKKS_SetMultipartyMode(ParamsCKKSPtr p, int mode);
 PKEErr ParamsCKKS_SetCKKSDataType(ParamsCKKSPtr p, int dataType);
+PKEErr ParamsCKKS_SetInteractiveBootCompressionLevel(ParamsCKKSPtr p, int compressionLevel);
 void DestroyParamsCKKS(ParamsCKKSPtr p);
 
 // --- CKKS CryptoContext ---
@@ -178,6 +179,25 @@ PKEErr CryptoContext_EvalChebyshevSeries(CryptoContextPtr cc, CiphertextPtr ct,
                                          const double *coefficients,
                                          size_t numCoeffs, double lowerBound,
                                          double upperBound, CiphertextPtr *out);
+
+// --- TCKKS Interactive Multi-Party Bootstrapping ---
+PKEErr CryptoContext_IntMPBootAdjustScale(CryptoContextPtr cc, CiphertextPtr ct,
+                                          CiphertextPtr *out);
+PKEErr CryptoContext_IntMPBootRandomElementGen(CryptoContextPtr cc,
+                                               PublicKeyPtr pk,
+                                               CiphertextPtr *out);
+PKEErr CryptoContext_IntMPBootDecrypt(CryptoContextPtr cc, PrivateKeyPtr sk,
+                                      CiphertextPtr c1, CiphertextPtr a,
+                                      CiphertextPtr *out0, CiphertextPtr *out1);
+PKEErr CryptoContext_IntMPBootAdd(CryptoContextPtr cc,
+                                  CiphertextPtr **sharesPairVec,
+                                  size_t numParties,
+                                  CiphertextPtr *out0, CiphertextPtr *out1);
+PKEErr CryptoContext_IntMPBootEncrypt(CryptoContextPtr cc, PublicKeyPtr pk,
+                                      CiphertextPtr aggregatedH0,
+                                      CiphertextPtr aggregatedH1,
+                                      CiphertextPtr a, CiphertextPtr inCtxt,
+                                      CiphertextPtr *out);
 
 #ifdef __cplusplus
 }

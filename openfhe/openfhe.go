@@ -67,6 +67,12 @@ const (
 	NOISE_FLOODING_HRA = 3
 )
 
+// --- Interactive Bootstrapping Compression Levels ---
+const (
+	COMPACT = 2 // More efficient but requires stronger security assumption (less conservative)
+	SLACK   = 3 // Less efficient but requires weaker security assumption (more conservative/secure, default)
+)
+
 // --- Common CryptoContext Methods ---
 func (cc *CryptoContext) Enable(feature int) error {
 	if cc.ptr == nil {
