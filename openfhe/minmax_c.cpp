@@ -7,17 +7,13 @@ extern "C" {
 
 // --- Min/Max Comparison Operations via Scheme Switching ---
 
-PKEErr CryptoContext_EvalMinSchemeSwitching(CryptoContextPtr cc_ptr_to_sptr,
-                                            CiphertextPtr ct_ptr_to_sptr,
-                                            void *publicKey, uint32_t numValues,
-                                            uint32_t numSlots, uint32_t pLWE,
-                                            double scaleSign,
-                                            CiphertextPtr *outValue,
-                                            CiphertextPtr *outIndex) {
+PKEErr CryptoContext_EvalMinSchemeSwitching(
+    CryptoContextPtr cc_ptr_to_sptr, CiphertextPtr ct_ptr_to_sptr,
+    void *publicKey, uint32_t numValues, uint32_t numSlots, uint32_t pLWE,
+    double scaleSign, CiphertextPtr *outValue, CiphertextPtr *outIndex) {
   try {
     if (!cc_ptr_to_sptr) {
-      return MakePKEError(
-          "CryptoContext_EvalMinSchemeSwitching: null context");
+      return MakePKEError("CryptoContext_EvalMinSchemeSwitching: null context");
     }
     if (!ct_ptr_to_sptr) {
       return MakePKEError(
@@ -46,10 +42,10 @@ PKEErr CryptoContext_EvalMinSchemeSwitching(CryptoContextPtr cc_ptr_to_sptr,
     }
 
     // Return both ciphertexts: result[0] = min value, result[1] = argmin index
-    *outValue = reinterpret_cast<CiphertextPtr>(
-        new CiphertextSharedPtr(result[0]));
-    *outIndex = reinterpret_cast<CiphertextPtr>(
-        new CiphertextSharedPtr(result[1]));
+    *outValue =
+        reinterpret_cast<CiphertextPtr>(new CiphertextSharedPtr(result[0]));
+    *outIndex =
+        reinterpret_cast<CiphertextPtr>(new CiphertextSharedPtr(result[1]));
 
     return MakePKEOk();
   }
@@ -91,27 +87,23 @@ PKEErr CryptoContext_EvalMinSchemeSwitchingAlt(
                           "number of results (expected 2)");
     }
 
-    *outValue = reinterpret_cast<CiphertextPtr>(
-        new CiphertextSharedPtr(result[0]));
-    *outIndex = reinterpret_cast<CiphertextPtr>(
-        new CiphertextSharedPtr(result[1]));
+    *outValue =
+        reinterpret_cast<CiphertextPtr>(new CiphertextSharedPtr(result[0]));
+    *outIndex =
+        reinterpret_cast<CiphertextPtr>(new CiphertextSharedPtr(result[1]));
 
     return MakePKEOk();
   }
   PKE_CATCH_RETURN()
 }
 
-PKEErr CryptoContext_EvalMaxSchemeSwitching(CryptoContextPtr cc_ptr_to_sptr,
-                                            CiphertextPtr ct_ptr_to_sptr,
-                                            void *publicKey, uint32_t numValues,
-                                            uint32_t numSlots, uint32_t pLWE,
-                                            double scaleSign,
-                                            CiphertextPtr *outValue,
-                                            CiphertextPtr *outIndex) {
+PKEErr CryptoContext_EvalMaxSchemeSwitching(
+    CryptoContextPtr cc_ptr_to_sptr, CiphertextPtr ct_ptr_to_sptr,
+    void *publicKey, uint32_t numValues, uint32_t numSlots, uint32_t pLWE,
+    double scaleSign, CiphertextPtr *outValue, CiphertextPtr *outIndex) {
   try {
     if (!cc_ptr_to_sptr) {
-      return MakePKEError(
-          "CryptoContext_EvalMaxSchemeSwitching: null context");
+      return MakePKEError("CryptoContext_EvalMaxSchemeSwitching: null context");
     }
     if (!ct_ptr_to_sptr) {
       return MakePKEError(
@@ -140,10 +132,10 @@ PKEErr CryptoContext_EvalMaxSchemeSwitching(CryptoContextPtr cc_ptr_to_sptr,
     }
 
     // Return both ciphertexts: result[0] = max value, result[1] = argmax index
-    *outValue = reinterpret_cast<CiphertextPtr>(
-        new CiphertextSharedPtr(result[0]));
-    *outIndex = reinterpret_cast<CiphertextPtr>(
-        new CiphertextSharedPtr(result[1]));
+    *outValue =
+        reinterpret_cast<CiphertextPtr>(new CiphertextSharedPtr(result[0]));
+    *outIndex =
+        reinterpret_cast<CiphertextPtr>(new CiphertextSharedPtr(result[1]));
 
     return MakePKEOk();
   }
@@ -185,10 +177,10 @@ PKEErr CryptoContext_EvalMaxSchemeSwitchingAlt(
                           "number of results (expected 2)");
     }
 
-    *outValue = reinterpret_cast<CiphertextPtr>(
-        new CiphertextSharedPtr(result[0]));
-    *outIndex = reinterpret_cast<CiphertextPtr>(
-        new CiphertextSharedPtr(result[1]));
+    *outValue =
+        reinterpret_cast<CiphertextPtr>(new CiphertextSharedPtr(result[0]));
+    *outIndex =
+        reinterpret_cast<CiphertextPtr>(new CiphertextSharedPtr(result[1]));
 
     return MakePKEOk();
   }

@@ -10,6 +10,7 @@ import "C"
 
 import (
 	"errors"
+	"runtime"
 	"sync"
 	"unsafe"
 )
@@ -1641,15 +1642,25 @@ func (cc *CryptoContext) IntMPBootAdd(sharesPairVec [][]*Ciphertext) ([]*Ciphert
 	numParties := len(sharesPairVec)
 
 	// Convert Go slice to C array of arrays
-	// Allocate outer array: array of pointers to CiphertextPtr arrays
-	cSharesPairVec := make([](*C.CiphertextPtr), numParties)
-	cSharesData := make([][]C.CiphertextPtr, numParties)
+	// We need to pin cSharesData because cSharesPairVec contains Go pointers to it.
+	// Per cgo rules: "Go code may pass a Go pointer to C provided the memory to which
+	// it points does not contain any Go pointers to memory that is unpinned."
+	var pinner runtime.Pinner
+	defer pinner.Unpin()
 
+	// First, create a flat array to hold all the ciphertext pointers (2 per party)
+	cSharesData := make([]C.CiphertextPtr, numParties*2)
 	for i := 0; i < numParties; i++ {
-		cSharesData[i] = make([]C.CiphertextPtr, 2)
-		cSharesData[i][0] = sharesPairVec[i][0].ptr
-		cSharesData[i][1] = sharesPairVec[i][1].ptr
-		cSharesPairVec[i] = &cSharesData[i][0]
+		cSharesData[i*2] = sharesPairVec[i][0].ptr
+		cSharesData[i*2+1] = sharesPairVec[i][1].ptr
+	}
+	pinner.Pin(&cSharesData[0])
+
+	// Create array of pointers to the inner arrays (each party's pair)
+	// These are Go pointers (&cSharesData[i*2]) pointing into the pinned cSharesData
+	cSharesPairVec := make([]*C.CiphertextPtr, numParties)
+	for i := 0; i < numParties; i++ {
+		cSharesPairVec[i] = &cSharesData[i*2]
 	}
 
 	var outCT0, outCT1 C.CiphertextPtr

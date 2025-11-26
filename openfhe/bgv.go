@@ -7,6 +7,7 @@ package openfhe
 #include "bgv_c.h"
 */
 import "C"
+
 import (
 	"errors"
 	"unsafe"

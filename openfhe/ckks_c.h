@@ -31,7 +31,8 @@ PKEErr ParamsCKKS_SetDigitSize(ParamsCKKSPtr p, int digitSize);
 PKEErr ParamsCKKS_SetKeySwitchTechnique(ParamsCKKSPtr p, int technique);
 PKEErr ParamsCKKS_SetMultipartyMode(ParamsCKKSPtr p, int mode);
 PKEErr ParamsCKKS_SetCKKSDataType(ParamsCKKSPtr p, int dataType);
-PKEErr ParamsCKKS_SetInteractiveBootCompressionLevel(ParamsCKKSPtr p, int compressionLevel);
+PKEErr ParamsCKKS_SetInteractiveBootCompressionLevel(ParamsCKKSPtr p,
+                                                     int compressionLevel);
 void DestroyParamsCKKS(ParamsCKKSPtr p);
 
 // --- CKKS CryptoContext ---
@@ -43,16 +44,15 @@ PKEErr CryptoContext_MakeCKKSPackedPlaintext(CryptoContextPtr cc,
                                              PlaintextPtr *out);
 PKEErr CryptoContext_MakeCKKSPackedPlaintextWithParams(CryptoContextPtr cc,
                                                        double *values, int len,
-                                                       double scaleDeg, int level,
+                                                       double scaleDeg,
+                                                       int level,
                                                        PlaintextPtr *out);
 PKEErr CryptoContext_MakeCKKSComplexPackedPlaintext(CryptoContextPtr cc,
                                                     complex_double_t *values,
                                                     int len, PlaintextPtr *out);
-PKEErr CryptoContext_MakeCKKSComplexPackedPlaintextWithParams(CryptoContextPtr cc,
-                                                              complex_double_t *values,
-                                                              int len,
-                                                              double scaleDeg, int level,
-                                                              PlaintextPtr *out);
+PKEErr CryptoContext_MakeCKKSComplexPackedPlaintextWithParams(
+    CryptoContextPtr cc, complex_double_t *values, int len, double scaleDeg,
+    int level, PlaintextPtr *out);
 
 // --- CKKS Operations ---
 PKEErr CryptoContext_Rescale(CryptoContextPtr cc, CiphertextPtr ct,
@@ -66,24 +66,29 @@ PKEErr CryptoContext_ModReduceInPlace(CryptoContextPtr cc, CiphertextPtr ct);
 PKEErr CryptoContext_EvalMultDouble(CryptoContextPtr cc, CiphertextPtr ct,
                                     double constant, CiphertextPtr *out);
 PKEErr CryptoContext_EvalMultComplex(CryptoContextPtr cc, CiphertextPtr ct,
-                                     complex_double_t constant, CiphertextPtr *out);
+                                     complex_double_t constant,
+                                     CiphertextPtr *out);
 PKEErr CryptoContext_EvalAddDouble(CryptoContextPtr cc, CiphertextPtr ct,
                                    double constant, CiphertextPtr *out);
 PKEErr CryptoContext_EvalAddComplex(CryptoContextPtr cc, CiphertextPtr ct,
-                                    complex_double_t constant, CiphertextPtr *out);
+                                    complex_double_t constant,
+                                    CiphertextPtr *out);
 PKEErr CryptoContext_EvalSubDouble(CryptoContextPtr cc, CiphertextPtr ct,
                                    double constant, CiphertextPtr *out);
 PKEErr CryptoContext_EvalSubComplex(CryptoContextPtr cc, CiphertextPtr ct,
-                                    complex_double_t constant, CiphertextPtr *out);
+                                    complex_double_t constant,
+                                    CiphertextPtr *out);
 
 // In-place operations
 PKEErr CryptoContext_EvalAddInPlaceDouble(CryptoContextPtr cc, CiphertextPtr ct,
                                           double constant);
-PKEErr CryptoContext_EvalAddInPlaceComplex(CryptoContextPtr cc, CiphertextPtr ct,
+PKEErr CryptoContext_EvalAddInPlaceComplex(CryptoContextPtr cc,
+                                           CiphertextPtr ct,
                                            complex_double_t constant);
 PKEErr CryptoContext_EvalSubInPlaceDouble(CryptoContextPtr cc, CiphertextPtr ct,
                                           double constant);
-PKEErr CryptoContext_EvalSubInPlaceComplex(CryptoContextPtr cc, CiphertextPtr ct,
+PKEErr CryptoContext_EvalSubInPlaceComplex(CryptoContextPtr cc,
+                                           CiphertextPtr ct,
                                            complex_double_t constant);
 
 // --- CKKS Bootstrapping ---
@@ -148,9 +153,9 @@ extern double goChebyshevCallback(int callbackID, double x);
 
 // Evaluate a custom function using Chebyshev approximation
 // The function is provided via a callback ID that maps to a Go function
-PKEErr CryptoContext_EvalChebyshevFunction(CryptoContextPtr cc,
-                                           int callbackID, CiphertextPtr ct,
-                                           double lowerBound, double upperBound,
+PKEErr CryptoContext_EvalChebyshevFunction(CryptoContextPtr cc, int callbackID,
+                                           CiphertextPtr ct, double lowerBound,
+                                           double upperBound,
                                            uint32_t polyDegree,
                                            CiphertextPtr *out);
 
@@ -162,8 +167,8 @@ PKEErr CryptoContext_EvalChebyshevFunction(CryptoContextPtr cc,
 // 2. Reuse coefficients across multiple ciphertexts (via EvalChebyshevSeries)
 // 3. Implement custom evaluation logic
 typedef struct {
-    double *coeffs;
-    size_t length;
+  double *coeffs;
+  size_t length;
 } ChebyshevCoeffs;
 
 PKEErr EvalChebyshevCoefficients(int callbackID, double lowerBound,
@@ -191,8 +196,8 @@ PKEErr CryptoContext_IntMPBootDecrypt(CryptoContextPtr cc, PrivateKeyPtr sk,
                                       CiphertextPtr *out0, CiphertextPtr *out1);
 PKEErr CryptoContext_IntMPBootAdd(CryptoContextPtr cc,
                                   CiphertextPtr **sharesPairVec,
-                                  size_t numParties,
-                                  CiphertextPtr *out0, CiphertextPtr *out1);
+                                  size_t numParties, CiphertextPtr *out0,
+                                  CiphertextPtr *out1);
 PKEErr CryptoContext_IntMPBootEncrypt(CryptoContextPtr cc, PublicKeyPtr pk,
                                       CiphertextPtr aggregatedH0,
                                       CiphertextPtr aggregatedH1,

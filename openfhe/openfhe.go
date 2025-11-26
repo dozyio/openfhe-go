@@ -724,6 +724,50 @@ func (kp *KeyPair) Close() {
 	}
 }
 
+// SecretKey extracts the secret key from a KeyPair.
+// The returned PrivateKey is a new reference and should be closed when done.
+// This is used for multi-party operations that need direct access to individual keys.
+func (kp *KeyPair) SecretKey() (*PrivateKey, error) {
+	if kp.ptr == nil {
+		return nil, errors.New("KeyPair is closed or invalid")
+	}
+
+	var skPtr C.PrivateKeyPtr
+	status := C.KeyPair_GetSecretKey(kp.ptr, &skPtr)
+	err := checkPKEErrorMsg(status)
+	if err != nil {
+		return nil, err
+	}
+
+	if skPtr == nil {
+		return nil, errors.New("SecretKey returned null")
+	}
+
+	return &PrivateKey{ptr: skPtr}, nil
+}
+
+// PublicKey extracts the public key from a KeyPair.
+// The returned PublicKey is a new reference and should be closed when done.
+// This is used for multi-party operations that need direct access to individual keys.
+func (kp *KeyPair) PublicKey() (*PublicKey, error) {
+	if kp.ptr == nil {
+		return nil, errors.New("KeyPair is closed or invalid")
+	}
+
+	var pkPtr C.PublicKeyPtr
+	status := C.KeyPair_GetPublicKey(kp.ptr, &pkPtr)
+	err := checkPKEErrorMsg(status)
+	if err != nil {
+		return nil, err
+	}
+
+	if pkPtr == nil {
+		return nil, errors.New("PublicKey returned null")
+	}
+
+	return &PublicKey{ptr: pkPtr}, nil
+}
+
 // Close frees the underlying C++ Ciphertext object.
 func (ct *Ciphertext) Close() {
 	if ct.ptr != nil {
@@ -777,6 +821,18 @@ func (ct *Ciphertext) SetElementAtIndex(index int) error {
 	}
 
 	status := C.Ciphertext_SetElementAtIndex(ct.ptr, C.size_t(index))
+	return checkPKEErrorMsg(status)
+}
+
+// EraseFirstElement removes the first element from a ciphertext's element vector.
+// This is equivalent to C++ ct->GetElements().erase(ct->GetElements().begin()).
+// Used in interactive bootstrapping to extract c1 by removing c0.
+func (ct *Ciphertext) EraseFirstElement() error {
+	if ct.ptr == nil {
+		return errors.New("Ciphertext is closed or invalid")
+	}
+
+	status := C.Ciphertext_EraseFirstElement(ct.ptr)
 	return checkPKEErrorMsg(status)
 }
 

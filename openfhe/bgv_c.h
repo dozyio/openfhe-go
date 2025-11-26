@@ -30,13 +30,15 @@ PKEErr NewCryptoContextBGV(ParamsBGVPtr p, CryptoContextPtr *out);
 // --- BGV Plaintext ---
 // (Note: BGV also uses the Packed encoding)
 PKEErr CryptoContext_MakePackedPlaintext(CryptoContextPtr cc, int64_t *values,
-                                          int len, PlaintextPtr *out);
-PKEErr CryptoContext_MakeCoefPackedPlaintext(CryptoContextPtr cc, int64_t *values,
-                                              int len, PlaintextPtr *out);
+                                         int len, PlaintextPtr *out);
+PKEErr CryptoContext_MakeCoefPackedPlaintext(CryptoContextPtr cc,
+                                             int64_t *values, int len,
+                                             PlaintextPtr *out);
 
 // BGV-specific Plaintext methods
 PKEErr Plaintext_SetLength(PlaintextPtr pt, int len);
-PKEErr Plaintext_GetCoefPackedValue(PlaintextPtr pt, int64_t **out_values, int *out_len);
+PKEErr Plaintext_GetCoefPackedValue(PlaintextPtr pt, int64_t **out_values,
+                                    int *out_len);
 
 #ifdef __cplusplus
 }
