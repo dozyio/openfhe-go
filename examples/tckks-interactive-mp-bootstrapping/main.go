@@ -119,11 +119,11 @@ func main() {
 		}
 
 		// Extract private and public keys
-		parties[i].PrivateKey, err = parties[i].KpShard.GetMultipartyPrivateKey()
-		must(err, "GetMultipartyPrivateKey party "+fmt.Sprint(i))
+		parties[i].PrivateKey, err = parties[i].KpShard.SecretKey()
+		must(err, "SecretKey party "+fmt.Sprint(i))
 
-		parties[i].PublicKey, err = parties[i].KpShard.GetMultipartyPublicKey()
-		must(err, "GetMultipartyPublicKey party "+fmt.Sprint(i))
+		parties[i].PublicKey, err = parties[i].KpShard.PublicKey()
+		must(err, "PublicKey party "+fmt.Sprint(i))
 
 		fmt.Printf("   Party %d: Key generation completed\n", i)
 	}
@@ -138,8 +138,8 @@ func main() {
 	must(err, "MultipartyKeyGen collective")
 	defer kpMultiparty.Close()
 
-	jointPK, err := kpMultiparty.GetMultipartyPublicKey()
-	must(err, "GetMultipartyPublicKey joint")
+	jointPK, err := kpMultiparty.PublicKey()
+	must(err, "PublicKey joint")
 	defer jointPK.Close()
 
 	fmt.Println("   Joint public key generated successfully")

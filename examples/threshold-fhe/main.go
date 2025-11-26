@@ -54,9 +54,9 @@ func main() {
 	}
 	defer kp1.Close()
 
-	pk1, err := kp1.GetMultipartyPublicKey()
+	pk1, err := kp1.PublicKey()
 	if err != nil {
-		log.Fatal("GetMultipartyPublicKey party 1:", err)
+		log.Fatal("PublicKey party 1:", err)
 	}
 	defer pk1.Close()
 	fmt.Println("   Party 1: Keys generated")
@@ -68,9 +68,9 @@ func main() {
 	}
 	defer kp2.Close()
 
-	pk2, err := kp2.GetMultipartyPublicKey()
+	pk2, err := kp2.PublicKey()
 	if err != nil {
-		log.Fatal("GetMultipartyPublicKey party 2:", err)
+		log.Fatal("PublicKey party 2:", err)
 	}
 	defer pk2.Close()
 	fmt.Println("   Party 2: Keys generated from Party 1's public key")
@@ -149,21 +149,21 @@ func main() {
 	fmt.Println("\n7. Performing threshold decryption (requires all 3 parties)...")
 
 	// Get private keys
-	sk1, err := kp1.GetMultipartyPrivateKey()
+	sk1, err := kp1.SecretKey()
 	if err != nil {
-		log.Fatal("GetMultipartyPrivateKey party 1:", err)
+		log.Fatal("SecretKey party 1:", err)
 	}
 	defer sk1.Close()
 
-	sk2, err := kp2.GetMultipartyPrivateKey()
+	sk2, err := kp2.SecretKey()
 	if err != nil {
-		log.Fatal("GetMultipartyPrivateKey party 2:", err)
+		log.Fatal("SecretKey party 2:", err)
 	}
 	defer sk2.Close()
 
-	sk3, err := kp3.GetMultipartyPrivateKey()
+	sk3, err := kp3.SecretKey()
 	if err != nil {
-		log.Fatal("GetMultipartyPrivateKey party 3:", err)
+		log.Fatal("SecretKey party 3:", err)
 	}
 	defer sk3.Close()
 

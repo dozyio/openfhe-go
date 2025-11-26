@@ -726,7 +726,9 @@ func (kp *KeyPair) Close() {
 
 // SecretKey extracts the secret key from a KeyPair.
 // The returned PrivateKey is a new reference and should be closed when done.
-// This is used for multi-party operations that need direct access to individual keys.
+// This matches C++ KeyPair.secretKey member access.
+// OpenFHE uses "secretKey" as the member name but "PrivateKey" as the type name.
+// For low-level serialization, see GetPrivateKey() which returns unsafe.Pointer.
 func (kp *KeyPair) SecretKey() (*PrivateKey, error) {
 	if kp.ptr == nil {
 		return nil, errors.New("KeyPair is closed or invalid")
@@ -748,7 +750,8 @@ func (kp *KeyPair) SecretKey() (*PrivateKey, error) {
 
 // PublicKey extracts the public key from a KeyPair.
 // The returned PublicKey is a new reference and should be closed when done.
-// This is used for multi-party operations that need direct access to individual keys.
+// This matches C++ KeyPair.publicKey member access.
+// For low-level serialization, see GetPublicKey() which returns unsafe.Pointer.
 func (kp *KeyPair) PublicKey() (*PublicKey, error) {
 	if kp.ptr == nil {
 		return nil, errors.New("KeyPair is closed or invalid")

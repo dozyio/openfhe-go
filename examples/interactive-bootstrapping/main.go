@@ -62,12 +62,12 @@ func main() {
 	defer kp1.Close()
 
 	// Extract private/public keys for multiparty operations
-	sk1, err := kp1.GetMultipartyPrivateKey()
-	must(err, "GetMultipartyPrivateKey party 1")
+	sk1, err := kp1.SecretKey()
+	must(err, "SecretKey party 1")
 	defer sk1.Close()
 
-	pk1, err := kp1.GetMultipartyPublicKey()
-	must(err, "GetMultipartyPublicKey party 1")
+	pk1, err := kp1.PublicKey()
+	must(err, "PublicKey party 1")
 	defer pk1.Close()
 
 	// Generate evalmult key part for A
@@ -85,12 +85,12 @@ func main() {
 	must(err, "MultipartyKeyGen party 2")
 	defer kp2.Close()
 
-	pk2, err := kp2.GetMultipartyPublicKey()
-	must(err, "GetMultipartyPublicKey party 2")
+	pk2, err := kp2.PublicKey()
+	must(err, "PublicKey party 2")
 	defer pk2.Close()
 
-	sk2, err := kp2.GetMultipartyPrivateKey()
-	must(err, "GetMultipartyPrivateKey party 2")
+	sk2, err := kp2.SecretKey()
+	must(err, "SecretKey party 2")
 	defer sk2.Close()
 
 	// === 5) Create and encrypt plaintext ===
