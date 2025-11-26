@@ -62,11 +62,12 @@ PKEErr CryptoContext_Enable(CryptoContextPtr cc, int feature);
 PKEErr CryptoContext_KeyGen(CryptoContextPtr cc, KeyPairPtr *out);
 PKEErr CryptoContext_EvalMultKeyGen(CryptoContextPtr cc, KeyPairPtr keys);
 PKEErr CryptoContext_EvalRotateKeyGen(CryptoContextPtr cc, KeyPairPtr keys,
-                                       int32_t *indices, int len);
-PKEErr CryptoContext_EvalAutomorphismKeyGen(CryptoContextPtr cc, KeyPairPtr keys,
-                                             uint32_t *indices, int len);
+                                      int32_t *indices, int len);
+PKEErr CryptoContext_EvalAutomorphismKeyGen(CryptoContextPtr cc,
+                                            KeyPairPtr keys, uint32_t *indices,
+                                            int len);
 EvalKeyMapPtr CryptoContext_GetEvalAutomorphismKeyMap(CryptoContextPtr cc,
-                                                       const char *keyTag);
+                                                      const char *keyTag);
 uint64_t CryptoContext_GetRingDimension(CryptoContextPtr cc);
 uint64_t CryptoContext_GetCyclotomicOrder(CryptoContextPtr cc);
 int Ciphertext_GetLevel(CiphertextPtr ct);
@@ -77,39 +78,40 @@ int GetNativeInt();
 
 // --- Common Operations ---
 PKEErr CryptoContext_Encrypt(CryptoContextPtr cc, KeyPairPtr keys,
-                              PlaintextPtr pt, CiphertextPtr *out);
+                             PlaintextPtr pt, CiphertextPtr *out);
 PKEErr CryptoContext_Decrypt(CryptoContextPtr cc, KeyPairPtr keys,
-                              CiphertextPtr ct, PlaintextPtr *out);
+                             CiphertextPtr ct, PlaintextPtr *out);
 PKEErr CryptoContext_EvalAdd(CryptoContextPtr cc, CiphertextPtr ct1,
-                              CiphertextPtr ct2, CiphertextPtr *out);
+                             CiphertextPtr ct2, CiphertextPtr *out);
 PKEErr CryptoContext_EvalSub(CryptoContextPtr cc, CiphertextPtr ct1,
-                              CiphertextPtr ct2, CiphertextPtr *out);
+                             CiphertextPtr ct2, CiphertextPtr *out);
 PKEErr CryptoContext_EvalMult(CryptoContextPtr cc, CiphertextPtr ct1,
-                               CiphertextPtr ct2, CiphertextPtr *out);
+                              CiphertextPtr ct2, CiphertextPtr *out);
 PKEErr CryptoContext_EvalRotate(CryptoContextPtr cc, CiphertextPtr ct,
-                                 int32_t index, CiphertextPtr *out);
+                                int32_t index, CiphertextPtr *out);
 PKEErr CryptoContext_EvalAutomorphism(CryptoContextPtr cc, CiphertextPtr ct,
                                       uint32_t index, EvalKeyMapPtr evalKeyMap,
                                       CiphertextPtr *out);
 PKEErr CryptoContext_EvalMerge(CryptoContextPtr cc, CiphertextPtr *cts,
-                                int ct_count, CiphertextPtr *out);
+                               int ct_count, CiphertextPtr *out);
 PKEErr CryptoContext_EvalFastRotationPrecompute(CryptoContextPtr cc,
-                                                 CiphertextPtr ct,
-                                                 void **out);
+                                                CiphertextPtr ct, void **out);
 PKEErr CryptoContext_EvalFastRotation(CryptoContextPtr cc, CiphertextPtr ct,
-                                       int32_t index, uint32_t m,
-                                       void *precomp, CiphertextPtr *out);
+                                      int32_t index, uint32_t m, void *precomp,
+                                      CiphertextPtr *out);
 void DestroyFastRotationPrecompute(void *precomp);
 PKEErr CryptoContext_EvalAddPlain(CryptoContextPtr cc, CiphertextPtr ct,
-                                   PlaintextPtr pt, CiphertextPtr *out);
+                                  PlaintextPtr pt, CiphertextPtr *out);
 PKEErr CryptoContext_EvalSubPlain(CryptoContextPtr cc, CiphertextPtr ct,
-                                   PlaintextPtr pt, CiphertextPtr *out);
+                                  PlaintextPtr pt, CiphertextPtr *out);
 PKEErr CryptoContext_EvalMultPlain(CryptoContextPtr cc, CiphertextPtr ct,
-                                    PlaintextPtr pt, CiphertextPtr *out);
+                                   PlaintextPtr pt, CiphertextPtr *out);
 
 // --- KeyPair ---
 PKEErr GetPublicKey(KeyPairPtr kp, void **out_pk_sptr_wrapper);
 PKEErr GetPrivateKey(KeyPairPtr kp, void **out_sk_sptr_wrapper);
+PKEErr KeyPair_GetPublicKey(KeyPairPtr kp, PublicKeyPtr *out);
+PKEErr KeyPair_GetSecretKey(KeyPairPtr kp, PrivateKeyPtr *out);
 PKEErr NewKeyPair(KeyPairPtr *out);
 PKEErr SetPublicKey(KeyPairPtr kp, void *pk);
 PKEErr SetPrivateKey(KeyPairPtr kp, void *sk);
@@ -148,13 +150,14 @@ size_t SerializeCiphertextToBytes(CiphertextPtr ct, char **outBytes);
 CiphertextPtr DeserializeCiphertextFromBytes(const char *inData, int inLen);
 
 PKEErr CryptoContext_GetParameterElementString(CryptoContextPtr cc,
-                                                char **outString);
+                                               char **outString);
 
 // --- Multiparty / Threshold FHE ---
 // Multiparty key generation
-PKEErr CryptoContext_MultipartyKeyGen_FromPrivateKeys(
-    CryptoContextPtr cc, PrivateKeyPtr *privateKeys, size_t numKeys,
-    KeyPairPtr *out);
+PKEErr
+CryptoContext_MultipartyKeyGen_FromPrivateKeys(CryptoContextPtr cc,
+                                               PrivateKeyPtr *privateKeys,
+                                               size_t numKeys, KeyPairPtr *out);
 PKEErr CryptoContext_MultipartyKeyGen_FromPublicKey(CryptoContextPtr cc,
                                                     PublicKeyPtr publicKey,
                                                     int makeSparse, int fresh,
@@ -184,8 +187,7 @@ PKEErr CryptoContext_MultiKeySwitchGen(CryptoContextPtr cc,
 PKEErr CryptoContext_MultiEvalSumKeyGen(CryptoContextPtr cc,
                                         PrivateKeyPtr privateKey,
                                         EvalKeyMapPtr evalKeyMap,
-                                        const char *keyTag,
-                                        EvalKeyMapPtr *out);
+                                        const char *keyTag, EvalKeyMapPtr *out);
 PKEErr CryptoContext_MultiEvalAtIndexKeyGen(CryptoContextPtr cc,
                                             PrivateKeyPtr privateKey,
                                             EvalKeyMapPtr evalKeyMap,
@@ -220,8 +222,7 @@ PKEErr CryptoContext_MultiAddEvalAutomorphismKeys(CryptoContextPtr cc,
 // Base evaluation key generation (required for multiparty eval key workflow)
 PKEErr CryptoContext_KeySwitchGen(CryptoContextPtr cc,
                                   PrivateKeyPtr oldPrivateKey,
-                                  PrivateKeyPtr newPrivateKey,
-                                  EvalKeyPtr *out);
+                                  PrivateKeyPtr newPrivateKey, EvalKeyPtr *out);
 PKEErr CryptoContext_InsertEvalMultKey(CryptoContextPtr cc,
                                        EvalKeyPtr *evalKeys, size_t numKeys);
 PKEErr CryptoContext_InsertEvalSumKey(CryptoContextPtr cc,
@@ -234,8 +235,7 @@ PKEErr CryptoContext_EvalAtIndexKeyGenPrivate(CryptoContextPtr cc,
                                               const int32_t *indices,
                                               size_t numIndices,
                                               PublicKeyPtr publicKey);
-PKEErr CryptoContext_GetEvalSumKeyMap(CryptoContextPtr cc,
-                                      const char *keyTag,
+PKEErr CryptoContext_GetEvalSumKeyMap(CryptoContextPtr cc, const char *keyTag,
                                       EvalKeyMapPtr *out);
 
 // Key tag functions
@@ -251,19 +251,17 @@ PKEErr CryptoContext_IntBootDecrypt(CryptoContextPtr cc,
                                     PrivateKeyPtr privateKey,
                                     CiphertextPtr ciphertext,
                                     CiphertextPtr *out);
-PKEErr CryptoContext_IntBootEncrypt(CryptoContextPtr cc,
-                                    PublicKeyPtr publicKey,
+PKEErr CryptoContext_IntBootEncrypt(CryptoContextPtr cc, PublicKeyPtr publicKey,
                                     CiphertextPtr ciphertext,
                                     CiphertextPtr *out);
-PKEErr CryptoContext_IntBootAdd(CryptoContextPtr cc,
-                                CiphertextPtr ciphertext1,
-                                CiphertextPtr ciphertext2,
-                                CiphertextPtr *out);
+PKEErr CryptoContext_IntBootAdd(CryptoContextPtr cc, CiphertextPtr ciphertext1,
+                                CiphertextPtr ciphertext2, CiphertextPtr *out);
 
 // Ciphertext manipulation functions (for interactive bootstrapping)
 PKEErr Ciphertext_Clone(CiphertextPtr ct, CiphertextPtr *out);
 size_t Ciphertext_GetNumElements(CiphertextPtr ct);
 PKEErr Ciphertext_SetElementAtIndex(CiphertextPtr ct, size_t index);
+PKEErr Ciphertext_EraseFirstElement(CiphertextPtr ct);
 
 // Cleanup functions for multiparty types
 void DestroyPrivateKey(PrivateKeyPtr sk);

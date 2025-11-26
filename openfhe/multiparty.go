@@ -100,46 +100,6 @@ func (pk *PublicKey) GetKeyTag() (string, error) {
 	return keyTag, nil
 }
 
-// GetMultipartyPrivateKey extracts the private key from a KeyPair for multiparty operations
-func (kp *KeyPair) GetMultipartyPrivateKey() (*PrivateKey, error) {
-	if kp.ptr == nil {
-		return nil, errors.New("KeyPair is closed or invalid")
-	}
-
-	var skPtr C.PrivateKeyPtr
-	status := C.GetPrivateKey(kp.ptr, (*unsafe.Pointer)(unsafe.Pointer(&skPtr)))
-	err := checkPKEErrorMsg(status)
-	if err != nil {
-		return nil, err
-	}
-
-	if skPtr == nil {
-		return nil, errors.New("GetMultipartyPrivateKey returned null private key")
-	}
-
-	return &PrivateKey{ptr: skPtr}, nil
-}
-
-// GetMultipartyPublicKey extracts the public key from a KeyPair for multiparty operations
-func (kp *KeyPair) GetMultipartyPublicKey() (*PublicKey, error) {
-	if kp.ptr == nil {
-		return nil, errors.New("KeyPair is closed or invalid")
-	}
-
-	var pkPtr C.PublicKeyPtr
-	status := C.GetPublicKey(kp.ptr, (*unsafe.Pointer)(unsafe.Pointer(&pkPtr)))
-	err := checkPKEErrorMsg(status)
-	if err != nil {
-		return nil, err
-	}
-
-	if pkPtr == nil {
-		return nil, errors.New("GetMultipartyPublicKey returned null public key")
-	}
-
-	return &PublicKey{ptr: pkPtr}, nil
-}
-
 // --- Multiparty Key Generation ---
 
 // MultipartyKeyGen generates a keypair from a vector of private keys (additive secret sharing)

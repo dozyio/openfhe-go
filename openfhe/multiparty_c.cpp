@@ -642,7 +642,8 @@ PKEErr CryptoContext_InsertEvalMultKey(CryptoContextPtr cc_ptr_to_sptr,
       return MakePKEError("CryptoContext_InsertEvalMultKey: null context");
     }
     if (!evalKeys || numKeys == 0) {
-      return MakePKEError("CryptoContext_InsertEvalMultKey: null or empty eval key vector");
+      return MakePKEError(
+          "CryptoContext_InsertEvalMultKey: null or empty eval key vector");
     }
 
     auto &cc_sptr = GetCCSharedPtr(cc_ptr_to_sptr);
@@ -651,8 +652,9 @@ PKEErr CryptoContext_InsertEvalMultKey(CryptoContextPtr cc_ptr_to_sptr,
 
     for (size_t i = 0; i < numKeys; i++) {
       if (!evalKeys[i]) {
-        return MakePKEError("CryptoContext_InsertEvalMultKey: null eval key at index " +
-                            std::to_string(i));
+        return MakePKEError(
+            "CryptoContext_InsertEvalMultKey: null eval key at index " +
+            std::to_string(i));
       }
       evalKeyVec.push_back(GetEKSharedPtr(evalKeys[i]));
     }
@@ -763,7 +765,8 @@ PKEErr CryptoContext_IntBootAdjustScale(CryptoContextPtr cc_ptr_to_sptr,
       return MakePKEError("CryptoContext_IntBootAdjustScale: null ciphertext");
     }
     if (!out) {
-      return MakePKEError("CryptoContext_IntBootAdjustScale: null output pointer");
+      return MakePKEError(
+          "CryptoContext_IntBootAdjustScale: null output pointer");
     }
 
     auto &cc_sptr = GetCCSharedPtr(cc_ptr_to_sptr);
@@ -836,8 +839,7 @@ PKEErr CryptoContext_IntBootEncrypt(CryptoContextPtr cc_ptr_to_sptr,
 
 PKEErr CryptoContext_IntBootAdd(CryptoContextPtr cc_ptr_to_sptr,
                                 CiphertextPtr ciphertext1,
-                                CiphertextPtr ciphertext2,
-                                CiphertextPtr *out) {
+                                CiphertextPtr ciphertext2, CiphertextPtr *out) {
   try {
     if (!cc_ptr_to_sptr) {
       return MakePKEError("CryptoContext_IntBootAdd: null context");

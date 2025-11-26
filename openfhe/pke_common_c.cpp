@@ -110,8 +110,8 @@ PKEErr CryptoContext_EvalRotateKeyGen(CryptoContextPtr cc_ptr_to_sptr,
 }
 
 PKEErr CryptoContext_EvalAutomorphismKeyGen(CryptoContextPtr cc_ptr_to_sptr,
-                                      KeyPairPtr keys_raw_ptr, uint32_t *indices,
-                                      int len) {
+                                            KeyPairPtr keys_raw_ptr,
+                                            uint32_t *indices, int len) {
   try {
     if (!cc_ptr_to_sptr) {
       return MakePKEError("CryptoContext_EvalAutomorphismKeyGen: null context");
@@ -126,8 +126,8 @@ PKEErr CryptoContext_EvalAutomorphismKeyGen(CryptoContextPtr cc_ptr_to_sptr,
           "CryptoContext_EvalAutomorphismKeyGen: keypair has no secret key");
     }
     if (len > 0 && !indices) {
-      return MakePKEError(
-          "CryptoContext_EvalAutomorphismKeyGen: non-zero length with null indices");
+      return MakePKEError("CryptoContext_EvalAutomorphismKeyGen: non-zero "
+                          "length with null indices");
     }
     std::vector<uint32_t> vec(indices, indices + len);
     cc_sptr->EvalAutomorphismKeyGen(kp_raw->secretKey, vec);
@@ -136,16 +136,17 @@ PKEErr CryptoContext_EvalAutomorphismKeyGen(CryptoContextPtr cc_ptr_to_sptr,
   PKE_CATCH_RETURN()
 }
 
-EvalKeyMapPtr CryptoContext_GetEvalAutomorphismKeyMap(CryptoContextPtr cc_ptr_to_sptr,
-                                                       const char *keyTag) {
+EvalKeyMapPtr
+CryptoContext_GetEvalAutomorphismKeyMap(CryptoContextPtr cc_ptr_to_sptr,
+                                        const char *keyTag) {
   if (!cc_ptr_to_sptr)
     return nullptr;
 
   auto &cc = GetCCSharedPtr(cc_ptr_to_sptr);
-  
+
   std::string tag = keyTag ? keyTag : "";
   auto evalKeyMap = cc->GetEvalAutomorphismKeyMap(tag);
-  
+
   // Create a new map on the heap and copy the contents
   auto mapPtr = new std::map<uint32_t, EvalKey<DCRTPoly>>(evalKeyMap);
   return reinterpret_cast<EvalKeyMapPtr>(mapPtr);
@@ -434,9 +435,9 @@ PKEErr CryptoContext_EvalRotate(CryptoContextPtr cc_ptr_to_sptr,
 }
 
 PKEErr CryptoContext_EvalAutomorphism(CryptoContextPtr cc_ptr_to_sptr,
-                                CiphertextPtr ct_ptr_to_sptr, uint32_t index,
-                                EvalKeyMapPtr evalKeyMap,
-                                CiphertextPtr *out) {
+                                      CiphertextPtr ct_ptr_to_sptr,
+                                      uint32_t index, EvalKeyMapPtr evalKeyMap,
+                                      CiphertextPtr *out) {
   try {
     if (!cc_ptr_to_sptr) {
       return MakePKEError("CryptoContext_EvalAutomorphism: null context");
@@ -448,12 +449,15 @@ PKEErr CryptoContext_EvalAutomorphism(CryptoContextPtr cc_ptr_to_sptr,
       return MakePKEError("CryptoContext_EvalAutomorphism: null evalKeyMap");
     }
     if (!out) {
-      return MakePKEError("CryptoContext_EvalAutomorphism: null output pointer");
+      return MakePKEError(
+          "CryptoContext_EvalAutomorphism: null output pointer");
     }
     auto &cc_sptr = GetCCSharedPtr(cc_ptr_to_sptr);
     auto &ct_sptr = GetCTSharedPtr(ct_ptr_to_sptr);
-    auto mapPtr = reinterpret_cast<std::map<uint32_t, EvalKey<DCRTPoly>>*>(evalKeyMap);
-    Ciphertext<DCRTPoly> result_ct_sptr = cc_sptr->EvalAutomorphism(ct_sptr, index, *mapPtr);
+    auto mapPtr =
+        reinterpret_cast<std::map<uint32_t, EvalKey<DCRTPoly>> *>(evalKeyMap);
+    Ciphertext<DCRTPoly> result_ct_sptr =
+        cc_sptr->EvalAutomorphism(ct_sptr, index, *mapPtr);
     *out = reinterpret_cast<CiphertextPtr>(
         new CiphertextSharedPtr(result_ct_sptr));
     return MakePKEOk();
@@ -462,8 +466,8 @@ PKEErr CryptoContext_EvalAutomorphism(CryptoContextPtr cc_ptr_to_sptr,
 }
 
 PKEErr CryptoContext_EvalMerge(CryptoContextPtr cc_ptr_to_sptr,
-                                CiphertextPtr *cts, int ct_count,
-                                CiphertextPtr *out) {
+                               CiphertextPtr *cts, int ct_count,
+                               CiphertextPtr *out) {
   try {
     if (!cc_ptr_to_sptr) {
       return MakePKEError("CryptoContext_EvalMerge: null context");
@@ -478,18 +482,19 @@ PKEErr CryptoContext_EvalMerge(CryptoContextPtr cc_ptr_to_sptr,
       return MakePKEError("CryptoContext_EvalMerge: null output pointer");
     }
     auto &cc_sptr = GetCCSharedPtr(cc_ptr_to_sptr);
-    
+
     // Convert the array of CiphertextPtr to vector of shared_ptr
     std::vector<Ciphertext<DCRTPoly>> ct_vec;
     ct_vec.reserve(ct_count);
     for (int i = 0; i < ct_count; i++) {
       if (!cts[i]) {
-        return MakePKEError("CryptoContext_EvalMerge: null ciphertext in array");
+        return MakePKEError(
+            "CryptoContext_EvalMerge: null ciphertext in array");
       }
       auto &ct_sptr = GetCTSharedPtr(cts[i]);
       ct_vec.push_back(ct_sptr);
     }
-    
+
     Ciphertext<DCRTPoly> result_ct_sptr = cc_sptr->EvalMerge(ct_vec);
     *out = reinterpret_cast<CiphertextPtr>(
         new CiphertextSharedPtr(result_ct_sptr));
@@ -608,6 +613,50 @@ PKEErr GetPrivateKey(KeyPairPtr kp_raw_ptr, void **out_sk_sptr_wrapper) {
     // Return a pointer to a *copy* of the shared_ptr, managed on heap
     auto *heap_sptr_ptr = new PrivateKeySharedPtr(kp->secretKey);
     *out_sk_sptr_wrapper = reinterpret_cast<void *>(heap_sptr_ptr);
+    return MakePKEOk();
+  }
+  PKE_CATCH_RETURN()
+}
+
+// Typed versions that return proper pointer types for Go bindings
+PKEErr KeyPair_GetPublicKey(KeyPairPtr kp_raw_ptr, PublicKeyPtr *out) {
+  try {
+    if (!kp_raw_ptr) {
+      return MakePKEError("KeyPair_GetPublicKey: null keypair");
+    }
+    if (!out) {
+      return MakePKEError("KeyPair_GetPublicKey: null output pointer");
+    }
+    auto kp = reinterpret_cast<KeyPairRawPtr>(kp_raw_ptr);
+    if (!kp || !kp->publicKey) {
+      return MakePKEError("KeyPair_GetPublicKey: keypair has no public key");
+    }
+
+    // Return a pointer to a *copy* of the shared_ptr, managed on heap
+    auto *heap_sptr_ptr = new PublicKeySharedPtr(kp->publicKey);
+    *out = reinterpret_cast<PublicKeyPtr>(heap_sptr_ptr);
+    return MakePKEOk();
+  }
+  PKE_CATCH_RETURN()
+}
+
+PKEErr KeyPair_GetSecretKey(KeyPairPtr kp_raw_ptr, PrivateKeyPtr *out) {
+  try {
+    if (!kp_raw_ptr) {
+      return MakePKEError("KeyPair_GetSecretKey: null keypair");
+    }
+    if (!out) {
+      return MakePKEError("KeyPair_GetSecretKey: null output pointer");
+    }
+
+    auto kp = reinterpret_cast<KeyPairRawPtr>(kp_raw_ptr);
+    if (!kp || !kp->secretKey) {
+      return MakePKEError("KeyPair_GetSecretKey: keypair has no secret key");
+    }
+
+    // Return a pointer to a *copy* of the shared_ptr, managed on heap
+    auto *heap_sptr_ptr = new PrivateKeySharedPtr(kp->secretKey);
+    *out = reinterpret_cast<PrivateKeyPtr>(heap_sptr_ptr);
     return MakePKEOk();
   }
   PKE_CATCH_RETURN()
@@ -1056,7 +1105,8 @@ size_t Ciphertext_GetNumElements(CiphertextPtr ct_ptr_to_sptr) {
   return ct_sptr->GetElements().size();
 }
 
-PKEErr Ciphertext_SetElementAtIndex(CiphertextPtr ct_ptr_to_sptr, size_t index) {
+PKEErr Ciphertext_SetElementAtIndex(CiphertextPtr ct_ptr_to_sptr,
+                                    size_t index) {
   try {
     if (!ct_ptr_to_sptr) {
       return MakePKEError("Ciphertext_SetElementAtIndex: null ciphertext");
@@ -1064,7 +1114,7 @@ PKEErr Ciphertext_SetElementAtIndex(CiphertextPtr ct_ptr_to_sptr, size_t index) 
 
     auto &ct_sptr = GetCTSharedPtr(ct_ptr_to_sptr);
     auto &elements = ct_sptr->GetElements();
-    
+
     if (index >= elements.size()) {
       return MakePKEError("Ciphertext_SetElementAtIndex: index out of range");
     }
@@ -1073,11 +1123,35 @@ PKEErr Ciphertext_SetElementAtIndex(CiphertextPtr ct_ptr_to_sptr, size_t index) 
     std::vector<lbcrypto::DCRTPoly> newElements;
     newElements.push_back(elements[index]);
     ct_sptr->SetElements(std::move(newElements));
-    
+
     return MakePKEOk();
   }
   PKE_CATCH_RETURN()
 }
 
+// Erase the first element from a ciphertext (equivalent to C++
+// GetElements().erase(begin())) This is used in interactive bootstrapping to
+// extract c1 by removing c0
+PKEErr Ciphertext_EraseFirstElement(CiphertextPtr ct_ptr_to_sptr) {
+  try {
+    if (!ct_ptr_to_sptr) {
+      return MakePKEError("Ciphertext_EraseFirstElement: null ciphertext");
+    }
+
+    auto &ct_sptr = GetCTSharedPtr(ct_ptr_to_sptr);
+    auto &elements = ct_sptr->GetElements();
+
+    if (elements.size() == 0) {
+      return MakePKEError(
+          "Ciphertext_EraseFirstElement: ciphertext has no elements");
+    }
+
+    // Erase the first element (equivalent to elements.erase(elements.begin()))
+    elements.erase(elements.begin());
+
+    return MakePKEOk();
+  }
+  PKE_CATCH_RETURN()
+}
 
 } // extern "C"

@@ -60,9 +60,9 @@ func main() {
 	defer kp1.Close()
 	keypairs[0] = kp1
 
-	pk1, err := kp1.GetMultipartyPublicKey()
+	pk1, err := kp1.PublicKey()
 	if err != nil {
-		log.Fatal("GetMultipartyPublicKey party 1:", err)
+		log.Fatal("PublicKey party 1:", err)
 	}
 	defer pk1.Close()
 	fmt.Println("   Party 1: Initial keys generated")
@@ -77,9 +77,9 @@ func main() {
 		defer kp.Close()
 		keypairs[i] = kp
 
-		pk, err := kp.GetMultipartyPublicKey()
+		pk, err := kp.PublicKey()
 		if err != nil {
-			log.Fatalf("GetMultipartyPublicKey party %d: %v", i+1, err)
+			log.Fatalf("PublicKey party %d: %v", i+1, err)
 		}
 		defer pk.Close()
 
@@ -101,16 +101,16 @@ func main() {
 	var privateKeys [5]*openfhe.PrivateKey
 	var publicKeys [5]*openfhe.PublicKey
 	for i := 0; i < 5; i++ {
-		sk, err := keypairs[i].GetMultipartyPrivateKey()
+		sk, err := keypairs[i].SecretKey()
 		if err != nil {
-			log.Fatalf("GetMultipartyPrivateKey party %d: %v", i+1, err)
+			log.Fatalf("SecretKey party %d: %v", i+1, err)
 		}
 		defer sk.Close()
 		privateKeys[i] = sk
 
-		pk, err := keypairs[i].GetMultipartyPublicKey()
+		pk, err := keypairs[i].PublicKey()
 		if err != nil {
-			log.Fatalf("GetMultipartyPublicKey party %d: %v", i+1, err)
+			log.Fatalf("PublicKey party %d: %v", i+1, err)
 		}
 		defer pk.Close()
 		publicKeys[i] = pk

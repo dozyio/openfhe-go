@@ -178,7 +178,9 @@ func NewKeyPair() (*KeyPair, error) {
 	return kp, nil
 }
 
-// GetPublicKey extracts the public key part from a KeyPair.
+// GetPublicKey extracts the public key part from a KeyPair as an unsafe.Pointer.
+// This is a low-level API for serialization/deserialization workflows.
+// For normal use, prefer PublicKey() which returns a typed *PublicKey.
 func (kp *KeyPair) GetPublicKey() (unsafe.Pointer, error) {
 	if kp.ptr == nil {
 		return nil, errors.New("KeyPair is closed or invalid")
@@ -195,7 +197,9 @@ func (kp *KeyPair) GetPublicKey() (unsafe.Pointer, error) {
 	return pkH, nil
 }
 
-// GetPrivateKey extracts the private key part from a KeyPair.
+// GetPrivateKey extracts the private key part from a KeyPair as an unsafe.Pointer.
+// This is a low-level API for serialization/deserialization workflows.
+// For normal use, prefer SecretKey() which returns a typed *PrivateKey.
 func (kp *KeyPair) GetPrivateKey() (unsafe.Pointer, error) {
 	if kp.ptr == nil {
 		return nil, errors.New("KeyPair is closed or invalid")

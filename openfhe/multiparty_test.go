@@ -34,16 +34,16 @@ func TestBGVThresholdFHE(t *testing.T) {
 	mustT(t, err, "KeyGen party 1")
 	defer kp1.Close()
 
-	pk1, err := kp1.GetMultipartyPublicKey()
-	mustT(t, err, "GetMultipartyPublicKey party 1")
+	pk1, err := kp1.PublicKey()
+	mustT(t, err, "PublicKey party 1")
 	defer pk1.Close()
 
 	kp2, err := cc.MultipartyKeyGenFromPublicKey(pk1, false, false)
 	mustT(t, err, "MultipartyKeyGen party 2")
 	defer kp2.Close()
 
-	pk2, err := kp2.GetMultipartyPublicKey()
-	mustT(t, err, "GetMultipartyPublicKey party 2")
+	pk2, err := kp2.PublicKey()
+	mustT(t, err, "PublicKey party 2")
 	defer pk2.Close()
 
 	kp3, err := cc.MultipartyKeyGenFromPublicKey(pk2, false, false)
@@ -89,8 +89,8 @@ func TestBGVThresholdFHE(t *testing.T) {
 	defer ctAdd123.Close()
 
 	// Multiparty decryption - lead party
-	sk1, err := kp1.GetMultipartyPrivateKey()
-	mustT(t, err, "GetMultipartyPrivateKey party 1")
+	sk1, err := kp1.SecretKey()
+	mustT(t, err, "SecretKey party 1")
 	defer sk1.Close()
 
 	partial1, err := cc.MultipartyDecryptLead([]*Ciphertext{ctAdd123}, sk1)
@@ -101,8 +101,8 @@ func TestBGVThresholdFHE(t *testing.T) {
 	defer partial1[0].Close()
 
 	// Multiparty decryption - main parties
-	sk2, err := kp2.GetMultipartyPrivateKey()
-	mustT(t, err, "GetMultipartyPrivateKey party 2")
+	sk2, err := kp2.SecretKey()
+	mustT(t, err, "SecretKey party 2")
 	defer sk2.Close()
 
 	partial2, err := cc.MultipartyDecryptMain([]*Ciphertext{ctAdd123}, sk2)
@@ -112,8 +112,8 @@ func TestBGVThresholdFHE(t *testing.T) {
 	}
 	defer partial2[0].Close()
 
-	sk3, err := kp3.GetMultipartyPrivateKey()
-	mustT(t, err, "GetMultipartyPrivateKey party 3")
+	sk3, err := kp3.SecretKey()
+	mustT(t, err, "SecretKey party 3")
 	defer sk3.Close()
 
 	partial3, err := cc.MultipartyDecryptMain([]*Ciphertext{ctAdd123}, sk3)
@@ -182,12 +182,12 @@ func TestMultipartyKeyAggregation(t *testing.T) {
 	defer kp2.Close()
 
 	// Get public keys
-	pk1, err := kp1.GetMultipartyPublicKey()
-	mustT(t, err, "GetMultipartyPublicKey 1")
+	pk1, err := kp1.PublicKey()
+	mustT(t, err, "PublicKey 1")
 	defer pk1.Close()
 
-	pk2, err := kp2.GetMultipartyPublicKey()
-	mustT(t, err, "GetMultipartyPublicKey 2")
+	pk2, err := kp2.PublicKey()
+	mustT(t, err, "PublicKey 2")
 	defer pk2.Close()
 
 	// Aggregate public keys
@@ -235,8 +235,8 @@ func TestCKKSThresholdFHE(t *testing.T) {
 	mustT(t, err, "KeyGen party 1")
 	defer kp1.Close()
 
-	pk1, err := kp1.GetMultipartyPublicKey()
-	mustT(t, err, "GetMultipartyPublicKey party 1")
+	pk1, err := kp1.PublicKey()
+	mustT(t, err, "PublicKey party 1")
 	defer pk1.Close()
 
 	kp2, err := cc.MultipartyKeyGenFromPublicKey(pk1, false, false)
@@ -269,12 +269,12 @@ func TestCKKSThresholdFHE(t *testing.T) {
 	defer ctAdd.Close()
 
 	// Multiparty decrypt
-	sk1, err := kp1.GetMultipartyPrivateKey()
-	mustT(t, err, "GetMultipartyPrivateKey 1")
+	sk1, err := kp1.SecretKey()
+	mustT(t, err, "SecretKey 1")
 	defer sk1.Close()
 
-	sk2, err := kp2.GetMultipartyPrivateKey()
-	mustT(t, err, "GetMultipartyPrivateKey 2")
+	sk2, err := kp2.SecretKey()
+	mustT(t, err, "SecretKey 2")
 	defer sk2.Close()
 
 	partial1, err := cc.MultipartyDecryptLead([]*Ciphertext{ctAdd}, sk1)
@@ -387,8 +387,8 @@ func TestMultipartyErrorCases(t *testing.T) {
 		mustT(t, err, "KeyGen")
 		defer kp.Close()
 
-		sk, err := kp.GetMultipartyPrivateKey()
-		mustT(t, err, "GetMultipartyPrivateKey")
+		sk, err := kp.SecretKey()
+		mustT(t, err, "SecretKey")
 		defer sk.Close()
 
 		_, err = cc.MultipartyDecryptLead([]*Ciphertext{}, sk)
@@ -417,8 +417,8 @@ func TestMultipartyErrorCases(t *testing.T) {
 		mustT(t, err, "KeyGen")
 		defer kp.Close()
 
-		pk, err := kp.GetMultipartyPublicKey()
-		mustT(t, err, "GetMultipartyPublicKey")
+		pk, err := kp.PublicKey()
+		mustT(t, err, "PublicKey")
 		defer pk.Close()
 
 		// Test with nil first key
@@ -469,8 +469,8 @@ func TestMultipartyEvalKeys(t *testing.T) {
 	mustT(t, err, "KeyGen party 1")
 	defer kp1.Close()
 
-	pk1, err := kp1.GetMultipartyPublicKey()
-	mustT(t, err, "GetMultipartyPublicKey party 1")
+	pk1, err := kp1.PublicKey()
+	mustT(t, err, "PublicKey party 1")
 	defer pk1.Close()
 
 	kp2, err := cc.MultipartyKeyGenFromPublicKey(pk1, false, false)
@@ -479,8 +479,8 @@ func TestMultipartyEvalKeys(t *testing.T) {
 
 	// Test complete eval key generation workflow
 	t.Run("CompleteEvalKeyWorkflow", func(t *testing.T) {
-		sk1, err := kp1.GetMultipartyPrivateKey()
-		mustT(t, err, "GetMultipartyPrivateKey party 1")
+		sk1, err := kp1.SecretKey()
+		mustT(t, err, "SecretKey party 1")
 		defer sk1.Close()
 
 		// Step 1: Party 1 generates base eval sum key
@@ -492,12 +492,12 @@ func TestMultipartyEvalKeys(t *testing.T) {
 
 	// Test rotation key generation workflow
 	t.Run("RotationKeyWorkflow", func(t *testing.T) {
-		sk1, err := kp1.GetMultipartyPrivateKey()
-		mustT(t, err, "GetMultipartyPrivateKey party 1")
+		sk1, err := kp1.SecretKey()
+		mustT(t, err, "SecretKey party 1")
 		defer sk1.Close()
 
-		sk2, err := kp2.GetMultipartyPrivateKey()
-		mustT(t, err, "GetMultipartyPrivateKey party 2")
+		sk2, err := kp2.SecretKey()
+		mustT(t, err, "SecretKey party 2")
 		defer sk2.Close()
 
 		// Generate rotation keys for indices [1, 2, 3]
@@ -562,15 +562,15 @@ func TestClosedContextOperations(t *testing.T) {
 	mustT(t, err, "KeyGen")
 
 	// Get keys before closing
-	pk, err := kp.GetMultipartyPublicKey()
-	mustT(t, err, "GetMultipartyPublicKey")
+	pk, err := kp.PublicKey()
+	mustT(t, err, "PublicKey")
 
 	kp.Close() // Close keypair
 	pk.Close() // Close public key
 
 	t.Run("OperationWithClosedKeys", func(t *testing.T) {
 		// Try to get key from closed keypair
-		_, err := kp.GetMultipartyPrivateKey()
+		_, err := kp.SecretKey()
 		if err == nil {
 			t.Error("Expected error with closed keypair, got nil")
 		}
@@ -613,12 +613,12 @@ func TestMultipartyKeyGenVariants(t *testing.T) {
 		defer kp2.Close()
 
 		// Get private keys
-		sk1, err := kp1.GetMultipartyPrivateKey()
-		mustT(t, err, "GetMultipartyPrivateKey 1")
+		sk1, err := kp1.SecretKey()
+		mustT(t, err, "SecretKey 1")
 		defer sk1.Close()
 
-		sk2, err := kp2.GetMultipartyPrivateKey()
-		mustT(t, err, "GetMultipartyPrivateKey 2")
+		sk2, err := kp2.SecretKey()
+		mustT(t, err, "SecretKey 2")
 		defer sk2.Close()
 
 		// Generate joint keypair from private keys
@@ -636,8 +636,8 @@ func TestMultipartyKeyGenVariants(t *testing.T) {
 		mustT(t, err, "KeyGen")
 		defer kp1.Close()
 
-		pk1, err := kp1.GetMultipartyPublicKey()
-		mustT(t, err, "GetMultipartyPublicKey")
+		pk1, err := kp1.PublicKey()
+		mustT(t, err, "PublicKey")
 		defer pk1.Close()
 
 		kp2, err := cc.MultipartyKeyGenFromPublicKey(pk1, false, false)
@@ -691,12 +691,12 @@ func TestInteractiveBootstrapping(t *testing.T) {
 	mustT(t, err, "KeyGen party 1")
 	defer kp1.Close()
 
-	sk1, err := kp1.GetMultipartyPrivateKey()
-	mustT(t, err, "GetMultipartyPrivateKey party 1")
+	sk1, err := kp1.SecretKey()
+	mustT(t, err, "SecretKey party 1")
 	defer sk1.Close()
 
-	pk1, err := kp1.GetMultipartyPublicKey()
-	mustT(t, err, "GetMultipartyPublicKey party 1")
+	pk1, err := kp1.PublicKey()
+	mustT(t, err, "PublicKey party 1")
 	defer pk1.Close()
 
 	// C++ uses MultipartyKeyGen(kp1.publicKey) which defaults to makeSparse=false, fresh=false
@@ -704,12 +704,12 @@ func TestInteractiveBootstrapping(t *testing.T) {
 	mustT(t, err, "MultipartyKeyGen party 2")
 	defer kp2.Close()
 
-	sk2, err := kp2.GetMultipartyPrivateKey()
-	mustT(t, err, "GetMultipartyPrivateKey party 2")
+	sk2, err := kp2.SecretKey()
+	mustT(t, err, "SecretKey party 2")
 	defer sk2.Close()
 
-	pk2, err := kp2.GetMultipartyPublicKey()
-	mustT(t, err, "GetMultipartyPublicKey party 2")
+	pk2, err := kp2.PublicKey()
+	mustT(t, err, "PublicKey party 2")
 	defer pk2.Close()
 
 	// Create and encrypt plaintext (matches C++ unit test)

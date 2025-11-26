@@ -80,8 +80,10 @@ func TestEvalMinSchemeSwitching(t *testing.T) {
 	mustT(t, cc.EvalCompareSwitchPrecompute(pLWE, scaleSign), "EvalCompareSwitchPrecompute")
 
 	// Create test data
-	data := []float64{5.2, 3.1, 7.8, 2.9, 6.0, 1.5, 4.3, 8.1,
-		3.7, 5.9, 2.2, 7.4, 6.8, 4.9, 3.3, 5.5}
+	data := []float64{
+		5.2, 3.1, 7.8, 2.9, 6.0, 1.5, 4.3, 8.1,
+		3.7, 5.9, 2.2, 7.4, 6.8, 4.9, 3.3, 5.5,
+	}
 	expectedMin := 1.5
 	expectedArgmin := 5
 

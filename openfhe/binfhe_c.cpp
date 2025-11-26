@@ -224,7 +224,8 @@ BinFHEErr BinFHEContext_DecryptModulus(BinFHEContextH h, LWESecretKeyH skh,
     AsBinFHEContext(h)->Decrypt(*AsLWESecretKey(skh), *AsLWECiphertext(cth),
                                 &pt_result, p);
     // Return as-is to match OpenFHE's LWEPlaintext type (int64_t)
-    // Note: values are always in [0, p-1] but we preserve the signed type for API consistency
+    // Note: values are always in [0, p-1] but we preserve the signed type for
+    // API consistency
     *out_val = pt_result;
     return MakeBinFHEOk();
   }
@@ -389,7 +390,8 @@ BinFHEErr BinFHEContext_DecryptModulusLWEKey(BinFHEContextH h, void *skh,
     lbcrypto::LWEPlaintext pt_result = 0;
     AsBinFHEContext(h)->Decrypt(*lwesk, *AsLWECiphertext(cth), &pt_result, p);
     // Return as-is to match OpenFHE's LWEPlaintext type (int64_t)
-    // Note: values are always in [0, p-1] but we preserve the signed type for API consistency
+    // Note: values are always in [0, p-1] but we preserve the signed type for
+    // API consistency
     *out_val = pt_result;
     return MakeBinFHEOk();
   }

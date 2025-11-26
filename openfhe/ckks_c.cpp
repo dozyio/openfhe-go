@@ -196,15 +196,18 @@ PKEErr ParamsCKKS_SetCKKSDataType(ParamsCKKSPtr p, int dataType) {
   PKE_CATCH_RETURN()
 }
 
-PKEErr ParamsCKKS_SetInteractiveBootCompressionLevel(ParamsCKKSPtr p, int compressionLevel) {
+PKEErr ParamsCKKS_SetInteractiveBootCompressionLevel(ParamsCKKSPtr p,
+                                                     int compressionLevel) {
   try {
     if (!p) {
-      return MakePKEError("ParamsCKKS_SetInteractiveBootCompressionLevel: null params");
+      return MakePKEError(
+          "ParamsCKKS_SetInteractiveBootCompressionLevel: null params");
     }
     // Map int to COMPRESSION_LEVEL enum
     // COMPACT = 2, SLACK = 3 (from OpenFHE constants-defs.h)
-    reinterpret_cast<CCParams<CryptoContextCKKSRNS> *>(p)->SetInteractiveBootCompressionLevel(
-        static_cast<COMPRESSION_LEVEL>(compressionLevel));
+    reinterpret_cast<CCParams<CryptoContextCKKSRNS> *>(p)
+        ->SetInteractiveBootCompressionLevel(
+            static_cast<COMPRESSION_LEVEL>(compressionLevel));
 
     return MakePKEOk();
   }
@@ -1305,8 +1308,7 @@ PKEErr CryptoContext_IntMPBootAdjustScale(CryptoContextPtr cc, CiphertextPtr ct,
     auto ct_sptr = *reinterpret_cast<CiphertextSharedPtr *>(ct);
 
     Ciphertext<DCRTPoly> result_ct = cc_sptr->IntMPBootAdjustScale(ct_sptr);
-    *out = reinterpret_cast<CiphertextPtr>(
-        new CiphertextSharedPtr(result_ct));
+    *out = reinterpret_cast<CiphertextPtr>(new CiphertextSharedPtr(result_ct));
 
     return MakePKEOk();
   }
@@ -1330,9 +1332,9 @@ PKEErr CryptoContext_IntMPBootRandomElementGen(CryptoContextPtr cc,
     auto cc_sptr = *reinterpret_cast<CryptoContextSharedPtr *>(cc);
     auto pk_sptr = *reinterpret_cast<PublicKeySharedPtr *>(pk);
 
-    Ciphertext<DCRTPoly> result_ct = cc_sptr->IntMPBootRandomElementGen(pk_sptr);
-    *out = reinterpret_cast<CiphertextPtr>(
-        new CiphertextSharedPtr(result_ct));
+    Ciphertext<DCRTPoly> result_ct =
+        cc_sptr->IntMPBootRandomElementGen(pk_sptr);
+    *out = reinterpret_cast<CiphertextPtr>(new CiphertextSharedPtr(result_ct));
 
     return MakePKEOk();
   }
@@ -1341,7 +1343,8 @@ PKEErr CryptoContext_IntMPBootRandomElementGen(CryptoContextPtr cc,
 
 PKEErr CryptoContext_IntMPBootDecrypt(CryptoContextPtr cc, PrivateKeyPtr sk,
                                       CiphertextPtr c1, CiphertextPtr a,
-                                      CiphertextPtr *out0, CiphertextPtr *out1) {
+                                      CiphertextPtr *out0,
+                                      CiphertextPtr *out1) {
   try {
     if (!cc) {
       return MakePKEError("IntMPBootDecrypt: null crypto context");
@@ -1364,19 +1367,20 @@ PKEErr CryptoContext_IntMPBootDecrypt(CryptoContextPtr cc, PrivateKeyPtr sk,
     auto c1_sptr = *reinterpret_cast<CiphertextSharedPtr *>(c1);
     auto a_sptr = *reinterpret_cast<CiphertextSharedPtr *>(a);
 
-    // IntMPBootDecrypt returns a std::vector<Ciphertext<DCRTPoly>> with 2 elements
-    std::vector<Ciphertext<DCRTPoly>> sharesPair = 
+    // IntMPBootDecrypt returns a std::vector<Ciphertext<DCRTPoly>> with 2
+    // elements
+    std::vector<Ciphertext<DCRTPoly>> sharesPair =
         cc_sptr->IntMPBootDecrypt(sk_sptr, c1_sptr, a_sptr);
 
     if (sharesPair.size() != 2) {
-      return MakePKEError("IntMPBootDecrypt: expected 2 shares, got " + 
+      return MakePKEError("IntMPBootDecrypt: expected 2 shares, got " +
                           std::to_string(sharesPair.size()));
     }
 
-    *out0 = reinterpret_cast<CiphertextPtr>(
-        new CiphertextSharedPtr(sharesPair[0]));
-    *out1 = reinterpret_cast<CiphertextPtr>(
-        new CiphertextSharedPtr(sharesPair[1]));
+    *out0 =
+        reinterpret_cast<CiphertextPtr>(new CiphertextSharedPtr(sharesPair[0]));
+    *out1 =
+        reinterpret_cast<CiphertextPtr>(new CiphertextSharedPtr(sharesPair[1]));
 
     return MakePKEOk();
   }
@@ -1385,8 +1389,8 @@ PKEErr CryptoContext_IntMPBootDecrypt(CryptoContextPtr cc, PrivateKeyPtr sk,
 
 PKEErr CryptoContext_IntMPBootAdd(CryptoContextPtr cc,
                                   CiphertextPtr **sharesPairVec,
-                                  size_t numParties,
-                                  CiphertextPtr *out0, CiphertextPtr *out1) {
+                                  size_t numParties, CiphertextPtr *out0,
+                                  CiphertextPtr *out1) {
   try {
     if (!cc) {
       return MakePKEError("IntMPBootAdd: null crypto context");
@@ -1400,23 +1404,25 @@ PKEErr CryptoContext_IntMPBootAdd(CryptoContextPtr cc,
 
     auto cc_sptr = *reinterpret_cast<CryptoContextSharedPtr *>(cc);
 
-    // Convert C array of arrays to std::vector<std::vector<Ciphertext<DCRTPoly>>>
+    // Convert C array of arrays to
+    // std::vector<std::vector<Ciphertext<DCRTPoly>>>
     std::vector<std::vector<Ciphertext<DCRTPoly>>> sharesPairVecCpp;
     for (size_t i = 0; i < numParties; i++) {
       std::vector<Ciphertext<DCRTPoly>> partyShares;
       // Each party has 2 shares (h0, h1)
       for (size_t j = 0; j < 2; j++) {
-        auto ct_sptr = *reinterpret_cast<CiphertextSharedPtr *>(sharesPairVec[i][j]);
+        auto ct_sptr =
+            *reinterpret_cast<CiphertextSharedPtr *>(sharesPairVec[i][j]);
         partyShares.push_back(ct_sptr);
       }
       sharesPairVecCpp.push_back(partyShares);
     }
 
-    std::vector<Ciphertext<DCRTPoly>> aggregatedShares = 
+    std::vector<Ciphertext<DCRTPoly>> aggregatedShares =
         cc_sptr->IntMPBootAdd(sharesPairVecCpp);
 
     if (aggregatedShares.size() != 2) {
-      return MakePKEError("IntMPBootAdd: expected 2 aggregated shares, got " + 
+      return MakePKEError("IntMPBootAdd: expected 2 aggregated shares, got " +
                           std::to_string(aggregatedShares.size()));
     }
 
@@ -1470,8 +1476,7 @@ PKEErr CryptoContext_IntMPBootEncrypt(CryptoContextPtr cc, PublicKeyPtr pk,
     Ciphertext<DCRTPoly> result_ct = cc_sptr->IntMPBootEncrypt(
         pk_sptr, aggregatedSharesPair, a_sptr, inCtxt_sptr);
 
-    *out = reinterpret_cast<CiphertextPtr>(
-        new CiphertextSharedPtr(result_ct));
+    *out = reinterpret_cast<CiphertextPtr>(new CiphertextSharedPtr(result_ct));
 
     return MakePKEOk();
   }

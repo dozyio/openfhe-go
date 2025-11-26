@@ -82,17 +82,19 @@ PKEErr NewCryptoContextBGV(ParamsBGVPtr p, CryptoContextPtr *out) {
 // We only need to implement the BGV-specific SetLength here.
 
 PKEErr CryptoContext_MakeCoefPackedPlaintext(CryptoContextPtr cc_ptr_to_sptr,
-                                              int64_t *values, int len,
-                                              PlaintextPtr *out) {
+                                             int64_t *values, int len,
+                                             PlaintextPtr *out) {
   try {
     if (!cc_ptr_to_sptr) {
-      return MakePKEError("CryptoContext_MakeCoefPackedPlaintext: null context");
+      return MakePKEError(
+          "CryptoContext_MakeCoefPackedPlaintext: null context");
     }
     if (!values && len > 0) {
       return MakePKEError("CryptoContext_MakeCoefPackedPlaintext: null values");
     }
     if (!out) {
-      return MakePKEError("CryptoContext_MakeCoefPackedPlaintext: null output pointer");
+      return MakePKEError(
+          "CryptoContext_MakeCoefPackedPlaintext: null output pointer");
     }
     auto &cc_sptr = GetCCSharedPtr(cc_ptr_to_sptr);
     std::vector<int64_t> vec(values, values + len);
@@ -116,16 +118,18 @@ PKEErr Plaintext_SetLength(PlaintextPtr pt_ptr_to_sptr, int len) {
 }
 
 PKEErr Plaintext_GetCoefPackedValue(PlaintextPtr pt_ptr_to_sptr,
-                                     int64_t **out_values, int *out_len) {
+                                    int64_t **out_values, int *out_len) {
   try {
     if (!pt_ptr_to_sptr) {
       return MakePKEError("Plaintext_GetCoefPackedValue: null plaintext");
     }
     if (!out_values) {
-      return MakePKEError("Plaintext_GetCoefPackedValue: null output values pointer");
+      return MakePKEError(
+          "Plaintext_GetCoefPackedValue: null output values pointer");
     }
     if (!out_len) {
-      return MakePKEError("Plaintext_GetCoefPackedValue: null output length pointer");
+      return MakePKEError(
+          "Plaintext_GetCoefPackedValue: null output length pointer");
     }
     auto &pt_sptr = GetPTSharedPtr(pt_ptr_to_sptr);
     const std::vector<int64_t> &vec = pt_sptr->GetCoefPackedValue();
@@ -149,7 +153,8 @@ PKEErr ParamsBGV_SetMultipartyMode(ParamsBGVPtr p_ptr_to_sptr, int mode) {
     if (!p_ptr_to_sptr) {
       return MakePKEError("ParamsBGV_SetMultipartyMode: null params");
     }
-    auto &params = *reinterpret_cast<CCParams<CryptoContextBGVRNS> *>(p_ptr_to_sptr);
+    auto &params =
+        *reinterpret_cast<CCParams<CryptoContextBGVRNS> *>(p_ptr_to_sptr);
     params.SetMultipartyMode(static_cast<MultipartyMode>(mode));
     return MakePKEOk();
   }
@@ -173,7 +178,8 @@ PKEErr ParamsBGV_SetPRENumHops(ParamsBGVPtr p, uint32_t numHops) {
     if (!p) {
       return MakePKEError("ParamsBGV_SetPRENumHops: null params");
     }
-    reinterpret_cast<CCParams<CryptoContextBGVRNS> *>(p)->SetPRENumHops(numHops);
+    reinterpret_cast<CCParams<CryptoContextBGVRNS> *>(p)->SetPRENumHops(
+        numHops);
     return MakePKEOk();
   }
   PKE_CATCH_RETURN()
@@ -184,7 +190,8 @@ PKEErr ParamsBGV_SetStatisticalSecurity(ParamsBGVPtr p, uint32_t statSec) {
     if (!p) {
       return MakePKEError("ParamsBGV_SetStatisticalSecurity: null params");
     }
-    reinterpret_cast<CCParams<CryptoContextBGVRNS> *>(p)->SetStatisticalSecurity(statSec);
+    reinterpret_cast<CCParams<CryptoContextBGVRNS> *>(p)
+        ->SetStatisticalSecurity(statSec);
     return MakePKEOk();
   }
   PKE_CATCH_RETURN()
@@ -195,7 +202,8 @@ PKEErr ParamsBGV_SetNumAdversarialQueries(ParamsBGVPtr p, uint32_t numQueries) {
     if (!p) {
       return MakePKEError("ParamsBGV_SetNumAdversarialQueries: null params");
     }
-    reinterpret_cast<CCParams<CryptoContextBGVRNS> *>(p)->SetNumAdversarialQueries(numQueries);
+    reinterpret_cast<CCParams<CryptoContextBGVRNS> *>(p)
+        ->SetNumAdversarialQueries(numQueries);
     return MakePKEOk();
   }
   PKE_CATCH_RETURN()

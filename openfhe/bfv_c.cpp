@@ -72,7 +72,8 @@ PKEErr ParamsBFV_SetMaxRelinSkDeg(ParamsBFVPtr p, uint32_t maxRelinSkDeg) {
     if (!p) {
       return MakePKEError("ParamsBFV_SetMaxRelinSkDeg: null params");
     }
-    reinterpret_cast<CCParams<CryptoContextBFVRNS> *>(p)->SetMaxRelinSkDeg(maxRelinSkDeg);
+    reinterpret_cast<CCParams<CryptoContextBFVRNS> *>(p)->SetMaxRelinSkDeg(
+        maxRelinSkDeg);
     return MakePKEOk();
   }
   PKE_CATCH_RETURN()
@@ -103,8 +104,8 @@ PKEErr NewCryptoContextBFV(ParamsBFVPtr p, CryptoContextPtr *out) {
 
 // --- BFV Plaintext ---
 PKEErr CryptoContext_MakePackedPlaintext(CryptoContextPtr cc_ptr_to_sptr,
-                                          int64_t *values, int len,
-                                          PlaintextPtr *out) {
+                                         int64_t *values, int len,
+                                         PlaintextPtr *out) {
   try {
     if (!cc_ptr_to_sptr) {
       return MakePKEError("CryptoContext_MakePackedPlaintext: null context");
@@ -132,7 +133,8 @@ PKEErr ParamsBFV_SetMultipartyMode(ParamsBFVPtr p_ptr_to_sptr, int mode) {
     if (!p_ptr_to_sptr) {
       return MakePKEError("ParamsBFV_SetMultipartyMode: null params");
     }
-    auto &params = *reinterpret_cast<CCParams<CryptoContextBFVRNS> *>(p_ptr_to_sptr);
+    auto &params =
+        *reinterpret_cast<CCParams<CryptoContextBFVRNS> *>(p_ptr_to_sptr);
     params.SetMultipartyMode(static_cast<MultipartyMode>(mode));
     return MakePKEOk();
   }
