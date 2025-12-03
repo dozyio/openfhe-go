@@ -176,6 +176,27 @@ func (cc *CryptoContext) GetEvalAutomorphismKeyMap(keyTag string) *EvalKeyMap {
 	return &EvalKeyMap{ptr: mapPtr}
 }
 
+// ClearEvalMultKeys clears the evaluation multiplication keys from the CryptoContext
+func (cc *CryptoContext) ClearEvalMultKeys() {
+	if cc.ptr == nil {
+		return
+	}
+	C.CryptoContext_ClearEvalMultKeys(cc.ptr)
+}
+
+// ClearEvalAutomorphismKeys clears the evaluation automorphism (rotation) keys from the CryptoContext
+func (cc *CryptoContext) ClearEvalAutomorphismKeys() {
+	if cc.ptr == nil {
+		return
+	}
+	C.CryptoContext_ClearEvalAutomorphismKeys(cc.ptr)
+}
+
+// ReleaseAllContexts releases all contexts from the CryptoContext factory
+func ReleaseAllContexts() {
+	C.ReleaseAllContexts()
+}
+
 func (cc *CryptoContext) Encrypt(keys *KeyPair, pt *Plaintext) (*Ciphertext, error) {
 	if cc.ptr == nil {
 		return nil, errors.New("CryptoContext is closed or invalid")

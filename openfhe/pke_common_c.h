@@ -66,6 +66,9 @@ PKEErr CryptoContext_EvalRotateKeyGen(CryptoContextPtr cc, KeyPairPtr keys,
 PKEErr CryptoContext_EvalAutomorphismKeyGen(CryptoContextPtr cc,
                                             KeyPairPtr keys, uint32_t *indices,
                                             int len);
+void CryptoContext_ClearEvalMultKeys(CryptoContextPtr cc);
+void CryptoContext_ClearEvalAutomorphismKeys(CryptoContextPtr cc);
+void ReleaseAllContexts();
 EvalKeyMapPtr CryptoContext_GetEvalAutomorphismKeyMap(CryptoContextPtr cc,
                                                       const char *keyTag);
 uint64_t CryptoContext_GetRingDimension(CryptoContextPtr cc);
@@ -145,6 +148,11 @@ size_t SerializeEvalMultKeyToBytes(CryptoContextPtr cc, const char *keyId,
                                    char **outBytes);
 void DeserializeEvalMultKeyFromBytes(CryptoContextPtr cc, const char *inData,
                                      int inLen);
+
+size_t SerializeEvalAutomorphismKeyToBytes(CryptoContextPtr cc,
+                                           const char *keyId, char **outBytes);
+void DeserializeEvalAutomorphismKeyFromBytes(CryptoContextPtr cc,
+                                             const char *inData, int inLen);
 
 size_t SerializeCiphertextToBytes(CiphertextPtr ct, char **outBytes);
 CiphertextPtr DeserializeCiphertextFromBytes(const char *inData, int inLen);

@@ -115,7 +115,7 @@ See examples and tests for usage
 - [x] simple-ckks-bootstrapping
 - [x] simple-complex-numbers (complex number operations and bootstrapping)
 - [x] simple-integers-bgvrns
-- [ ] simple-integers-serial-bgvrns
+- [x] simple-integers-serial-bgvrns
 - [x] simple-integers-serial
 - [x] simple-integers
 - [x] simple-real-numbers-serial

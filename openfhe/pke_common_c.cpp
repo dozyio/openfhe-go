@@ -136,6 +136,24 @@ PKEErr CryptoContext_EvalAutomorphismKeyGen(CryptoContextPtr cc_ptr_to_sptr,
   PKE_CATCH_RETURN()
 }
 
+void CryptoContext_ClearEvalMultKeys(CryptoContextPtr cc_ptr_to_sptr) {
+  if (!cc_ptr_to_sptr)
+    return;
+  auto &cc = GetCCSharedPtr(cc_ptr_to_sptr);
+  cc->ClearEvalMultKeys();
+}
+
+void CryptoContext_ClearEvalAutomorphismKeys(CryptoContextPtr cc_ptr_to_sptr) {
+  if (!cc_ptr_to_sptr)
+    return;
+  auto &cc = GetCCSharedPtr(cc_ptr_to_sptr);
+  cc->ClearEvalAutomorphismKeys();
+}
+
+void ReleaseAllContexts() {
+  lbcrypto::CryptoContextFactory<lbcrypto::DCRTPoly>::ReleaseAllContexts();
+}
+
 EvalKeyMapPtr
 CryptoContext_GetEvalAutomorphismKeyMap(CryptoContextPtr cc_ptr_to_sptr,
                                         const char *keyTag) {
@@ -986,6 +1004,38 @@ void DeserializeEvalMultKeyFromBytes(CryptoContextPtr cc_ptr_to_sptr,
     std::string s(inData, inLen);
     std::stringstream ss(s);
     cc->DeserializeEvalMultKey(ss, SerType::BINARY);
+  } catch (...) {
+    // C-API function is void, cannot report error
+  }
+}
+
+// EvalAutomorphismKey (Rotation Key) Serialization
+size_t SerializeEvalAutomorphismKeyToBytes(CryptoContextPtr cc_ptr_to_sptr,
+                                           const char *keyId, char **outBytes) {
+  try {
+    auto &cc = GetCCSharedPtr(cc_ptr_to_sptr);
+    std::stringstream ss;
+    if (!cc->SerializeEvalAutomorphismKey(ss, SerType::BINARY,
+                                          std::string(keyId)))
+      return 0;
+    std::string s = ss.str();
+    *outBytes = CopyStringToC(s);
+    if (!*outBytes)
+      return 0;
+    return s.length();
+  } catch (...) {
+    *outBytes = nullptr;
+    return 0;
+  }
+}
+
+void DeserializeEvalAutomorphismKeyFromBytes(CryptoContextPtr cc_ptr_to_sptr,
+                                             const char *inData, int inLen) {
+  try {
+    auto &cc = GetCCSharedPtr(cc_ptr_to_sptr);
+    std::string s(inData, inLen);
+    std::stringstream ss(s);
+    cc->DeserializeEvalAutomorphismKey(ss, SerType::BINARY);
   } catch (...) {
     // C-API function is void, cannot report error
   }

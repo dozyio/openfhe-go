@@ -132,6 +132,37 @@ func DeserializeEvalMultKeyFromBytes(cc *CryptoContext, data []byte) error {
 	return nil
 }
 
+// --- EvalAutomorphismKey (Rotation Key) Serialization ---
+
+// SerializeEvalAutomorphismKeyToBytes serializes the rotation/automorphism keys stored *within* the CryptoContext.
+func SerializeEvalAutomorphismKeyToBytes(cc *CryptoContext, keyId string) ([]byte, error) {
+	cKeyId := C.CString(keyId)
+	defer C.free(unsafe.Pointer(cKeyId))
+
+	var cBytes *C.char
+	size := C.SerializeEvalAutomorphismKeyToBytes(cc.ptr, cKeyId, &cBytes)
+	if size == 0 || cBytes == nil {
+		return nil, fmt.Errorf("eval automorphism key serialization failed (keyId: %s)", keyId)
+	}
+	goBytes := C.GoBytes(unsafe.Pointer(cBytes), C.int(size))
+	C.FreeString(cBytes)
+	return goBytes, nil
+}
+
+// DeserializeEvalAutomorphismKeyFromBytes loads the rotation/automorphism keys *into* the provided CryptoContext.
+func DeserializeEvalAutomorphismKeyFromBytes(cc *CryptoContext, data []byte) error {
+	if len(data) == 0 {
+		return fmt.Errorf("cannot deserialize eval automorphism key from empty data")
+	}
+	cData := (*C.char)(unsafe.Pointer(&data[0]))
+	cLen := C.int(len(data))
+
+	C.DeserializeEvalAutomorphismKeyFromBytes(cc.ptr, cData, cLen)
+	// NOTE: C++ side doesn't easily return error status here.
+	// The C++ side now catches exceptions, so we assume success if no crash.
+	return nil
+}
+
 // --- Ciphertext Serialization ---
 
 func SerializeCiphertextToBytes(ct *Ciphertext) ([]byte, error) {
