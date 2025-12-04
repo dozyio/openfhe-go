@@ -616,54 +616,6 @@ func (cc *CryptoContext) EvalBootstrapSetup(levelBudget []uint32, bsgsDim []uint
 	return nil
 }
 
-// func (cc *CryptoContext) EvalBootstrapSetup(slots uint32) error {
-// 	var cErr *C.char
-// 	ok := C.CryptoContext_EvalBootstrapSetup(cc.ptr, C.uint32_t(slots), &cErr)
-// 	if ok == 1 {
-// 		return nil
-// 	}
-// 	defer func() {
-// 		if cErr != nil {
-// 			C.free(unsafe.Pointer(cErr))
-// 		}
-// 	}()
-// 	if cErr != nil {
-// 		return fmt.Errorf("%s", C.GoString(cErr))
-// 	}
-// 	return fmt.Errorf("EvalBootstrapSetup failed")
-// }
-//
-// func (cc *CryptoContext) EvalBootstrapPrecompute(slots uint32) error {
-// 	var cErr *C.char
-// 	ok := C.CryptoContext_EvalBootstrapPrecompute(cc.ptr, C.uint32_t(slots), &cErr)
-// 	if ok == 1 {
-// 		return nil
-// 	}
-// 	defer func() {
-// 		if cErr != nil {
-// 			C.free(unsafe.Pointer(cErr))
-// 		}
-// 	}()
-// 	if cErr != nil {
-// 		return fmt.Errorf("%s", C.GoString(cErr))
-// 	}
-// 	return fmt.Errorf("EvalBootstrapPrecompute failed")
-// }
-
-// --- Global Cleanup ---
-
-// Cleanup releases all C++ objects created by the wrapper.
-// Call this function typically via `defer openfhe.Cleanup()` at the start of main.
-func Cleanup() {
-	fmt.Println("TODO!!! Running OpenFHE Global Cleanup...") // Optional: for debugging
-
-	// Call C++ functions to clear internal object maps
-	// C.ReleaseAllBinFHE()
-	// C.ReleaseAllPKE()
-
-	fmt.Println("OpenFHE Global Cleanup finished.") // Optional
-}
-
 func (ct *Ciphertext) GetLevel() (int, bool) {
 	if ct.ptr == nil {
 		return -1, false // Indicate invalid state
