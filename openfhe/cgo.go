@@ -3,7 +3,12 @@ package openfhe
 /*
 #cgo CPPFLAGS: -I${SRCDIR}/../openfhe-install/include -I${SRCDIR}/../openfhe-install/include/openfhe -I${SRCDIR}/../openfhe-install/include/openfhe/core -I${SRCDIR}/../openfhe-install/include/openfhe/pke -I${SRCDIR}/../openfhe-install/include/openfhe/binfhe -I${SRCDIR}/../openfhe-install/include/openfhe/cereal
 #cgo CXXFLAGS: -std=c++17
-#cgo LDFLAGS: ${SRCDIR}/../openfhe-install/lib/libOPENFHEpke_static.a ${SRCDIR}/../openfhe-install/lib/libOPENFHEcore_static.a ${SRCDIR}/../openfhe-install/lib/libOPENFHEbinfhe_static.a
+
+// Default: Use shared libraries (fast development builds)
+#cgo !static LDFLAGS: -L${SRCDIR}/../openfhe-install/lib -lOPENFHEpke -lOPENFHEcore -lOPENFHEbinfhe -Wl,-rpath,${SRCDIR}/../openfhe-install/lib
+
+// Production: Use static libraries when OPENFHE_STATIC=1 is set
+#cgo static LDFLAGS: ${SRCDIR}/../openfhe-install/lib/libOPENFHEpke_static.a ${SRCDIR}/../openfhe-install/lib/libOPENFHEcore_static.a ${SRCDIR}/../openfhe-install/lib/libOPENFHEbinfhe_static.a
 
 //CGO_SOURCES: pke_common_c.cpp bfv_c.cpp bgv_c.cpp ckks_c.cpp binfhe_c.cpp pre_c.cpp schemeswitch_c.cpp minmax_c.cpp multiparty_c.cpp
 

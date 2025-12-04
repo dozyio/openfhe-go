@@ -22,58 +22,67 @@ Target: OpenFHE v1.4.2
 
 ## Build
 
-### Prerequisites
+### Quick Start
 
-For faster compilation (recommended), install ccache:
 ```bash
-brew install ccache  # macOS
-# or
-apt install ccache   # Linux
+# Development build (fast, uses shared libraries)
+make build
+
+# Production build (static binary, slower)
+make build-static
 ```
 
-### Build the project
+### Build Details
+
+The project supports two build modes:
+
+#### Development Mode (Default - Shared Libraries)
+Fast iteration with shared libraries - ideal for development and testing.
 
 ```bash
-make build
+make build          # Build with shared libraries
+make test           # Run tests
+make run-examples   # Run all examples
 ```
 
 **Build times:**
-- First build: ~15 seconds (with ccache, cold cache)
-- Rebuild: ~8 seconds (with ccache, warm cache)
-- No-op build: ~0.1 seconds (fully cached)
-- Without ccache: ~100 seconds
+- **First-time OpenFHE build**: 3-5 minutes (builds C++ OpenFHE library)
+- **Subsequent Go builds**: 5-30 seconds (recompiles C++ wrappers, links against shared libs)
+- **OpenFHE only**: `make build_openfhe` (builds shared libraries only)
 
-**Important:** ccache is automatically used when building through `make`. If you run `go build` or `go test` directly, you need to either:
+The C++ wrapper files are recompiled by CGO on each build, but linking against shared libraries is much faster than static linking.
 
-1. **Use make targets** (recommended):
-   ```bash
-   make build
-   make test
-   ```
+#### Production Mode (Static Libraries)
+Standalone binaries with statically linked OpenFHE - ideal for deployment.
 
-2. **Set environment variables** in your shell/IDE:
-   ```bash
-   export CC="ccache clang"
-   export CXX="ccache clang++"
-   go build ./openfhe
-   go test ./openfhe
-   ```
+```bash
+make build-static    # Build with static libraries
+```
 
-3. **Configure your editor/IDE** (for gopls and test runners):
-   - **VS Code** (`settings.json`):
-     ```json
-     {
-       "go.toolsEnvVars": {
-         "CC": "ccache clang",
-         "CXX": "ccache clang++"
-       }
-     }
-     ```
-   - **Neovim/Vim**:
-     ```lua
-     vim.env.CC = "ccache clang"
-     vim.env.CXX = "ccache clang++"
-     ```
+**Build times:**
+- **First-time static build**: 3-5 minutes (builds C++ OpenFHE static libraries)
+- **Subsequent static builds**: 30-120 seconds (relinks all static `.a` files)
+- **Static libs only**: `make build_openfhe_static`
+
+Static builds produce self-contained binaries but are slower due to relinking all libraries on each build.
+
+### Switching Between Build Modes
+
+To switch from one mode to another, clean the OpenFHE installation:
+
+```bash
+make clean_openfhe   # Remove OpenFHE build artifacts
+make build           # Rebuild with desired mode
+```
+
+### Build Requirements
+
+The Makefile automatically handles:
+- Cloning OpenFHE v1.4.2 source
+- Building and installing OpenFHE C++ libraries
+- Setting appropriate CGO flags for linking
+
+No additional tools or manual configuration required.
 
 ## Run tests
 

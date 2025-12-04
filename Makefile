@@ -4,7 +4,9 @@ OPENFHE_BUILD_DIR := $(CURDIR)/openfhe-build
 OPENFHE_INSTALL_DIR := $(CURDIR)/openfhe-install
 
 # Path to the marker file indicating OpenFHE install is complete
-OPENFHE_INSTALL_MARKER := $(OPENFHE_INSTALL_DIR)/.installed
+# Separate markers for shared and static builds
+OPENFHE_SHARED_MARKER := $(OPENFHE_INSTALL_DIR)/.installed-shared
+OPENFHE_STATIC_MARKER := $(OPENFHE_INSTALL_DIR)/.installed-static
 
 # Go build output name
 GO_APP_NAME := go_simple_integers
@@ -13,41 +15,59 @@ GO_APP_NAME := go_simple_integers
 OPENFHE_REPO := https://github.com/openfheorg/openfhe-development.git
 OPENFHE_TAG := v1.4.2
 
-# CMake options for OpenFHE
-CMAKE_OPTIONS := -DBUILD_SHARED=OFF \
-                 -DBUILD_STATIC=ON \
-                 -DCMAKE_INSTALL_PREFIX=$(OPENFHE_INSTALL_DIR) \
-                 -DBUILD_EXAMPLES=OFF \
-                 -DBUILD_UNITTESTS=OFF \
-                 -DBUILD_BENCHMARKS=OFF \
-                 -DWITH_NATIVEOPT=OFF \
-                 -DCMAKE_BUILD_TYPE=Release \
-                 -DWITH_OPENMP=OFF # Disable OpenMP if not needed/causing issues
+# Base CMake options for OpenFHE
+CMAKE_BASE_OPTIONS := -DCMAKE_INSTALL_PREFIX=$(OPENFHE_INSTALL_DIR) \
+                      -DBUILD_EXAMPLES=OFF \
+                      -DBUILD_UNITTESTS=OFF \
+                      -DBUILD_BENCHMARKS=OFF \
+                      -DWITH_NATIVEOPT=OFF \
+                      -DCMAKE_BUILD_TYPE=Release \
+                      -DWITH_OPENMP=OFF
 
-# Enable ccache for CGO compilation to speed up rebuilds
-export CC := ccache clang
-export CXX := ccache clang++
+# Shared library options (default for development)
+CMAKE_SHARED_OPTIONS := $(CMAKE_BASE_OPTIONS) \
+                        -DBUILD_SHARED=ON \
+                        -DBUILD_STATIC=OFF
+
+# Static library options (for production builds)
+CMAKE_STATIC_OPTIONS := $(CMAKE_BASE_OPTIONS) \
+                        -DBUILD_SHARED=OFF \
+                        -DBUILD_STATIC=ON
 
 # --- Targets ---
 
-.PHONY: all build run clean fetch_openfhe build_openfhe clean_openfhe test test-coverage benchmark
+.PHONY: all build build-static run clean fetch_openfhe build_openfhe build_openfhe_shared build_openfhe_static clean_openfhe test test-coverage benchmark
 
-# Default target: build the Go application
+# Default target: build with shared libraries (fast for development)
 all: build
 
-# Target to ensure OpenFHE is fetched and installed
-$(OPENFHE_INSTALL_MARKER): $(OPENFHE_SRC_DIR)/CMakeLists.txt
-	@echo "--- Ensuring build directory exists and CMake cache is cleared ---"
+# Target to build OpenFHE with shared libraries (default for dev)
+$(OPENFHE_SHARED_MARKER): $(OPENFHE_SRC_DIR)/CMakeLists.txt
+	@echo "--- Building OpenFHE with SHARED libraries (development mode) ---"
 	@mkdir -p $(OPENFHE_BUILD_DIR)
 	@rm -f $(OPENFHE_BUILD_DIR)/CMakeCache.txt
-	@echo "--- Configuring OpenFHE ---"
-	@mkdir -p $(OPENFHE_BUILD_DIR)
-	cd $(OPENFHE_BUILD_DIR) && cmake $(CMAKE_OPTIONS) $(OPENFHE_SRC_DIR)
+	@echo "--- Configuring OpenFHE (shared) ---"
+	cd $(OPENFHE_BUILD_DIR) && cmake $(CMAKE_SHARED_OPTIONS) $(OPENFHE_SRC_DIR)
 	@echo "--- Building OpenFHE (this may take a while) ---"
 	@cmake --build $(OPENFHE_BUILD_DIR) --parallel $$(sysctl -n hw.ncpu)
 	@echo "--- Installing OpenFHE ---"
 	@cmake --install $(OPENFHE_BUILD_DIR)
-	@touch $(OPENFHE_INSTALL_MARKER) # Create marker file upon success
+	@touch $(OPENFHE_SHARED_MARKER)
+	@rm -f $(OPENFHE_STATIC_MARKER) # Remove static marker if exists
+
+# Target to build OpenFHE with static libraries (for production)
+$(OPENFHE_STATIC_MARKER): $(OPENFHE_SRC_DIR)/CMakeLists.txt
+	@echo "--- Building OpenFHE with STATIC libraries (production mode) ---"
+	@mkdir -p $(OPENFHE_BUILD_DIR)
+	@rm -f $(OPENFHE_BUILD_DIR)/CMakeCache.txt
+	@echo "--- Configuring OpenFHE (static) ---"
+	cd $(OPENFHE_BUILD_DIR) && cmake $(CMAKE_STATIC_OPTIONS) $(OPENFHE_SRC_DIR)
+	@echo "--- Building OpenFHE (this may take a while) ---"
+	@cmake --build $(OPENFHE_BUILD_DIR) --parallel $$(sysctl -n hw.ncpu)
+	@echo "--- Installing OpenFHE ---"
+	@cmake --install $(OPENFHE_BUILD_DIR)
+	@touch $(OPENFHE_STATIC_MARKER)
+	@rm -f $(OPENFHE_SHARED_MARKER) # Remove shared marker if exists
 
 # Target to fetch OpenFHE source code
 $(OPENFHE_SRC_DIR)/CMakeLists.txt:
@@ -67,40 +87,50 @@ $(OPENFHE_SRC_DIR)/CMakeLists.txt:
 		fi; \
 	fi
 
-# Explicit target to build OpenFHE (depends on fetching)
-build_openfhe: $(OPENFHE_INSTALL_MARKER)
-	@echo "--- OpenFHE build and install complete ---"
+# Explicit target to build OpenFHE with shared libraries (default)
+build_openfhe: build_openfhe_shared
 
-# Build the Go package (depends on OpenFHE being installed)
-# CGO will now compile the C++ files listed in //CGO_SOURCES
-build: $(OPENFHE_INSTALL_MARKER)
-	@echo "Building Go package (CGO will compile C++ wrapper files)..."
-	go build ./...
+build_openfhe_shared: $(OPENFHE_SHARED_MARKER)
+	@echo "--- OpenFHE shared library build complete ---"
 
-test: $(OPENFHE_INSTALL_MARKER)
+build_openfhe_static: $(OPENFHE_STATIC_MARKER)
+	@echo "--- OpenFHE static library build complete ---"
+
+# Build the Go package with shared libraries (fast development builds)
+build: $(OPENFHE_SHARED_MARKER)
+	@echo "Building Go package with shared libraries (development mode)..."
+	@echo "Note: Shared libraries are in $(OPENFHE_INSTALL_DIR)/lib"
+	CGO_LDFLAGS_ALLOW=".*" go build ./...
+
+# Build the Go package with static libraries (production builds)
+build-static: $(OPENFHE_STATIC_MARKER)
+	@echo "Building Go package with static libraries (production mode)..."
+	CGO_LDFLAGS_ALLOW=".*" OPENFHE_STATIC=1 go build ./...
+
+test: $(OPENFHE_SHARED_MARKER)
 	@echo "Running Go tests..."
-	@go test -v -count 1 ./openfhe
+	CGO_LDFLAGS_ALLOW=".*" go test -v -count 1 ./openfhe
 
-test-coverage: $(OPENFHE_INSTALL_MARKER)
+test-coverage: $(OPENFHE_SHARED_MARKER)
 	@echo "Running Go tests with coverage..."
-	@go test -v -count 1 -coverprofile=coverage.out ./openfhe
+	CGO_LDFLAGS_ALLOW=".*" go test -v -count 1 -coverprofile=coverage.out ./openfhe
 	@echo "\n--- Coverage Summary ---"
 	@go tool cover -func=coverage.out | tail -1
 	@echo "\nGenerating HTML coverage report..."
 	@go tool cover -html=coverage.out -o coverage.html
 	@echo "Coverage report generated: coverage.html"
 
-test-short: $(OPENFHE_INSTALL_MARKER)
+test-short: $(OPENFHE_SHARED_MARKER)
 	@echo "Running Go tests (short mode, skips slow tests)..."
-	@go test -v -short -count 1 ./openfhe
+	CGO_LDFLAGS_ALLOW=".*" go test -v -short -count 1 ./openfhe
 
-benchmark: $(OPENFHE_INSTALL_MARKER)
+benchmark: $(OPENFHE_SHARED_MARKER)
 	@echo "Running benchmarks..."
-	@go test -bench=. -benchmem -count 3 ./openfhe
+	CGO_LDFLAGS_ALLOW=".*" go test -bench=. -benchmem -count 3 ./openfhe
 
-run-examples: $(OPENFHE_INSTALL_MARKER)
+run-examples: $(OPENFHE_SHARED_MARKER)
 	@echo "Running all Go examples..."
-	@find ./examples -type f -name 'main.go' -execdir sh -c 'echo "\n▶ running $$(pwd)/$$1"; go run . ' _ {} \;
+	@find ./examples -type f -name 'main.go' -execdir sh -c 'echo "\n▶ running $$(pwd)/$$1"; CGO_LDFLAGS_ALLOW=".*" go run . ' _ {} \;
 
 # Target to clean Go build artifacts
 clean:
