@@ -10,6 +10,7 @@ import "C"
 
 import (
 	"errors"
+	"fmt"
 	"runtime"
 	"sync"
 	"unsafe"
@@ -1632,10 +1633,10 @@ func (cc *CryptoContext) IntMPBootAdd(sharesPairVec [][]*Ciphertext) ([]*Ciphert
 	// Validate that each party has exactly 2 shares
 	for i, shares := range sharesPairVec {
 		if len(shares) != 2 {
-			return nil, errors.New("party " + string(rune(i)) + " does not have exactly 2 shares")
+			return nil, fmt.Errorf("party %d does not have exactly 2 shares", i)
 		}
 		if shares[0] == nil || shares[0].ptr == nil || shares[1] == nil || shares[1].ptr == nil {
-			return nil, errors.New("party " + string(rune(i)) + " has nil shares")
+			return nil, fmt.Errorf("party %d has nil shares", i)
 		}
 	}
 

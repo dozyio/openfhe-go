@@ -10,6 +10,7 @@ import "C"
 
 import (
 	"errors"
+	"fmt"
 	"unsafe"
 )
 
@@ -116,7 +117,7 @@ func (cc *CryptoContext) MultipartyKeyGen(privateKeys []*PrivateKey) (*KeyPair, 
 	cPrivateKeys := make([]C.PrivateKeyPtr, len(privateKeys))
 	for i, sk := range privateKeys {
 		if sk == nil || sk.ptr == nil {
-			return nil, errors.New("private key at index " + string(rune(i)) + " is nil")
+			return nil, fmt.Errorf("private key at index %d is nil", i)
 		}
 		cPrivateKeys[i] = sk.ptr
 	}
@@ -200,7 +201,7 @@ func (cc *CryptoContext) MultipartyDecryptLead(ciphertexts []*Ciphertext, privat
 	cCiphertexts := make([]C.CiphertextPtr, len(ciphertexts))
 	for i, ct := range ciphertexts {
 		if ct == nil || ct.ptr == nil {
-			return nil, errors.New("ciphertext at index " + string(rune(i)) + " is nil")
+			return nil, fmt.Errorf("ciphertext at index %d is nil", i)
 		}
 		cCiphertexts[i] = ct.ptr
 	}
@@ -225,7 +226,7 @@ func (cc *CryptoContext) MultipartyDecryptLead(ciphertexts []*Ciphertext, privat
 	partials := make([]*Ciphertext, len(cPartials))
 	for i, cPtr := range cPartials {
 		if cPtr == nil {
-			return nil, errors.New("MultipartyDecryptLead returned null ciphertext at index " + string(rune(i)))
+			return nil, fmt.Errorf("MultipartyDecryptLead returned null ciphertext at index %d", i)
 		}
 		partials[i] = &Ciphertext{ptr: cPtr}
 	}
@@ -251,7 +252,7 @@ func (cc *CryptoContext) MultipartyDecryptMain(ciphertexts []*Ciphertext, privat
 	cCiphertexts := make([]C.CiphertextPtr, len(ciphertexts))
 	for i, ct := range ciphertexts {
 		if ct == nil || ct.ptr == nil {
-			return nil, errors.New("ciphertext at index " + string(rune(i)) + " is nil")
+			return nil, fmt.Errorf("ciphertext at index %d is nil", i)
 		}
 		cCiphertexts[i] = ct.ptr
 	}
@@ -276,7 +277,7 @@ func (cc *CryptoContext) MultipartyDecryptMain(ciphertexts []*Ciphertext, privat
 	partials := make([]*Ciphertext, len(cPartials))
 	for i, cPtr := range cPartials {
 		if cPtr == nil {
-			return nil, errors.New("MultipartyDecryptMain returned null ciphertext at index " + string(rune(i)))
+			return nil, fmt.Errorf("MultipartyDecryptMain returned null ciphertext at index %d", i)
 		}
 		partials[i] = &Ciphertext{ptr: cPtr}
 	}
@@ -298,7 +299,7 @@ func (cc *CryptoContext) MultipartyDecryptFusion(partialCiphertexts []*Ciphertex
 	cPartials := make([]C.CiphertextPtr, len(partialCiphertexts))
 	for i, ct := range partialCiphertexts {
 		if ct == nil || ct.ptr == nil {
-			return nil, errors.New("partial ciphertext at index " + string(rune(i)) + " is nil")
+			return nil, fmt.Errorf("partial ciphertext at index %d is nil", i)
 		}
 		cPartials[i] = ct.ptr
 	}
@@ -374,7 +375,7 @@ func (cc *CryptoContext) InsertEvalMultKey(evalKeys []*EvalKey) error {
 	cEvalKeys := make([]C.EvalKeyPtr, len(evalKeys))
 	for i, ek := range evalKeys {
 		if ek == nil || ek.ptr == nil {
-			return errors.New("eval key at index " + string(rune(i)) + " is nil")
+			return fmt.Errorf("eval key at index %d is nil", i)
 		}
 		cEvalKeys[i] = ek.ptr
 	}
