@@ -770,6 +770,37 @@ PKEErr Plaintext_GetPackedValueAt(PlaintextPtr pt_ptr_to_sptr, int i,
   PKE_CATCH_RETURN()
 }
 
+PKEErr Plaintext_GetPackedValueBulk(PlaintextPtr pt_ptr_to_sptr,
+                                    int64_t **out_values, int *out_len) {
+  try {
+    if (!pt_ptr_to_sptr) {
+      return MakePKEError("Plaintext_GetPackedValueBulk: null plaintext");
+    }
+    if (!out_values) {
+      return MakePKEError(
+          "Plaintext_GetPackedValueBulk: null output values pointer");
+    }
+    if (!out_len) {
+      return MakePKEError(
+          "Plaintext_GetPackedValueBulk: null output length pointer");
+    }
+    auto &pt_sptr = GetPTSharedPtr(pt_ptr_to_sptr);
+    const std::vector<int64_t> &vec = pt_sptr->GetPackedValue();
+    *out_len = vec.size();
+    if (*out_len == 0) {
+      *out_values = nullptr;
+      return MakePKEOk();
+    }
+    *out_values = (int64_t *)malloc(*out_len * sizeof(int64_t));
+    if (!*out_values) {
+      return MakePKEError("Plaintext_GetPackedValueBulk: malloc failed");
+    }
+    std::copy(vec.begin(), vec.end(), *out_values);
+    return MakePKEOk();
+  }
+  PKE_CATCH_RETURN()
+}
+
 PKEErr Plaintext_GetRealPackedValueLength(PlaintextPtr pt_ptr_to_sptr,
                                           int *out_len) {
   try {
@@ -804,6 +835,37 @@ PKEErr Plaintext_GetRealPackedValueAt(PlaintextPtr pt_ptr_to_sptr, int i,
           "Plaintext_GetRealPackedValueAt: index out of bounds");
     }
     *out_val = pt_sptr->GetRealPackedValue()[i];
+    return MakePKEOk();
+  }
+  PKE_CATCH_RETURN()
+}
+
+PKEErr Plaintext_GetRealPackedValueBulk(PlaintextPtr pt_ptr_to_sptr,
+                                        double **out_values, int *out_len) {
+  try {
+    if (!pt_ptr_to_sptr) {
+      return MakePKEError("Plaintext_GetRealPackedValueBulk: null plaintext");
+    }
+    if (!out_values) {
+      return MakePKEError(
+          "Plaintext_GetRealPackedValueBulk: null output values pointer");
+    }
+    if (!out_len) {
+      return MakePKEError(
+          "Plaintext_GetRealPackedValueBulk: null output length pointer");
+    }
+    auto &pt_sptr = GetPTSharedPtr(pt_ptr_to_sptr);
+    const std::vector<double> &vec = pt_sptr->GetRealPackedValue();
+    *out_len = vec.size();
+    if (*out_len == 0) {
+      *out_values = nullptr;
+      return MakePKEOk();
+    }
+    *out_values = (double *)malloc(*out_len * sizeof(double));
+    if (!*out_values) {
+      return MakePKEError("Plaintext_GetRealPackedValueBulk: malloc failed");
+    }
+    std::copy(vec.begin(), vec.end(), *out_values);
     return MakePKEOk();
   }
   PKE_CATCH_RETURN()

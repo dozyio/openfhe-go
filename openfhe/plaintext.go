@@ -21,29 +21,28 @@ func (pt *Plaintext) GetPackedValue() ([]int64, error) {
 		return nil, errors.New("Plaintext is closed or invalid")
 	}
 
-	var lengthC C.int
+	var cValues *C.int64_t
+	var cLen C.int
 
-	status := C.Plaintext_GetPackedValueLength(pt.ptr, &lengthC)
+	status := C.Plaintext_GetPackedValueBulk(pt.ptr, &cValues, &cLen)
 	err := checkPKEErrorMsg(status)
 	if err != nil {
 		return nil, err
 	}
 
-	length := int(lengthC)
-	if length == 0 {
-		return nil, nil // Empty vector
+	length := int(cLen)
+	if length == 0 || cValues == nil {
+		return []int64{}, nil
 	}
 
+	cSlice := unsafe.Slice(cValues, length)
 	goSlice := make([]int64, length)
 	for i := 0; i < length; i++ {
-		var valC C.int64_t
-		status = C.Plaintext_GetPackedValueAt(pt.ptr, C.int(i), &valC)
-		err := checkPKEErrorMsg(status)
-		if err != nil {
-			return nil, err
-		}
-		goSlice[i] = int64(valC)
+		goSlice[i] = int64(cSlice[i])
 	}
+
+	// Free the C-allocated memory
+	C.free(unsafe.Pointer(cValues))
 
 	return goSlice, nil
 }
@@ -53,31 +52,28 @@ func (pt *Plaintext) GetRealPackedValue() ([]float64, error) {
 		return nil, errors.New("Plaintext is closed or invalid")
 	}
 
-	var lengthC C.int
+	var cValues *C.double
+	var cLen C.int
 
-	status := C.Plaintext_GetRealPackedValueLength(pt.ptr, &lengthC)
+	status := C.Plaintext_GetRealPackedValueBulk(pt.ptr, &cValues, &cLen)
 	err := checkPKEErrorMsg(status)
 	if err != nil {
 		return nil, err
 	}
 
-	length := int(lengthC)
-	if length == 0 {
-		return nil, nil // Empty vector
+	length := int(cLen)
+	if length == 0 || cValues == nil {
+		return []float64{}, nil
 	}
 
+	cSlice := unsafe.Slice(cValues, length)
 	goSlice := make([]float64, length)
 	for i := 0; i < length; i++ {
-		var valC C.double
-
-		status = C.Plaintext_GetRealPackedValueAt(pt.ptr, C.int(i), &valC)
-		err := checkPKEErrorMsg(status)
-		if err != nil {
-			return nil, err
-		}
-
-		goSlice[i] = float64(valC)
+		goSlice[i] = float64(cSlice[i])
 	}
+
+	// Free the C-allocated memory
+	C.free(unsafe.Pointer(cValues))
 
 	return goSlice, nil
 }
@@ -87,31 +83,28 @@ func (pt *Plaintext) GetComplexPackedValue() ([]complex128, error) {
 		return nil, errors.New("Plaintext is closed or invalid")
 	}
 
-	var lengthC C.int
+	var cValues *C.complex_double_t
+	var cLen C.int
 
-	status := C.Plaintext_GetComplexPackedValueLength(pt.ptr, &lengthC)
+	status := C.Plaintext_GetComplexPackedValueBulk(pt.ptr, &cValues, &cLen)
 	err := checkPKEErrorMsg(status)
 	if err != nil {
 		return nil, err
 	}
 
-	length := int(lengthC)
-	if length == 0 {
-		return nil, nil // Empty vector
+	length := int(cLen)
+	if length == 0 || cValues == nil {
+		return []complex128{}, nil
 	}
 
+	cSlice := unsafe.Slice(cValues, length)
 	goSlice := make([]complex128, length)
-	var valC C.complex_double_t
-
 	for i := 0; i < length; i++ {
-		status = C.Plaintext_GetComplexPackedValueAt(pt.ptr, C.int(i), &valC)
-		err := checkPKEErrorMsg(status)
-		if err != nil {
-			return nil, err
-		}
-
-		goSlice[i] = complex(float64(valC.real), float64(valC.imag))
+		goSlice[i] = complex(float64(cSlice[i].real), float64(cSlice[i].imag))
 	}
+
+	// Free the C-allocated memory
+	C.free(unsafe.Pointer(cValues))
 
 	return goSlice, nil
 }
@@ -135,9 +128,8 @@ func (pt *Plaintext) GetCoefPackedValue() ([]int64, error) {
 		return []int64{}, nil
 	}
 
-	// Convert C array to Go slice
+	cSlice := unsafe.Slice(cValues, length)
 	goSlice := make([]int64, length)
-	cSlice := (*[1 << 30]C.int64_t)(unsafe.Pointer(cValues))[:length:length]
 	for i := 0; i < length; i++ {
 		goSlice[i] = int64(cSlice[i])
 	}

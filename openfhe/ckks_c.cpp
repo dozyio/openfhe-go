@@ -416,6 +416,43 @@ PKEErr Plaintext_GetComplexPackedValueAt(PlaintextPtr pt_ptr_to_sptr, int i,
   PKE_CATCH_RETURN()
 }
 
+PKEErr Plaintext_GetComplexPackedValueBulk(PlaintextPtr pt_ptr_to_sptr,
+                                           complex_double_t **out_values,
+                                           int *out_len) {
+  try {
+    if (!pt_ptr_to_sptr) {
+      return MakePKEError("Plaintext_GetComplexPackedValueBulk: null plaintext");
+    }
+    if (!out_values) {
+      return MakePKEError(
+          "Plaintext_GetComplexPackedValueBulk: null output values pointer");
+    }
+    if (!out_len) {
+      return MakePKEError(
+          "Plaintext_GetComplexPackedValueBulk: null output length pointer");
+    }
+    auto &pt_sptr = GetPTSharedPtr(pt_ptr_to_sptr);
+    const std::vector<std::complex<double>> &vec =
+        pt_sptr->GetCKKSPackedValue();
+    *out_len = vec.size();
+    if (*out_len == 0) {
+      *out_values = nullptr;
+      return MakePKEOk();
+    }
+    *out_values =
+        (complex_double_t *)malloc(*out_len * sizeof(complex_double_t));
+    if (!*out_values) {
+      return MakePKEError("Plaintext_GetComplexPackedValueBulk: malloc failed");
+    }
+    for (int i = 0; i < *out_len; ++i) {
+      (*out_values)[i].real = vec[i].real();
+      (*out_values)[i].imag = vec[i].imag();
+    }
+    return MakePKEOk();
+  }
+  PKE_CATCH_RETURN()
+}
+
 // --- CKKS Operations ---
 PKEErr CryptoContext_Rescale(CryptoContextPtr cc_ptr_to_sptr,
                              CiphertextPtr ct_ptr_to_sptr, CiphertextPtr *out) {

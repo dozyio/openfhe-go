@@ -119,6 +119,9 @@ uint32_t CKKS_GetBootstrapDepth(const uint32_t *levelBudget, int len,
 PKEErr Plaintext_GetComplexPackedValueLength(PlaintextPtr pt, int *out_len);
 PKEErr Plaintext_GetComplexPackedValueAt(PlaintextPtr pt, int i,
                                          complex_double_t *out_val);
+PKEErr Plaintext_GetComplexPackedValueBulk(PlaintextPtr pt,
+                                           complex_double_t **out_values,
+                                           int *out_len);
 
 // --- CKKS Advanced Operations ---
 PKEErr CryptoContext_EvalSumKeyGen(CryptoContextPtr cc, KeyPairPtr keys);

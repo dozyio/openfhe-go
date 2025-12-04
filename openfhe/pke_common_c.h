@@ -123,8 +123,12 @@ void DestroyKeyPair(KeyPairPtr kp);
 // --- Plaintext ---
 PKEErr Plaintext_GetPackedValueLength(PlaintextPtr pt, int *out_len);
 PKEErr Plaintext_GetPackedValueAt(PlaintextPtr pt, int i, int64_t *out_val);
+PKEErr Plaintext_GetPackedValueBulk(PlaintextPtr pt, int64_t **out_values,
+                                    int *out_len);
 PKEErr Plaintext_GetRealPackedValueLength(PlaintextPtr pt, int *out_len);
 PKEErr Plaintext_GetRealPackedValueAt(PlaintextPtr pt, int i, double *out_val);
+PKEErr Plaintext_GetRealPackedValueBulk(PlaintextPtr pt, double **out_values,
+                                        int *out_len);
 void DestroyPlaintext(PlaintextPtr pt);
 
 // --- Ciphertext ---
