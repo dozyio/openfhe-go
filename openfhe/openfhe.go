@@ -16,7 +16,7 @@ import (
 	"unsafe"
 )
 
-// Interface for objects that need C++ memory released
+// Closeable interface for objects that need C++ memory released
 type Closeable interface {
 	Close()
 }
@@ -76,7 +76,7 @@ const (
 // --- Common CryptoContext Methods ---
 func (cc *CryptoContext) Enable(feature int) error {
 	if cc.ptr == nil {
-		return errors.New("CryptoContext is closed or invalid")
+		return ErrContextClosed
 	}
 	status := C.CryptoContext_Enable(cc.ptr, C.int(feature))
 	err := checkPKEErrorMsg(status)
@@ -88,7 +88,7 @@ func (cc *CryptoContext) Enable(feature int) error {
 
 func (cc *CryptoContext) KeyGen() (*KeyPair, error) {
 	if cc.ptr == nil {
-		return nil, errors.New("CryptoContext is closed or invalid")
+		return nil, ErrContextClosed
 	}
 	var kpH C.KeyPairPtr
 	status := C.CryptoContext_KeyGen(cc.ptr, &kpH)
@@ -108,10 +108,10 @@ func (cc *CryptoContext) KeyGen() (*KeyPair, error) {
 
 func (cc *CryptoContext) EvalMultKeyGen(keys *KeyPair) error {
 	if cc.ptr == nil {
-		return errors.New("CryptoContext is closed or invalid")
+		return ErrContextClosed
 	}
 	if keys == nil || keys.ptr == nil {
-		return errors.New("KeyPair is closed or invalid")
+		return ErrKeypairClosed
 	}
 	status := C.CryptoContext_EvalMultKeyGen(cc.ptr, keys.ptr)
 	err := checkPKEErrorMsg(status)
@@ -123,10 +123,10 @@ func (cc *CryptoContext) EvalMultKeyGen(keys *KeyPair) error {
 
 func (cc *CryptoContext) EvalRotateKeyGen(keys *KeyPair, indices []int32) error {
 	if cc.ptr == nil {
-		return errors.New("CryptoContext is closed or invalid")
+		return ErrContextClosed
 	}
 	if keys == nil || keys.ptr == nil {
-		return errors.New("KeyPair is closed or invalid")
+		return ErrKeypairClosed
 	}
 	if len(indices) == 0 {
 		return nil // Nothing to do
@@ -143,10 +143,10 @@ func (cc *CryptoContext) EvalRotateKeyGen(keys *KeyPair, indices []int32) error 
 
 func (cc *CryptoContext) EvalAutomorphismKeyGen(keys *KeyPair, indices []uint32) error {
 	if cc.ptr == nil {
-		return errors.New("CryptoContext is closed or invalid")
+		return ErrContextClosed
 	}
 	if keys == nil || keys.ptr == nil {
-		return errors.New("KeyPair is closed or invalid")
+		return ErrKeypairClosed
 	}
 	if len(indices) == 0 {
 		return nil // Nothing to do
@@ -199,13 +199,13 @@ func ReleaseAllContexts() {
 
 func (cc *CryptoContext) Encrypt(keys *KeyPair, pt *Plaintext) (*Ciphertext, error) {
 	if cc.ptr == nil {
-		return nil, errors.New("CryptoContext is closed or invalid")
+		return nil, ErrContextClosed
 	}
 	if keys == nil || keys.ptr == nil {
-		return nil, errors.New("KeyPair is closed or invalid")
+		return nil, ErrKeypairClosed
 	}
 	if pt == nil || pt.ptr == nil {
-		return nil, errors.New("Plaintext is closed or invalid")
+		return nil, ErrPlaintextNil
 	}
 	var ctH C.CiphertextPtr
 	status := C.CryptoContext_Encrypt(cc.ptr, keys.ptr, pt.ptr, &ctH)
@@ -222,13 +222,13 @@ func (cc *CryptoContext) Encrypt(keys *KeyPair, pt *Plaintext) (*Ciphertext, err
 
 func (cc *CryptoContext) Decrypt(keys *KeyPair, ct *Ciphertext) (*Plaintext, error) {
 	if cc.ptr == nil {
-		return nil, errors.New("CryptoContext is closed or invalid")
+		return nil, ErrContextClosed
 	}
 	if keys == nil || keys.ptr == nil {
-		return nil, errors.New("KeyPair is closed or invalid")
+		return nil, ErrKeypairClosed
 	}
 	if ct == nil || ct.ptr == nil {
-		return nil, errors.New("Ciphertext is closed or invalid")
+		return nil, ErrCiphertextNil
 	}
 	var ptH C.PlaintextPtr
 	status := C.CryptoContext_Decrypt(cc.ptr, keys.ptr, ct.ptr, &ptH)
@@ -247,10 +247,10 @@ func (cc *CryptoContext) Decrypt(keys *KeyPair, ct *Ciphertext) (*Plaintext, err
 // --- Common Homomorphic Operations ---
 func (cc *CryptoContext) EvalAdd(ct1, ct2 *Ciphertext) (*Ciphertext, error) {
 	if cc.ptr == nil {
-		return nil, errors.New("CryptoContext is closed or invalid")
+		return nil, ErrContextClosed
 	}
 	if ct1 == nil || ct1.ptr == nil || ct2 == nil || ct2.ptr == nil {
-		return nil, errors.New("Input Ciphertext is closed or invalid")
+		return nil, ErrCiphertextNil
 	}
 	var ctH C.CiphertextPtr
 	status := C.CryptoContext_EvalAdd(cc.ptr, ct1.ptr, ct2.ptr, &ctH)
@@ -267,10 +267,10 @@ func (cc *CryptoContext) EvalAdd(ct1, ct2 *Ciphertext) (*Ciphertext, error) {
 
 func (cc *CryptoContext) EvalSub(ct1, ct2 *Ciphertext) (*Ciphertext, error) {
 	if cc.ptr == nil {
-		return nil, errors.New("CryptoContext is closed or invalid")
+		return nil, ErrContextClosed
 	}
 	if ct1 == nil || ct1.ptr == nil || ct2 == nil || ct2.ptr == nil {
-		return nil, errors.New("Input Ciphertext is closed or invalid")
+		return nil, ErrCiphertextNil
 	}
 	var ctH C.CiphertextPtr
 	status := C.CryptoContext_EvalSub(cc.ptr, ct1.ptr, ct2.ptr, &ctH)
@@ -287,10 +287,10 @@ func (cc *CryptoContext) EvalSub(ct1, ct2 *Ciphertext) (*Ciphertext, error) {
 
 func (cc *CryptoContext) EvalMult(ct1, ct2 *Ciphertext) (*Ciphertext, error) {
 	if cc.ptr == nil {
-		return nil, errors.New("CryptoContext is closed or invalid")
+		return nil, ErrContextClosed
 	}
 	if ct1 == nil || ct1.ptr == nil || ct2 == nil || ct2.ptr == nil {
-		return nil, errors.New("Input Ciphertext is closed or invalid")
+		return nil, ErrCiphertextNil
 	}
 	var ctH C.CiphertextPtr
 	status := C.CryptoContext_EvalMult(cc.ptr, ct1.ptr, ct2.ptr, &ctH)
@@ -307,13 +307,13 @@ func (cc *CryptoContext) EvalMult(ct1, ct2 *Ciphertext) (*Ciphertext, error) {
 
 func (cc *CryptoContext) EvalAddPlain(ct *Ciphertext, pt *Plaintext) (*Ciphertext, error) {
 	if cc.ptr == nil {
-		return nil, errors.New("CryptoContext is closed or invalid")
+		return nil, ErrContextClosed
 	}
 	if ct == nil || ct.ptr == nil {
-		return nil, errors.New("Input Ciphertext is closed or invalid")
+		return nil, ErrCiphertextNil
 	}
 	if pt == nil || pt.ptr == nil {
-		return nil, errors.New("Input Plaintext is closed or invalid")
+		return nil, ErrPlaintextNil
 	}
 	var ctH C.CiphertextPtr
 	status := C.CryptoContext_EvalAddPlain(cc.ptr, ct.ptr, pt.ptr, &ctH)
@@ -330,13 +330,13 @@ func (cc *CryptoContext) EvalAddPlain(ct *Ciphertext, pt *Plaintext) (*Ciphertex
 
 func (cc *CryptoContext) EvalSubPlain(ct *Ciphertext, pt *Plaintext) (*Ciphertext, error) {
 	if cc.ptr == nil {
-		return nil, errors.New("CryptoContext is closed or invalid")
+		return nil, ErrContextClosed
 	}
 	if ct == nil || ct.ptr == nil {
-		return nil, errors.New("Input Ciphertext is closed or invalid")
+		return nil, ErrCiphertextNil
 	}
 	if pt == nil || pt.ptr == nil {
-		return nil, errors.New("Input Plaintext is closed or invalid")
+		return nil, ErrPlaintextNil
 	}
 	var ctH C.CiphertextPtr
 	status := C.CryptoContext_EvalSubPlain(cc.ptr, ct.ptr, pt.ptr, &ctH)
@@ -353,13 +353,13 @@ func (cc *CryptoContext) EvalSubPlain(ct *Ciphertext, pt *Plaintext) (*Ciphertex
 
 func (cc *CryptoContext) EvalMultPlain(ct *Ciphertext, pt *Plaintext) (*Ciphertext, error) {
 	if cc.ptr == nil {
-		return nil, errors.New("CryptoContext is closed or invalid")
+		return nil, ErrContextClosed
 	}
 	if ct == nil || ct.ptr == nil {
-		return nil, errors.New("Input Ciphertext is closed or invalid")
+		return nil, ErrCiphertextNil
 	}
 	if pt == nil || pt.ptr == nil {
-		return nil, errors.New("Input Plaintext is closed or invalid")
+		return nil, ErrPlaintextNil
 	}
 	var ctH C.CiphertextPtr
 	status := C.CryptoContext_EvalMultPlain(cc.ptr, ct.ptr, pt.ptr, &ctH)
@@ -376,10 +376,10 @@ func (cc *CryptoContext) EvalMultPlain(ct *Ciphertext, pt *Plaintext) (*Cipherte
 
 func (cc *CryptoContext) EvalRotate(ct *Ciphertext, index int32) (*Ciphertext, error) {
 	if cc.ptr == nil {
-		return nil, errors.New("CryptoContext is closed or invalid")
+		return nil, ErrContextClosed
 	}
 	if ct == nil || ct.ptr == nil {
-		return nil, errors.New("Input Ciphertext is closed or invalid")
+		return nil, ErrCiphertextNil
 	}
 	var ctH C.CiphertextPtr
 	status := C.CryptoContext_EvalRotate(cc.ptr, ct.ptr, C.int32_t(index), &ctH)
@@ -396,13 +396,13 @@ func (cc *CryptoContext) EvalRotate(ct *Ciphertext, index int32) (*Ciphertext, e
 
 func (cc *CryptoContext) EvalAutomorphism(ct *Ciphertext, index uint32, evalKeyMap *EvalKeyMap) (*Ciphertext, error) {
 	if cc.ptr == nil {
-		return nil, errors.New("CryptoContext is closed or invalid")
+		return nil, ErrContextClosed
 	}
 	if ct == nil || ct.ptr == nil {
-		return nil, errors.New("Input Ciphertext is closed or invalid")
+		return nil, ErrCiphertextNil
 	}
 	if evalKeyMap == nil || evalKeyMap.ptr == nil {
-		return nil, errors.New("EvalKeyMap is closed or invalid")
+		return nil, ErrEvalKeyMapNil
 	}
 	var ctH C.CiphertextPtr
 	status := C.CryptoContext_EvalAutomorphism(cc.ptr, ct.ptr, C.uint32_t(index), evalKeyMap.ptr, &ctH)
@@ -419,17 +419,17 @@ func (cc *CryptoContext) EvalAutomorphism(ct *Ciphertext, index uint32, evalKeyM
 
 func (cc *CryptoContext) EvalMerge(ciphertexts []*Ciphertext) (*Ciphertext, error) {
 	if cc.ptr == nil {
-		return nil, errors.New("CryptoContext is closed or invalid")
+		return nil, ErrContextClosed
 	}
 	if len(ciphertexts) == 0 {
-		return nil, errors.New("ciphertext array is empty")
+		return nil, ErrEmptyArray
 	}
 
 	// Convert Go slice to C array
 	cCts := make([]C.CiphertextPtr, len(ciphertexts))
 	for i, ct := range ciphertexts {
 		if ct == nil || ct.ptr == nil {
-			return nil, errors.New("Ciphertext in array is closed or invalid")
+			return nil, ErrCiphertextNil
 		}
 		cCts[i] = ct.ptr
 	}
@@ -454,10 +454,10 @@ type FastRotationPrecompute struct {
 
 func (cc *CryptoContext) EvalFastRotationPrecompute(ct *Ciphertext) (*FastRotationPrecompute, error) {
 	if cc.ptr == nil {
-		return nil, errors.New("CryptoContext is closed or invalid")
+		return nil, ErrContextClosed
 	}
 	if ct == nil || ct.ptr == nil {
-		return nil, errors.New("Input Ciphertext is closed or invalid")
+		return nil, ErrCiphertextNil
 	}
 	var precompH unsafe.Pointer
 	status := C.CryptoContext_EvalFastRotationPrecompute(cc.ptr, ct.ptr, &precompH)
@@ -474,13 +474,13 @@ func (cc *CryptoContext) EvalFastRotationPrecompute(ct *Ciphertext) (*FastRotati
 
 func (cc *CryptoContext) EvalFastRotation(ct *Ciphertext, index int32, m uint32, precomp *FastRotationPrecompute) (*Ciphertext, error) {
 	if cc.ptr == nil {
-		return nil, errors.New("CryptoContext is closed or invalid")
+		return nil, ErrContextClosed
 	}
 	if ct == nil || ct.ptr == nil {
-		return nil, errors.New("Input Ciphertext is closed or invalid")
+		return nil, ErrCiphertextNil
 	}
 	if precomp == nil || precomp.ptr == nil {
-		return nil, errors.New("FastRotationPrecompute is closed or invalid")
+		return nil, ErrFastRotationNil
 	}
 	var ctH C.CiphertextPtr
 	status := C.CryptoContext_EvalFastRotation(cc.ptr, ct.ptr, C.int32_t(index), C.uint32_t(m), precomp.ptr, &ctH)
@@ -510,10 +510,10 @@ func GetNativeInt() int {
 // --- CKKS Bootstrapping ---
 func (cc *CryptoContext) EvalBootstrapKeyGen(keys *KeyPair, slots uint32) error {
 	if cc.ptr == nil {
-		return errors.New("CryptoContext is closed or invalid")
+		return ErrContextClosed
 	}
 	if keys == nil || keys.ptr == nil {
-		return errors.New("KeyPair is closed or invalid")
+		return ErrKeypairClosed
 	}
 	status := C.CryptoContext_EvalBootstrapKeyGen(cc.ptr, keys.ptr, C.uint32_t(slots))
 	err := checkPKEErrorMsg(status)
@@ -525,10 +525,10 @@ func (cc *CryptoContext) EvalBootstrapKeyGen(keys *KeyPair, slots uint32) error 
 
 func (cc *CryptoContext) EvalBootstrap(ct *Ciphertext) (*Ciphertext, error) {
 	if cc.ptr == nil {
-		return nil, errors.New("CryptoContext is closed or invalid")
+		return nil, ErrContextClosed
 	}
 	if ct == nil || ct.ptr == nil {
-		return nil, errors.New("Input Ciphertext is closed or invalid")
+		return nil, ErrCiphertextNil
 	}
 	var ctH C.CiphertextPtr
 	status := C.CryptoContext_EvalBootstrap(cc.ptr, ct.ptr, &ctH)
@@ -548,10 +548,10 @@ func (cc *CryptoContext) EvalBootstrap(ct *Ciphertext) (*Ciphertext, error) {
 // precision: measured precision from first iteration (set to 0 if unknown)
 func (cc *CryptoContext) EvalBootstrapWithIterations(ct *Ciphertext, numIterations, precision uint32) (*Ciphertext, error) {
 	if cc.ptr == nil {
-		return nil, errors.New("CryptoContext is closed or invalid")
+		return nil, ErrContextClosed
 	}
 	if ct == nil || ct.ptr == nil {
-		return nil, errors.New("Input Ciphertext is closed or invalid")
+		return nil, ErrCiphertextNil
 	}
 	var ctH C.CiphertextPtr
 	status := C.CryptoContext_EvalBootstrapWithIterations(cc.ptr, ct.ptr, C.uint32_t(numIterations), C.uint32_t(precision), &ctH)
@@ -568,7 +568,7 @@ func (cc *CryptoContext) EvalBootstrapWithIterations(ct *Ciphertext, numIteratio
 
 func (cc *CryptoContext) EvalBootstrapSetupSimple(levelBudget []uint32) error {
 	if cc.ptr == nil {
-		return errors.New("CryptoContext is closed or invalid")
+		return ErrContextClosed
 	}
 	var ptr *C.uint32_t
 	var n C.int
@@ -591,7 +591,7 @@ func (cc *CryptoContext) EvalBootstrapSetupSimple(levelBudget []uint32) error {
 // numSlots: number of slots to use for bootstrapping
 func (cc *CryptoContext) EvalBootstrapSetup(levelBudget []uint32, bsgsDim []uint32, numSlots uint32) error {
 	if cc.ptr == nil {
-		return errors.New("CryptoContext is closed or invalid")
+		return ErrContextClosed
 	}
 
 	var lbPtr *C.uint32_t
@@ -637,7 +637,7 @@ func (ct *Ciphertext) GetNoiseScaleDeg() uint32 {
 
 func (ct *Ciphertext) GetKeyTag() (string, error) {
 	if ct.ptr == nil {
-		return "", errors.New("Ciphertext is closed or invalid")
+		return "", ErrCiphertextNil
 	}
 
 	var cKeyTag *C.char
@@ -658,7 +658,7 @@ func (ct *Ciphertext) GetKeyTag() (string, error) {
 func (cc *CryptoContext) GetParameterElementString() (string, error) {
 	fmt.Println("Go: Calling GetParameterElementString...")
 	if cc.ptr == nil {
-		return "", errors.New("CryptoContext is closed or invalid")
+		return "", ErrContextClosed
 	}
 	var cStr *C.char
 	status := C.CryptoContext_GetParameterElementString(cc.ptr, &cStr)
@@ -704,7 +704,7 @@ func (kp *KeyPair) Close() {
 // For low-level serialization, see GetPrivateKey() which returns unsafe.Pointer.
 func (kp *KeyPair) SecretKey() (*PrivateKey, error) {
 	if kp.ptr == nil {
-		return nil, errors.New("KeyPair is closed or invalid")
+		return nil, ErrKeypairClosed
 	}
 
 	var skPtr C.PrivateKeyPtr
@@ -727,7 +727,7 @@ func (kp *KeyPair) SecretKey() (*PrivateKey, error) {
 // For low-level serialization, see GetPublicKey() which returns unsafe.Pointer.
 func (kp *KeyPair) PublicKey() (*PublicKey, error) {
 	if kp.ptr == nil {
-		return nil, errors.New("KeyPair is closed or invalid")
+		return nil, ErrKeypairClosed
 	}
 
 	var pkPtr C.PublicKeyPtr
@@ -758,7 +758,7 @@ func (ct *Ciphertext) Close() {
 // ciphertext elements independently.
 func (ct *Ciphertext) Clone() (*Ciphertext, error) {
 	if ct.ptr == nil {
-		return nil, errors.New("Ciphertext is closed or invalid")
+		return nil, ErrCiphertextNil
 	}
 
 	var outCT C.CiphertextPtr
@@ -780,7 +780,7 @@ func (ct *Ciphertext) Clone() (*Ciphertext, error) {
 // For a fresh ciphertext, this is typically 2 (c0, c1).
 func (ct *Ciphertext) GetNumElements() (int, error) {
 	if ct.ptr == nil {
-		return 0, errors.New("Ciphertext is closed or invalid")
+		return 0, ErrCiphertextNil
 	}
 
 	numElements := C.Ciphertext_GetNumElements(ct.ptr)
@@ -793,7 +793,7 @@ func (ct *Ciphertext) GetNumElements() (int, error) {
 // For example, SetElementAtIndex(1) extracts just the second element (c1 = a*s).
 func (ct *Ciphertext) SetElementAtIndex(index int) error {
 	if ct.ptr == nil {
-		return errors.New("Ciphertext is closed or invalid")
+		return ErrCiphertextNil
 	}
 
 	status := C.Ciphertext_SetElementAtIndex(ct.ptr, C.size_t(index))
@@ -805,7 +805,7 @@ func (ct *Ciphertext) SetElementAtIndex(index int) error {
 // Used in interactive bootstrapping to extract c1 by removing c0.
 func (ct *Ciphertext) EraseFirstElement() error {
 	if ct.ptr == nil {
-		return errors.New("Ciphertext is closed or invalid")
+		return ErrCiphertextNil
 	}
 
 	status := C.Ciphertext_EraseFirstElement(ct.ptr)
@@ -816,10 +816,10 @@ func (ct *Ciphertext) EraseFirstElement() error {
 // This must be called before using MultiEvalSumKeyGen in multiparty scenarios.
 func (cc *CryptoContext) EvalSumKeyGenPrivate(privateKey *PrivateKey, publicKey *PublicKey) error {
 	if cc.ptr == nil {
-		return errors.New("CryptoContext is closed or invalid")
+		return ErrContextClosed
 	}
 	if privateKey == nil || privateKey.ptr == nil {
-		return errors.New("privateKey is nil or closed")
+		return ErrSecretKeyNil
 	}
 
 	var pkPtr C.PublicKeyPtr
@@ -835,13 +835,13 @@ func (cc *CryptoContext) EvalSumKeyGenPrivate(privateKey *PrivateKey, publicKey 
 // This must be called before using MultiEvalAtIndexKeyGen in multiparty scenarios.
 func (cc *CryptoContext) EvalAtIndexKeyGenPrivate(privateKey *PrivateKey, indices []int32, publicKey *PublicKey) error {
 	if cc.ptr == nil {
-		return errors.New("CryptoContext is closed or invalid")
+		return ErrContextClosed
 	}
 	if privateKey == nil || privateKey.ptr == nil {
-		return errors.New("privateKey is nil or closed")
+		return ErrSecretKeyNil
 	}
 	if len(indices) == 0 {
-		return errors.New("indices slice is empty")
+		return ErrEmptyIndices
 	}
 
 	var pkPtr C.PublicKeyPtr
@@ -863,7 +863,7 @@ func (cc *CryptoContext) EvalAtIndexKeyGenPrivate(privateKey *PrivateKey, indice
 // Used after EvalSumKeyGen to get the key map for multiparty scenarios.
 func (cc *CryptoContext) GetEvalSumKeyMap(keyTag string) (*EvalKeyMap, error) {
 	if cc.ptr == nil {
-		return nil, errors.New("CryptoContext is closed or invalid")
+		return nil, ErrContextClosed
 	}
 
 	cKeyTag := C.CString(keyTag)

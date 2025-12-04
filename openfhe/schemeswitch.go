@@ -73,7 +73,7 @@ func NewSchSwchParams() (*SchSwchParams, error) {
 // SetSecurityLevelCKKS sets the security level for the CKKS cryptocontext
 func (p *SchSwchParams) SetSecurityLevelCKKS(level SecurityLevel) error {
 	if p.ptr == nil {
-		return errors.New("SchSwchParams is closed or invalid")
+		return ErrSchSwchParamsNil
 	}
 	status := C.SchSwchParams_SetSecurityLevelCKKS(p.ptr, C.OFHESecurityLevel(level))
 	return checkPKEErrorMsg(status)
@@ -82,7 +82,7 @@ func (p *SchSwchParams) SetSecurityLevelCKKS(level SecurityLevel) error {
 // SetSecurityLevelFHEW sets the security level for the FHEW cryptocontext
 func (p *SchSwchParams) SetSecurityLevelFHEW(level BinFHEParamSet) error {
 	if p.ptr == nil {
-		return errors.New("SchSwchParams is closed or invalid")
+		return ErrSchSwchParamsNil
 	}
 	status := C.SchSwchParams_SetSecurityLevelFHEW(p.ptr, C.BinFHEParamSet(level))
 	return checkPKEErrorMsg(status)
@@ -91,7 +91,7 @@ func (p *SchSwchParams) SetSecurityLevelFHEW(level BinFHEParamSet) error {
 // SetNumSlotsCKKS sets the number of slots in CKKS encryption
 func (p *SchSwchParams) SetNumSlotsCKKS(numSlots uint32) error {
 	if p.ptr == nil {
-		return errors.New("SchSwchParams is closed or invalid")
+		return ErrSchSwchParamsNil
 	}
 	status := C.SchSwchParams_SetNumSlotsCKKS(p.ptr, C.uint32_t(numSlots))
 	return checkPKEErrorMsg(status)
@@ -100,7 +100,7 @@ func (p *SchSwchParams) SetNumSlotsCKKS(numSlots uint32) error {
 // SetNumValues sets the number of values to switch
 func (p *SchSwchParams) SetNumValues(numValues uint32) error {
 	if p.ptr == nil {
-		return errors.New("SchSwchParams is closed or invalid")
+		return ErrSchSwchParamsNil
 	}
 	status := C.SchSwchParams_SetNumValues(p.ptr, C.uint32_t(numValues))
 	return checkPKEErrorMsg(status)
@@ -109,7 +109,7 @@ func (p *SchSwchParams) SetNumValues(numValues uint32) error {
 // SetCtxtModSizeFHEWLargePrec sets the ciphertext modulus size for FHEW in large precision
 func (p *SchSwchParams) SetCtxtModSizeFHEWLargePrec(ctxtModSize uint32) error {
 	if p.ptr == nil {
-		return errors.New("SchSwchParams is closed or invalid")
+		return ErrSchSwchParamsNil
 	}
 	status := C.SchSwchParams_SetCtxtModSizeFHEWLargePrec(p.ptr, C.uint32_t(ctxtModSize))
 	return checkPKEErrorMsg(status)
@@ -118,7 +118,7 @@ func (p *SchSwchParams) SetCtxtModSizeFHEWLargePrec(ctxtModSize uint32) error {
 // SetComputeArgmin enables/disables argmin computation
 func (p *SchSwchParams) SetComputeArgmin(flag bool) error {
 	if p.ptr == nil {
-		return errors.New("SchSwchParams is closed or invalid")
+		return ErrSchSwchParamsNil
 	}
 	cFlag := C.int(0)
 	if flag {
@@ -131,7 +131,7 @@ func (p *SchSwchParams) SetComputeArgmin(flag bool) error {
 // SetUseAltArgmin enables/disables alternative argmin mode
 func (p *SchSwchParams) SetUseAltArgmin(flag bool) error {
 	if p.ptr == nil {
-		return errors.New("SchSwchParams is closed or invalid")
+		return ErrSchSwchParamsNil
 	}
 	cFlag := C.int(0)
 	if flag {
@@ -144,7 +144,7 @@ func (p *SchSwchParams) SetUseAltArgmin(flag bool) error {
 // SetArbitraryFunctionEvaluation enables/disables arbitrary function evaluation
 func (p *SchSwchParams) SetArbitraryFunctionEvaluation(flag bool) error {
 	if p.ptr == nil {
-		return errors.New("SchSwchParams is closed or invalid")
+		return ErrSchSwchParamsNil
 	}
 	cFlag := C.int(0)
 	if flag {
@@ -157,7 +157,7 @@ func (p *SchSwchParams) SetArbitraryFunctionEvaluation(flag bool) error {
 // SetOneHotEncoding enables/disables one-hot encoding for argmin output
 func (p *SchSwchParams) SetOneHotEncoding(flag bool) error {
 	if p.ptr == nil {
-		return errors.New("SchSwchParams is closed or invalid")
+		return ErrSchSwchParamsNil
 	}
 	cFlag := C.int(0)
 	if flag {
@@ -170,7 +170,7 @@ func (p *SchSwchParams) SetOneHotEncoding(flag bool) error {
 // GetSecurityLevelCKKS returns the security level for CKKS
 func (p *SchSwchParams) GetSecurityLevelCKKS() (SecurityLevel, error) {
 	if p.ptr == nil {
-		return 0, errors.New("SchSwchParams is closed or invalid")
+		return 0, ErrSchSwchParamsNil
 	}
 	var level C.OFHESecurityLevel
 	status := C.SchSwchParams_GetSecurityLevelCKKS(p.ptr, &level)
@@ -184,7 +184,7 @@ func (p *SchSwchParams) GetSecurityLevelCKKS() (SecurityLevel, error) {
 // GetSecurityLevelFHEW returns the security level for FHEW
 func (p *SchSwchParams) GetSecurityLevelFHEW() (BinFHEParamSet, error) {
 	if p.ptr == nil {
-		return 0, errors.New("SchSwchParams is closed or invalid")
+		return 0, ErrSchSwchParamsNil
 	}
 	var level C.BinFHEParamSet
 	status := C.SchSwchParams_GetSecurityLevelFHEW(p.ptr, &level)
@@ -198,7 +198,7 @@ func (p *SchSwchParams) GetSecurityLevelFHEW() (BinFHEParamSet, error) {
 // GetNumSlotsCKKS returns the number of slots in CKKS
 func (p *SchSwchParams) GetNumSlotsCKKS() (uint32, error) {
 	if p.ptr == nil {
-		return 0, errors.New("SchSwchParams is closed or invalid")
+		return 0, ErrSchSwchParamsNil
 	}
 	var numSlots C.uint32_t
 	status := C.SchSwchParams_GetNumSlotsCKKS(p.ptr, &numSlots)
@@ -212,7 +212,7 @@ func (p *SchSwchParams) GetNumSlotsCKKS() (uint32, error) {
 // GetNumValues returns the number of values
 func (p *SchSwchParams) GetNumValues() (uint32, error) {
 	if p.ptr == nil {
-		return 0, errors.New("SchSwchParams is closed or invalid")
+		return 0, ErrSchSwchParamsNil
 	}
 	var numValues C.uint32_t
 	status := C.SchSwchParams_GetNumValues(p.ptr, &numValues)
@@ -246,10 +246,10 @@ func (k *LWEPrivateKey) Close() {
 // EvalCKKStoFHEWSetup performs setup for CKKS to FHEW scheme switching
 func (cc *CryptoContext) EvalCKKStoFHEWSetup(params *SchSwchParams) (*LWEPrivateKey, error) {
 	if cc.ptr == nil {
-		return nil, errors.New("CryptoContext is closed or invalid")
+		return nil, ErrContextClosed
 	}
 	if params == nil || params.ptr == nil {
-		return nil, errors.New("SchSwchParams is closed or invalid")
+		return nil, ErrSchSwchParamsNil
 	}
 
 	var keyH C.LWEPrivateKeyPtr
@@ -268,13 +268,13 @@ func (cc *CryptoContext) EvalCKKStoFHEWSetup(params *SchSwchParams) (*LWEPrivate
 // EvalCKKStoFHEWKeyGen generates keys for CKKS to FHEW scheme switching
 func (cc *CryptoContext) EvalCKKStoFHEWKeyGen(keys *KeyPair, lwesk *LWEPrivateKey) error {
 	if cc.ptr == nil {
-		return errors.New("CryptoContext is closed or invalid")
+		return ErrContextClosed
 	}
 	if keys == nil || keys.ptr == nil {
-		return errors.New("KeyPair is closed or invalid")
+		return ErrKeypairClosed
 	}
 	if lwesk == nil || lwesk.ptr == nil {
-		return errors.New("LWEPrivateKey is closed or invalid")
+		return ErrLWEPrivateKeyNil
 	}
 
 	status := C.CryptoContext_EvalCKKStoFHEWKeyGen(cc.ptr, keys.ptr, lwesk.ptr)
@@ -284,7 +284,7 @@ func (cc *CryptoContext) EvalCKKStoFHEWKeyGen(keys *KeyPair, lwesk *LWEPrivateKe
 // EvalCKKStoFHEWPrecompute performs precomputation for CKKS to FHEW switching
 func (cc *CryptoContext) EvalCKKStoFHEWPrecompute(scale float64) error {
 	if cc.ptr == nil {
-		return errors.New("CryptoContext is closed or invalid")
+		return ErrContextClosed
 	}
 
 	status := C.CryptoContext_EvalCKKStoFHEWPrecompute(cc.ptr, C.double(scale))
@@ -294,10 +294,10 @@ func (cc *CryptoContext) EvalCKKStoFHEWPrecompute(scale float64) error {
 // EvalCKKStoFHEW transforms a CKKS ciphertext to FHEW ciphertexts
 func (cc *CryptoContext) EvalCKKStoFHEW(ct *Ciphertext, numValues uint32) ([]*LWECiphertext, error) {
 	if cc.ptr == nil {
-		return nil, errors.New("CryptoContext is closed or invalid")
+		return nil, ErrContextClosed
 	}
 	if ct == nil || ct.ptr == nil {
-		return nil, errors.New("Ciphertext is closed or invalid")
+		return nil, ErrCiphertextNil
 	}
 
 	var outArray *C.LWECiphertextH
@@ -331,10 +331,10 @@ func (cc *CryptoContext) EvalCKKStoFHEW(ct *Ciphertext, numValues uint32) ([]*LW
 // EvalFHEWtoCKKSSetup performs setup for FHEW to CKKS scheme switching
 func (cc *CryptoContext) EvalFHEWtoCKKSSetup(ccLWE *BinFHEContext, numSlots, logQ uint32) error {
 	if cc.ptr == nil {
-		return errors.New("CryptoContext is closed or invalid")
+		return ErrContextClosed
 	}
 	if ccLWE == nil || ccLWE.h == nil {
-		return errors.New("BinFHEContext is closed or invalid")
+		return ErrBinFHEContextNil
 	}
 
 	status := C.CryptoContext_EvalFHEWtoCKKSSetup(cc.ptr, ccLWE.h, C.uint32_t(numSlots), C.uint32_t(logQ))
@@ -344,13 +344,13 @@ func (cc *CryptoContext) EvalFHEWtoCKKSSetup(ccLWE *BinFHEContext, numSlots, log
 // EvalFHEWtoCKKSKeyGen generates keys for FHEW to CKKS scheme switching
 func (cc *CryptoContext) EvalFHEWtoCKKSKeyGen(keys *KeyPair, lwesk *LWEPrivateKey) error {
 	if cc.ptr == nil {
-		return errors.New("CryptoContext is closed or invalid")
+		return ErrContextClosed
 	}
 	if keys == nil || keys.ptr == nil {
-		return errors.New("KeyPair is closed or invalid")
+		return ErrKeypairClosed
 	}
 	if lwesk == nil || lwesk.ptr == nil {
-		return errors.New("LWEPrivateKey is closed or invalid")
+		return ErrLWEPrivateKeyNil
 	}
 
 	status := C.CryptoContext_EvalFHEWtoCKKSKeyGen(cc.ptr, keys.ptr, lwesk.ptr)
@@ -360,17 +360,17 @@ func (cc *CryptoContext) EvalFHEWtoCKKSKeyGen(keys *KeyPair, lwesk *LWEPrivateKe
 // EvalFHEWtoCKKS transforms FHEW ciphertexts to a CKKS ciphertext
 func (cc *CryptoContext) EvalFHEWtoCKKS(lweCts []*LWECiphertext, numSlots, p uint32) (*Ciphertext, error) {
 	if cc.ptr == nil {
-		return nil, errors.New("CryptoContext is closed or invalid")
+		return nil, ErrContextClosed
 	}
 	if len(lweCts) == 0 {
-		return nil, errors.New("LWE ciphertext array is empty")
+		return nil, ErrLWECiphertextArrayEmpty
 	}
 
 	// Convert Go slice to C array
 	cArray := make([]C.LWECiphertextH, len(lweCts))
 	for i, ct := range lweCts {
 		if ct == nil || ct.h == nil {
-			return nil, errors.New("LWE ciphertext is closed or invalid")
+			return nil, ErrLWECiphertextNil
 		}
 		cArray[i] = ct.h
 	}
@@ -394,17 +394,17 @@ func (cc *CryptoContext) EvalFHEWtoCKKSExt(lweCts []*LWECiphertext, numSlots, p 
 	pmin, pmax float64,
 ) (*Ciphertext, error) {
 	if cc.ptr == nil {
-		return nil, errors.New("CryptoContext is closed or invalid")
+		return nil, ErrContextClosed
 	}
 	if len(lweCts) == 0 {
-		return nil, errors.New("LWE ciphertext array is empty")
+		return nil, ErrLWECiphertextArrayEmpty
 	}
 
 	// Convert Go slice to C array
 	cArray := make([]C.LWECiphertextH, len(lweCts))
 	for i, ct := range lweCts {
 		if ct == nil || ct.h == nil {
-			return nil, errors.New("LWE ciphertext is closed or invalid")
+			return nil, ErrLWECiphertextNil
 		}
 		cArray[i] = ct.h
 	}
@@ -426,10 +426,10 @@ func (cc *CryptoContext) EvalFHEWtoCKKSExt(lweCts []*LWECiphertext, numSlots, p 
 // EvalSchemeSwitchingSetup performs setup for bidirectional scheme switching
 func (cc *CryptoContext) EvalSchemeSwitchingSetup(params *SchSwchParams) (*LWEPrivateKey, error) {
 	if cc.ptr == nil {
-		return nil, errors.New("CryptoContext is closed or invalid")
+		return nil, ErrContextClosed
 	}
 	if params == nil || params.ptr == nil {
-		return nil, errors.New("SchSwchParams is closed or invalid")
+		return nil, ErrSchSwchParamsNil
 	}
 
 	var keyH C.LWEPrivateKeyPtr
@@ -448,13 +448,13 @@ func (cc *CryptoContext) EvalSchemeSwitchingSetup(params *SchSwchParams) (*LWEPr
 // EvalSchemeSwitchingKeyGen generates keys for bidirectional scheme switching
 func (cc *CryptoContext) EvalSchemeSwitchingKeyGen(keys *KeyPair, lwesk *LWEPrivateKey) error {
 	if cc.ptr == nil {
-		return errors.New("CryptoContext is closed or invalid")
+		return ErrContextClosed
 	}
 	if keys == nil || keys.ptr == nil {
-		return errors.New("KeyPair is closed or invalid")
+		return ErrKeypairClosed
 	}
 	if lwesk == nil || lwesk.ptr == nil {
-		return errors.New("LWEPrivateKey is closed or invalid")
+		return ErrLWEPrivateKeyNil
 	}
 
 	status := C.CryptoContext_EvalSchemeSwitchingKeyGen(cc.ptr, keys.ptr, lwesk.ptr)
@@ -466,7 +466,7 @@ func (cc *CryptoContext) EvalSchemeSwitchingKeyGen(keys *KeyPair, lwesk *LWEPriv
 // It will be automatically cleaned up when the CryptoContext is closed.
 func (cc *CryptoContext) GetBinCCForSchemeSwitch() (*BinFHEContext, error) {
 	if cc.ptr == nil {
-		return nil, errors.New("CryptoContext is closed or invalid")
+		return nil, ErrContextClosed
 	}
 
 	var binCCH C.BinFHEContextH
@@ -485,7 +485,7 @@ func (cc *CryptoContext) GetBinCCForSchemeSwitch() (*BinFHEContext, error) {
 // EvalCompareSwitchPrecompute performs precomputation for comparison via scheme switching
 func (cc *CryptoContext) EvalCompareSwitchPrecompute(pLWE uint32, scaleSign float64) error {
 	if cc.ptr == nil {
-		return errors.New("CryptoContext is closed or invalid")
+		return ErrContextClosed
 	}
 
 	status := C.CryptoContext_EvalCompareSwitchPrecompute(cc.ptr, C.uint32_t(pLWE), C.double(scaleSign))
@@ -500,10 +500,10 @@ func (cc *CryptoContext) EvalCompareSwitchPrecompute(pLWE uint32, scaleSign floa
 // Note: returned values are always in range [0, p-1] despite being signed
 func (lwesk *LWEPrivateKey) DecryptLWECiphertext(ccLWE *BinFHEContext, ct *LWECiphertext, p uint64) (int64, error) {
 	if lwesk == nil || lwesk.ptr == nil {
-		return 0, errors.New("LWEPrivateKey is closed or invalid")
+		return 0, ErrLWEPrivateKeyNil
 	}
 	if ccLWE == nil || ccLWE.h == nil {
-		return 0, errors.New("BinFHEContext is closed or invalid")
+		return 0, ErrBinFHEContextNil
 	}
 	if ct == nil || ct.h == nil {
 		return 0, errors.New("LWECiphertext is closed or invalid")

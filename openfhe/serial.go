@@ -121,7 +121,7 @@ func SerializeEvalMultKeyToBytes(cc *CryptoContext, keyId string) ([]byte, error
 // DeserializeEvalMultKeyFromBytes loads the relin/evalmult keys *into* the provided CryptoContext.
 func DeserializeEvalMultKeyFromBytes(cc *CryptoContext, data []byte) error {
 	if len(data) == 0 {
-		return fmt.Errorf("cannot deserialize eval mult key from empty data")
+		return ErrEmptyData
 	}
 	cData := (*C.char)(unsafe.Pointer(&data[0]))
 	cLen := C.int(len(data))
@@ -214,7 +214,7 @@ func NewKeyPair() (*KeyPair, error) {
 // For normal use, prefer PublicKey() which returns a typed *PublicKey.
 func (kp *KeyPair) GetPublicKey() (unsafe.Pointer, error) {
 	if kp.ptr == nil {
-		return nil, errors.New("KeyPair is closed or invalid")
+		return nil, ErrKeypairClosed
 	}
 	var pkH unsafe.Pointer
 	status := C.GetPublicKey(kp.ptr, &pkH)
@@ -233,7 +233,7 @@ func (kp *KeyPair) GetPublicKey() (unsafe.Pointer, error) {
 // For normal use, prefer SecretKey() which returns a typed *PrivateKey.
 func (kp *KeyPair) GetPrivateKey() (unsafe.Pointer, error) {
 	if kp.ptr == nil {
-		return nil, errors.New("KeyPair is closed or invalid")
+		return nil, ErrKeypairClosed
 	}
 	var skH unsafe.Pointer
 	status := C.GetPrivateKey(kp.ptr, &skH)
@@ -251,7 +251,7 @@ func (kp *KeyPair) GetPrivateKey() (unsafe.Pointer, error) {
 // It takes the temporary pointer returned by GetPublicKey or a deserialization.
 func (kp *KeyPair) SetPublicKey(pkPtr unsafe.Pointer) error { // ADDED error
 	if kp.ptr == nil {
-		return errors.New("KeyPair is closed or invalid")
+		return ErrKeypairClosed
 	}
 	if pkPtr == nil {
 		return errors.New("Input public key pointer is nil")
@@ -268,7 +268,7 @@ func (kp *KeyPair) SetPublicKey(pkPtr unsafe.Pointer) error { // ADDED error
 // It takes the temporary pointer returned by GetPrivateKey or a deserialization.
 func (kp *KeyPair) SetPrivateKey(skPtr unsafe.Pointer) error { // ADDED error
 	if kp.ptr == nil {
-		return errors.New("KeyPair is closed or invalid")
+		return ErrKeypairClosed
 	}
 	if skPtr == nil {
 		return errors.New("Input private key pointer is nil")

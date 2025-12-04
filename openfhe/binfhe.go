@@ -126,7 +126,7 @@ func (cc *BinFHEContext) Release() { cc.Close() }
 
 func (cc *BinFHEContext) GenerateBinFHEContext(paramset BinFHEParamset, method BinFHEMethod) error {
 	if cc.h == nil {
-		return errors.New("BinFHEContext is closed or invalid")
+		return ErrBinFHEContextNil
 	}
 
 	status := C.BinFHEContext_Generate(cc.h, C.BINFHE_PARAMSET_C(paramset), C.BINFHE_METHOD_C(method))
@@ -141,7 +141,7 @@ func (cc *BinFHEContext) GenerateBinFHEContext(paramset BinFHEParamset, method B
 // --- Keys ---
 func (cc *BinFHEContext) KeyGen() (*BinFHESecretKey, error) {
 	if cc.h == nil {
-		return nil, errors.New("BinFHEContext is closed or invalid")
+		return nil, ErrBinFHEContextNil
 	}
 
 	var skH C.LWESecretKeyH
@@ -170,11 +170,11 @@ func (sk *BinFHESecretKey) Release() { sk.Close() }
 
 func (cc *BinFHEContext) BTKeyGen(sk *BinFHESecretKey) error {
 	if cc.h == nil {
-		return errors.New("BinFHEContext is closed or invalid")
+		return ErrBinFHEContextNil
 	}
 
 	if sk == nil || sk.h == nil {
-		return errors.New("BinFHESecretKey is closed or invalid")
+		return ErrBinFHESecretKeyNil
 	}
 
 	status := C.BinFHEContext_BTKeyGen(cc.h, sk.h)
@@ -189,11 +189,11 @@ func (cc *BinFHEContext) BTKeyGen(sk *BinFHESecretKey) error {
 // --- Operations ---
 func (cc *BinFHEContext) Encrypt(sk *BinFHESecretKey, message int) (*BinFHECiphertext, error) {
 	if cc.h == nil {
-		return nil, errors.New("BinFHEContext is closed or invalid")
+		return nil, ErrBinFHEContextNil
 	}
 
 	if sk == nil || sk.h == nil {
-		return nil, errors.New("BinFHESecretKey is closed or invalid")
+		return nil, ErrBinFHESecretKeyNil
 	}
 
 	var ctH C.LWECiphertextH
@@ -223,7 +223,7 @@ func (ct *BinFHECiphertext) Release() { ct.Close() }
 
 func (cc *BinFHEContext) EvalBinGate(gate BinFHEGate, ct1, ct2 *BinFHECiphertext) (*BinFHECiphertext, error) {
 	if cc.h == nil {
-		return nil, errors.New("BinFHEContext is closed or invalid")
+		return nil, ErrBinFHEContextNil
 	}
 
 	if ct1 == nil || ct1.h == nil {
@@ -252,11 +252,11 @@ func (cc *BinFHEContext) EvalBinGate(gate BinFHEGate, ct1, ct2 *BinFHECiphertext
 
 func (cc *BinFHEContext) Bootstrap(ctIn *BinFHECiphertext) (*BinFHECiphertext, error) {
 	if cc.h == nil {
-		return nil, errors.New("BinFHEContext is closed or invalid")
+		return nil, ErrBinFHEContextNil
 	}
 
 	if ctIn == nil || ctIn.h == nil {
-		return nil, errors.New("input BinFHECiphertext is closed or invalid")
+		return nil, ErrInputBinFHECiphertextNil
 	}
 
 	var ctOutH C.LWECiphertextH
@@ -278,15 +278,15 @@ func (cc *BinFHEContext) Bootstrap(ctIn *BinFHECiphertext) (*BinFHECiphertext, e
 
 func (cc *BinFHEContext) Decrypt(sk *BinFHESecretKey, ct *BinFHECiphertext) (int, error) {
 	if cc.h == nil {
-		return 0, errors.New("BinFHEContext is closed or invalid")
+		return 0, ErrBinFHEContextNil
 	}
 
 	if sk == nil || sk.h == nil {
-		return 0, errors.New("BinFHESecretKey is closed or invalid")
+		return 0, ErrBinFHESecretKeyNil
 	}
 
 	if ct == nil || ct.h == nil {
-		return 0, errors.New("BinFHECiphertext is closed or invalid")
+		return 0, ErrBinFHECiphertextNil
 	}
 
 	var resultBit C.int
@@ -305,15 +305,15 @@ func (cc *BinFHEContext) Decrypt(sk *BinFHESecretKey, ct *BinFHECiphertext) (int
 // Note: returned values are always in range [0, p-1] despite being signed
 func (cc *BinFHEContext) DecryptModulus(sk *BinFHESecretKey, ct *BinFHECiphertext, p uint64) (int64, error) {
 	if cc.h == nil {
-		return 0, errors.New("BinFHEContext is closed or invalid")
+		return 0, ErrBinFHEContextNil
 	}
 
 	if sk == nil || sk.h == nil {
-		return 0, errors.New("BinFHESecretKey is closed or invalid")
+		return 0, ErrBinFHESecretKeyNil
 	}
 
 	if ct == nil || ct.h == nil {
-		return 0, errors.New("BinFHECiphertext is closed or invalid")
+		return 0, ErrBinFHECiphertextNil
 	}
 
 	var result C.int64_t
@@ -330,7 +330,7 @@ func (cc *BinFHEContext) DecryptModulus(sk *BinFHESecretKey, ct *BinFHECiphertex
 // GetMaxPlaintextSpace returns the maximum plaintext space
 func (cc *BinFHEContext) GetMaxPlaintextSpace() (uint32, error) {
 	if cc.h == nil {
-		return 0, errors.New("BinFHEContext is closed or invalid")
+		return 0, ErrBinFHEContextNil
 	}
 
 	var result C.uint32_t
@@ -346,7 +346,7 @@ func (cc *BinFHEContext) GetMaxPlaintextSpace() (uint32, error) {
 // Getn returns the lattice parameter n
 func (cc *BinFHEContext) Getn() (uint32, error) {
 	if cc.h == nil {
-		return 0, errors.New("BinFHEContext is closed or invalid")
+		return 0, ErrBinFHEContextNil
 	}
 
 	var result C.uint32_t
@@ -362,7 +362,7 @@ func (cc *BinFHEContext) Getn() (uint32, error) {
 // Getq returns the ciphertext modulus q
 func (cc *BinFHEContext) Getq() (uint64, error) {
 	if cc.h == nil {
-		return 0, errors.New("BinFHEContext is closed or invalid")
+		return 0, ErrBinFHEContextNil
 	}
 
 	var result C.uint64_t
@@ -378,7 +378,7 @@ func (cc *BinFHEContext) Getq() (uint64, error) {
 // GetBeta returns the beta parameter
 func (cc *BinFHEContext) GetBeta() (uint32, error) {
 	if cc.h == nil {
-		return 0, errors.New("BinFHEContext is closed or invalid")
+		return 0, ErrBinFHEContextNil
 	}
 
 	var result C.uint32_t
@@ -394,11 +394,11 @@ func (cc *BinFHEContext) GetBeta() (uint32, error) {
 // EvalSign evaluates the sign function on an LWE ciphertext
 func (cc *BinFHEContext) EvalSign(ct *BinFHECiphertext) (*BinFHECiphertext, error) {
 	if cc.h == nil {
-		return nil, errors.New("BinFHEContext is closed or invalid")
+		return nil, ErrBinFHEContextNil
 	}
 
 	if ct == nil || ct.h == nil {
-		return nil, errors.New("BinFHECiphertext is closed or invalid")
+		return nil, ErrBinFHECiphertextNil
 	}
 
 	var outH C.LWECiphertextH
@@ -418,11 +418,11 @@ func (cc *BinFHEContext) EvalSign(ct *BinFHECiphertext) (*BinFHECiphertext, erro
 // EvalFloor evaluates the floor function, removing the lowest 'bits' bits
 func (cc *BinFHEContext) EvalFloor(ct *BinFHECiphertext, bits uint32) (*BinFHECiphertext, error) {
 	if cc.h == nil {
-		return nil, errors.New("BinFHEContext is closed or invalid")
+		return nil, ErrBinFHEContextNil
 	}
 
 	if ct == nil || ct.h == nil {
-		return nil, errors.New("BinFHECiphertext is closed or invalid")
+		return nil, ErrBinFHECiphertextNil
 	}
 
 	var outH C.LWECiphertextH
@@ -442,11 +442,11 @@ func (cc *BinFHEContext) EvalFloor(ct *BinFHECiphertext, bits uint32) (*BinFHECi
 // EvalNOT evaluates the NOT operation on a ciphertext
 func (cc *BinFHEContext) EvalNOT(ct *BinFHECiphertext) (*BinFHECiphertext, error) {
 	if cc.h == nil {
-		return nil, errors.New("BinFHEContext is closed or invalid")
+		return nil, ErrBinFHEContextNil
 	}
 
 	if ct == nil || ct.h == nil {
-		return nil, errors.New("BinFHECiphertext is closed or invalid")
+		return nil, ErrBinFHECiphertextNil
 	}
 
 	var outH C.LWECiphertextH

@@ -59,7 +59,7 @@ func (r *MinMaxResult) Close() {
 //	fmt.Printf("Argmin is at index: %d\n", argminIndex)
 func (r *MinMaxResult) GetIndexFromOneHot(cc *CryptoContext, keys *KeyPair, numValues uint32) (int, error) {
 	if r.Index == nil {
-		return -1, errors.New("Index ciphertext is nil")
+		return -1, ErrIndexCtNil
 	}
 
 	// Decrypt the one-hot encoded index
@@ -83,7 +83,7 @@ func (r *MinMaxResult) GetIndexFromOneHot(cc *CryptoContext, keys *KeyPair, numV
 		}
 	}
 
-	return -1, errors.New("no index found in one-hot vector (all values are 0)")
+	return -1, ErrNoIndexFound
 }
 
 // EvalMinSchemeSwitching finds the minimum value and its index (argmin) from the first numValues
@@ -150,13 +150,13 @@ func (cc *CryptoContext) EvalMinSchemeSwitchingExt(
 	scaleSign float64,
 ) (*MinMaxResult, error) {
 	if cc.ptr == nil {
-		return nil, errors.New("CryptoContext is closed or invalid")
+		return nil, ErrContextClosed
 	}
 	if ciphertext == nil || ciphertext.ptr == nil {
-		return nil, errors.New("Ciphertext is closed or invalid")
+		return nil, ErrCiphertextNil
 	}
 	if keys == nil || keys.ptr == nil {
-		return nil, errors.New("KeyPair is closed or invalid")
+		return nil, ErrKeypairClosed
 	}
 
 	// Get public key from KeyPair
@@ -167,7 +167,7 @@ func (cc *CryptoContext) EvalMinSchemeSwitchingExt(
 		return nil, err
 	}
 	if pk == nil {
-		return nil, errors.New("KeyPair has no public key")
+		return nil, ErrNoPublicKey
 	}
 
 	var valuePtr C.CiphertextPtr
@@ -227,13 +227,13 @@ func (cc *CryptoContext) EvalMinSchemeSwitchingAltExt(
 	scaleSign float64,
 ) (*MinMaxResult, error) {
 	if cc.ptr == nil {
-		return nil, errors.New("CryptoContext is closed or invalid")
+		return nil, ErrContextClosed
 	}
 	if ciphertext == nil || ciphertext.ptr == nil {
-		return nil, errors.New("Ciphertext is closed or invalid")
+		return nil, ErrCiphertextNil
 	}
 	if keys == nil || keys.ptr == nil {
-		return nil, errors.New("KeyPair is closed or invalid")
+		return nil, ErrKeypairClosed
 	}
 
 	var pk unsafe.Pointer
@@ -243,7 +243,7 @@ func (cc *CryptoContext) EvalMinSchemeSwitchingAltExt(
 		return nil, err
 	}
 	if pk == nil {
-		return nil, errors.New("KeyPair has no public key")
+		return nil, ErrNoPublicKey
 	}
 
 	var valuePtr C.CiphertextPtr
@@ -314,13 +314,13 @@ func (cc *CryptoContext) EvalMaxSchemeSwitchingExt(
 	scaleSign float64,
 ) (*MinMaxResult, error) {
 	if cc.ptr == nil {
-		return nil, errors.New("CryptoContext is closed or invalid")
+		return nil, ErrContextClosed
 	}
 	if ciphertext == nil || ciphertext.ptr == nil {
-		return nil, errors.New("Ciphertext is closed or invalid")
+		return nil, ErrCiphertextNil
 	}
 	if keys == nil || keys.ptr == nil {
-		return nil, errors.New("KeyPair is closed or invalid")
+		return nil, ErrKeypairClosed
 	}
 
 	var pk unsafe.Pointer
@@ -330,7 +330,7 @@ func (cc *CryptoContext) EvalMaxSchemeSwitchingExt(
 		return nil, err
 	}
 	if pk == nil {
-		return nil, errors.New("KeyPair has no public key")
+		return nil, ErrNoPublicKey
 	}
 
 	var valuePtr C.CiphertextPtr
@@ -390,13 +390,13 @@ func (cc *CryptoContext) EvalMaxSchemeSwitchingAltExt(
 	scaleSign float64,
 ) (*MinMaxResult, error) {
 	if cc.ptr == nil {
-		return nil, errors.New("CryptoContext is closed or invalid")
+		return nil, ErrContextClosed
 	}
 	if ciphertext == nil || ciphertext.ptr == nil {
-		return nil, errors.New("Ciphertext is closed or invalid")
+		return nil, ErrCiphertextNil
 	}
 	if keys == nil || keys.ptr == nil {
-		return nil, errors.New("KeyPair is closed or invalid")
+		return nil, ErrKeypairClosed
 	}
 
 	var pk unsafe.Pointer
@@ -406,7 +406,7 @@ func (cc *CryptoContext) EvalMaxSchemeSwitchingAltExt(
 		return nil, err
 	}
 	if pk == nil {
-		return nil, errors.New("KeyPair has no public key")
+		return nil, ErrNoPublicKey
 	}
 
 	var valuePtr C.CiphertextPtr

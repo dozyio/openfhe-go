@@ -33,7 +33,7 @@ func (ek *EvalKey) Close() {
 // GetKeyTag returns the key tag associated with this evaluation key
 func (ek *EvalKey) GetKeyTag() (string, error) {
 	if ek.ptr == nil {
-		return "", errors.New("EvalKey is closed or invalid")
+		return "", ErrEvalKeyNil
 	}
 
 	var cKeyTag *C.char
@@ -44,7 +44,7 @@ func (ek *EvalKey) GetKeyTag() (string, error) {
 	}
 
 	if cKeyTag == nil {
-		return "", errors.New("GetKeyTag returned null string")
+		return "", ErrNullString
 	}
 
 	keyTag := C.GoString(cKeyTag)
@@ -79,7 +79,7 @@ func (ek *EvalKey) GetKeyTag() (string, error) {
 //	defer reencryptionKey.Close()
 func (cc *CryptoContext) ReKeyGen(oldKeys, newKeys *KeyPair) (*EvalKey, error) {
 	if cc.ptr == nil {
-		return nil, errors.New("CryptoContext is closed or invalid")
+		return nil, ErrContextClosed
 	}
 	if oldKeys == nil || oldKeys.ptr == nil {
 		return nil, errors.New("oldKeys KeyPair is closed or invalid")
@@ -150,13 +150,13 @@ func (cc *CryptoContext) ReKeyGen(oldKeys, newKeys *KeyPair) (*EvalKey, error) {
 //	result, _ := cc.Decrypt(bobKeys, reencryptedCt)
 func (cc *CryptoContext) ReEncrypt(ct *Ciphertext, evalKey *EvalKey) (*Ciphertext, error) {
 	if cc.ptr == nil {
-		return nil, errors.New("CryptoContext is closed or invalid")
+		return nil, ErrContextClosed
 	}
 	if ct == nil || ct.ptr == nil {
-		return nil, errors.New("Ciphertext is closed or invalid")
+		return nil, ErrCiphertextNil
 	}
 	if evalKey == nil || evalKey.ptr == nil {
-		return nil, errors.New("EvalKey is closed or invalid")
+		return nil, ErrEvalKeyNil
 	}
 
 	var ctH C.CiphertextPtr

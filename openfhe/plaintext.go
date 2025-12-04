@@ -12,13 +12,12 @@ package openfhe
 import "C"
 
 import (
-	"errors"
 	"unsafe"
 )
 
 func (pt *Plaintext) GetPackedValue() ([]int64, error) {
 	if pt.ptr == nil {
-		return nil, errors.New("Plaintext is closed or invalid")
+		return nil, ErrPlaintextNil
 	}
 
 	var cValues *C.int64_t
@@ -49,7 +48,7 @@ func (pt *Plaintext) GetPackedValue() ([]int64, error) {
 
 func (pt *Plaintext) GetRealPackedValue() ([]float64, error) {
 	if pt.ptr == nil {
-		return nil, errors.New("Plaintext is closed or invalid")
+		return nil, ErrPlaintextNil
 	}
 
 	var cValues *C.double
@@ -80,7 +79,7 @@ func (pt *Plaintext) GetRealPackedValue() ([]float64, error) {
 
 func (pt *Plaintext) GetComplexPackedValue() ([]complex128, error) {
 	if pt.ptr == nil {
-		return nil, errors.New("Plaintext is closed or invalid")
+		return nil, ErrPlaintextNil
 	}
 
 	var cValues *C.complex_double_t
@@ -111,7 +110,7 @@ func (pt *Plaintext) GetComplexPackedValue() ([]complex128, error) {
 
 func (pt *Plaintext) GetCoefPackedValue() ([]int64, error) {
 	if pt.ptr == nil {
-		return nil, errors.New("Plaintext is closed or invalid")
+		return nil, ErrPlaintextNil
 	}
 
 	var cValues *C.int64_t
@@ -142,7 +141,7 @@ func (pt *Plaintext) GetCoefPackedValue() ([]int64, error) {
 
 func (pt *Plaintext) SetLength(len int) error {
 	if pt.ptr == nil {
-		return errors.New("Plaintext is closed or invalid")
+		return ErrPlaintextNil
 	}
 
 	status := C.Plaintext_SetLength(pt.ptr, C.int(len))

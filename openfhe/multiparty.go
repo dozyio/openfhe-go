@@ -59,7 +59,7 @@ func (ekm *EvalKeyMap) Close() {
 // GetKeyTag returns the key tag associated with this private key
 func (sk *PrivateKey) GetKeyTag() (string, error) {
 	if sk.ptr == nil {
-		return "", errors.New("PrivateKey is closed or invalid")
+		return "", ErrPrivateKeyNil
 	}
 
 	var cKeyTag *C.char
@@ -70,7 +70,7 @@ func (sk *PrivateKey) GetKeyTag() (string, error) {
 	}
 
 	if cKeyTag == nil {
-		return "", errors.New("GetKeyTag returned null string")
+		return "", ErrNullString
 	}
 
 	keyTag := C.GoString(cKeyTag)
@@ -81,7 +81,7 @@ func (sk *PrivateKey) GetKeyTag() (string, error) {
 // GetKeyTag returns the key tag associated with this public key
 func (pk *PublicKey) GetKeyTag() (string, error) {
 	if pk.ptr == nil {
-		return "", errors.New("PublicKey is closed or invalid")
+		return "", ErrPublicKeyNil
 	}
 
 	var cKeyTag *C.char
@@ -92,7 +92,7 @@ func (pk *PublicKey) GetKeyTag() (string, error) {
 	}
 
 	if cKeyTag == nil {
-		return "", errors.New("GetKeyTag returned null string")
+		return "", ErrNullString
 	}
 
 	keyTag := C.GoString(cKeyTag)
@@ -105,11 +105,11 @@ func (pk *PublicKey) GetKeyTag() (string, error) {
 // MultipartyKeyGen generates a keypair from a vector of private keys (additive secret sharing)
 func (cc *CryptoContext) MultipartyKeyGen(privateKeys []*PrivateKey) (*KeyPair, error) {
 	if cc.ptr == nil {
-		return nil, errors.New("CryptoContext is closed or invalid")
+		return nil, ErrContextClosed
 	}
 
 	if len(privateKeys) == 0 {
-		return nil, errors.New("privateKeys slice is empty")
+		return nil, ErrEmptySlice
 	}
 
 	// Convert Go slice to C array
@@ -144,11 +144,11 @@ func (cc *CryptoContext) MultipartyKeyGen(privateKeys []*PrivateKey) (*KeyPair, 
 // MultipartyKeyGenFromPublicKey generates a keypair that is compatible with an existing public key
 func (cc *CryptoContext) MultipartyKeyGenFromPublicKey(publicKey *PublicKey, makeSparse bool, fresh bool) (*KeyPair, error) {
 	if cc.ptr == nil {
-		return nil, errors.New("CryptoContext is closed or invalid")
+		return nil, ErrContextClosed
 	}
 
 	if publicKey == nil || publicKey.ptr == nil {
-		return nil, errors.New("publicKey is nil")
+		return nil, ErrPublicKeyArgNil
 	}
 
 	var outKP C.KeyPairPtr
@@ -185,15 +185,15 @@ func (cc *CryptoContext) MultipartyKeyGenFromPublicKey(publicKey *PublicKey, mak
 // MultipartyDecryptLead performs partial decryption by the lead party
 func (cc *CryptoContext) MultipartyDecryptLead(ciphertexts []*Ciphertext, privateKey *PrivateKey) ([]*Ciphertext, error) {
 	if cc.ptr == nil {
-		return nil, errors.New("CryptoContext is closed or invalid")
+		return nil, ErrContextClosed
 	}
 
 	if len(ciphertexts) == 0 {
-		return nil, errors.New("ciphertexts slice is empty")
+		return nil, ErrEmptySlice
 	}
 
 	if privateKey == nil || privateKey.ptr == nil {
-		return nil, errors.New("privateKey is nil")
+		return nil, ErrPrivateKeyArgNil
 	}
 
 	// Convert Go slice to C array
@@ -236,15 +236,15 @@ func (cc *CryptoContext) MultipartyDecryptLead(ciphertexts []*Ciphertext, privat
 // MultipartyDecryptMain performs partial decryption by a main party (non-lead)
 func (cc *CryptoContext) MultipartyDecryptMain(ciphertexts []*Ciphertext, privateKey *PrivateKey) ([]*Ciphertext, error) {
 	if cc.ptr == nil {
-		return nil, errors.New("CryptoContext is closed or invalid")
+		return nil, ErrContextClosed
 	}
 
 	if len(ciphertexts) == 0 {
-		return nil, errors.New("ciphertexts slice is empty")
+		return nil, ErrEmptySlice
 	}
 
 	if privateKey == nil || privateKey.ptr == nil {
-		return nil, errors.New("privateKey is nil")
+		return nil, ErrPrivateKeyArgNil
 	}
 
 	// Convert Go slice to C array
@@ -287,11 +287,11 @@ func (cc *CryptoContext) MultipartyDecryptMain(ciphertexts []*Ciphertext, privat
 // MultipartyDecryptFusion fuses partial decryptions from all parties into the final plaintext
 func (cc *CryptoContext) MultipartyDecryptFusion(partialCiphertexts []*Ciphertext) (*Plaintext, error) {
 	if cc.ptr == nil {
-		return nil, errors.New("CryptoContext is closed or invalid")
+		return nil, ErrContextClosed
 	}
 
 	if len(partialCiphertexts) == 0 {
-		return nil, errors.New("partialCiphertexts slice is empty")
+		return nil, ErrEmptySlice
 	}
 
 	// Convert Go slice to C array
@@ -329,7 +329,7 @@ func (cc *CryptoContext) MultipartyDecryptFusion(partialCiphertexts []*Ciphertex
 // This is the base function used before MultiKeySwitchGen in multiparty workflows
 func (cc *CryptoContext) KeySwitchGen(oldPrivateKey, newPrivateKey *PrivateKey) (*EvalKey, error) {
 	if cc.ptr == nil {
-		return nil, errors.New("CryptoContext is closed or invalid")
+		return nil, ErrContextClosed
 	}
 
 	if oldPrivateKey == nil || oldPrivateKey.ptr == nil {
@@ -363,7 +363,7 @@ func (cc *CryptoContext) KeySwitchGen(oldPrivateKey, newPrivateKey *PrivateKey) 
 // InsertEvalMultKey inserts evaluation mult keys into the crypto context
 func (cc *CryptoContext) InsertEvalMultKey(evalKeys []*EvalKey) error {
 	if cc.ptr == nil {
-		return errors.New("CryptoContext is closed or invalid")
+		return ErrContextClosed
 	}
 
 	if len(evalKeys) == 0 {
@@ -391,7 +391,7 @@ func (cc *CryptoContext) InsertEvalMultKey(evalKeys []*EvalKey) error {
 // InsertEvalSumKey inserts evaluation sum keys into the crypto context
 func (cc *CryptoContext) InsertEvalSumKey(evalKeyMap *EvalKeyMap) error {
 	if cc.ptr == nil {
-		return errors.New("CryptoContext is closed or invalid")
+		return ErrContextClosed
 	}
 
 	if evalKeyMap == nil || evalKeyMap.ptr == nil {
@@ -405,7 +405,7 @@ func (cc *CryptoContext) InsertEvalSumKey(evalKeyMap *EvalKeyMap) error {
 // MultiKeySwitchGen generates a multiparty key switching key
 func (cc *CryptoContext) MultiKeySwitchGen(oldPrivateKey, newPrivateKey *PrivateKey, evalKey *EvalKey) (*EvalKey, error) {
 	if cc.ptr == nil {
-		return nil, errors.New("CryptoContext is closed or invalid")
+		return nil, ErrContextClosed
 	}
 
 	if oldPrivateKey == nil || oldPrivateKey.ptr == nil {
@@ -417,7 +417,7 @@ func (cc *CryptoContext) MultiKeySwitchGen(oldPrivateKey, newPrivateKey *Private
 	}
 
 	if evalKey == nil || evalKey.ptr == nil {
-		return nil, errors.New("evalKey is nil")
+		return nil, ErrEvalKeyArgNil
 	}
 
 	var outEK C.EvalKeyPtr
@@ -444,11 +444,11 @@ func (cc *CryptoContext) MultiKeySwitchGen(oldPrivateKey, newPrivateKey *Private
 // MultiEvalSumKeyGen generates a multiparty evaluation sum key
 func (cc *CryptoContext) MultiEvalSumKeyGen(privateKey *PrivateKey, evalKeyMap *EvalKeyMap, keyTag string) (*EvalKeyMap, error) {
 	if cc.ptr == nil {
-		return nil, errors.New("CryptoContext is closed or invalid")
+		return nil, ErrContextClosed
 	}
 
 	if privateKey == nil || privateKey.ptr == nil {
-		return nil, errors.New("privateKey is nil")
+		return nil, ErrPrivateKeyArgNil
 	}
 
 	var ekmPtr C.EvalKeyMapPtr
@@ -483,11 +483,11 @@ func (cc *CryptoContext) MultiEvalSumKeyGen(privateKey *PrivateKey, evalKeyMap *
 // MultiEvalAtIndexKeyGen generates multiparty evaluation keys for rotation at specific indices
 func (cc *CryptoContext) MultiEvalAtIndexKeyGen(privateKey *PrivateKey, evalKeyMap *EvalKeyMap, indices []int32, keyTag string) (*EvalKeyMap, error) {
 	if cc.ptr == nil {
-		return nil, errors.New("CryptoContext is closed or invalid")
+		return nil, ErrContextClosed
 	}
 
 	if privateKey == nil || privateKey.ptr == nil {
-		return nil, errors.New("privateKey is nil")
+		return nil, ErrPrivateKeyArgNil
 	}
 
 	if len(indices) == 0 {
@@ -528,15 +528,15 @@ func (cc *CryptoContext) MultiEvalAtIndexKeyGen(privateKey *PrivateKey, evalKeyM
 // MultiMultEvalKey transforms a joint evaluation key for multiparty multiplication
 func (cc *CryptoContext) MultiMultEvalKey(privateKey *PrivateKey, evalKey *EvalKey, keyTag string) (*EvalKey, error) {
 	if cc.ptr == nil {
-		return nil, errors.New("CryptoContext is closed or invalid")
+		return nil, ErrContextClosed
 	}
 
 	if privateKey == nil || privateKey.ptr == nil {
-		return nil, errors.New("privateKey is nil")
+		return nil, ErrPrivateKeyArgNil
 	}
 
 	if evalKey == nil || evalKey.ptr == nil {
-		return nil, errors.New("evalKey is nil")
+		return nil, ErrEvalKeyArgNil
 	}
 
 	cKeyTag := C.CString(keyTag)
@@ -568,7 +568,7 @@ func (cc *CryptoContext) MultiMultEvalKey(privateKey *PrivateKey, evalKey *EvalK
 // MultiAddPubKeys aggregates two public keys
 func (cc *CryptoContext) MultiAddPubKeys(pk1, pk2 *PublicKey, keyTag string) (*PublicKey, error) {
 	if cc.ptr == nil {
-		return nil, errors.New("CryptoContext is closed or invalid")
+		return nil, ErrContextClosed
 	}
 
 	if pk1 == nil || pk1.ptr == nil {
@@ -606,7 +606,7 @@ func (cc *CryptoContext) MultiAddPubKeys(pk1, pk2 *PublicKey, keyTag string) (*P
 // MultiAddEvalKeys aggregates two evaluation keys
 func (cc *CryptoContext) MultiAddEvalKeys(ek1, ek2 *EvalKey, keyTag string) (*EvalKey, error) {
 	if cc.ptr == nil {
-		return nil, errors.New("CryptoContext is closed or invalid")
+		return nil, ErrContextClosed
 	}
 
 	if ek1 == nil || ek1.ptr == nil {
@@ -644,7 +644,7 @@ func (cc *CryptoContext) MultiAddEvalKeys(ek1, ek2 *EvalKey, keyTag string) (*Ev
 // MultiAddEvalMultKeys aggregates two multiplication evaluation keys
 func (cc *CryptoContext) MultiAddEvalMultKeys(ek1, ek2 *EvalKey, keyTag string) (*EvalKey, error) {
 	if cc.ptr == nil {
-		return nil, errors.New("CryptoContext is closed or invalid")
+		return nil, ErrContextClosed
 	}
 
 	if ek1 == nil || ek1.ptr == nil {
@@ -682,7 +682,7 @@ func (cc *CryptoContext) MultiAddEvalMultKeys(ek1, ek2 *EvalKey, keyTag string) 
 // MultiAddEvalSumKeys aggregates two evaluation sum key maps
 func (cc *CryptoContext) MultiAddEvalSumKeys(ekm1, ekm2 *EvalKeyMap, keyTag string) (*EvalKeyMap, error) {
 	if cc.ptr == nil {
-		return nil, errors.New("CryptoContext is closed or invalid")
+		return nil, ErrContextClosed
 	}
 
 	if ekm1 == nil || ekm1.ptr == nil {
@@ -720,7 +720,7 @@ func (cc *CryptoContext) MultiAddEvalSumKeys(ekm1, ekm2 *EvalKeyMap, keyTag stri
 // MultiAddEvalAutomorphismKeys aggregates two evaluation automorphism key maps
 func (cc *CryptoContext) MultiAddEvalAutomorphismKeys(ekm1, ekm2 *EvalKeyMap, keyTag string) (*EvalKeyMap, error) {
 	if cc.ptr == nil {
-		return nil, errors.New("CryptoContext is closed or invalid")
+		return nil, ErrContextClosed
 	}
 
 	if ekm1 == nil || ekm1.ptr == nil {
@@ -762,11 +762,11 @@ func (cc *CryptoContext) MultiAddEvalAutomorphismKeys(ekm1, ekm2 *EvalKeyMap, ke
 // It reduces the ciphertext to two towers (RNS limbs).
 func (cc *CryptoContext) IntBootAdjustScale(ciphertext *Ciphertext) (*Ciphertext, error) {
 	if cc.ptr == nil {
-		return nil, errors.New("CryptoContext is closed or invalid")
+		return nil, ErrContextClosed
 	}
 
 	if ciphertext == nil || ciphertext.ptr == nil {
-		return nil, errors.New("ciphertext is nil")
+		return nil, ErrCiphertextArgNil
 	}
 
 	var outCT C.CiphertextPtr
@@ -790,15 +790,15 @@ func (cc *CryptoContext) IntBootAdjustScale(ciphertext *Ciphertext) (*Ciphertext
 // This is the second step in the 2-party interactive bootstrapping protocol.
 func (cc *CryptoContext) IntBootDecrypt(privateKey *PrivateKey, ciphertext *Ciphertext) (*Ciphertext, error) {
 	if cc.ptr == nil {
-		return nil, errors.New("CryptoContext is closed or invalid")
+		return nil, ErrContextClosed
 	}
 
 	if privateKey == nil || privateKey.ptr == nil {
-		return nil, errors.New("privateKey is nil")
+		return nil, ErrPrivateKeyArgNil
 	}
 
 	if ciphertext == nil || ciphertext.ptr == nil {
-		return nil, errors.New("ciphertext is nil")
+		return nil, ErrCiphertextArgNil
 	}
 
 	var outCT C.CiphertextPtr
@@ -821,15 +821,15 @@ func (cc *CryptoContext) IntBootDecrypt(privateKey *PrivateKey, ciphertext *Ciph
 // This is the third step in the 2-party interactive bootstrapping protocol (client-side).
 func (cc *CryptoContext) IntBootEncrypt(publicKey *PublicKey, ciphertext *Ciphertext) (*Ciphertext, error) {
 	if cc.ptr == nil {
-		return nil, errors.New("CryptoContext is closed or invalid")
+		return nil, ErrContextClosed
 	}
 
 	if publicKey == nil || publicKey.ptr == nil {
-		return nil, errors.New("publicKey is nil")
+		return nil, ErrPublicKeyArgNil
 	}
 
 	if ciphertext == nil || ciphertext.ptr == nil {
-		return nil, errors.New("ciphertext is nil")
+		return nil, ErrCiphertextArgNil
 	}
 
 	var outCT C.CiphertextPtr
@@ -852,7 +852,7 @@ func (cc *CryptoContext) IntBootEncrypt(publicKey *PublicKey, ciphertext *Cipher
 // This is the final step in the 2-party interactive bootstrapping protocol (server-side).
 func (cc *CryptoContext) IntBootAdd(ciphertext1, ciphertext2 *Ciphertext) (*Ciphertext, error) {
 	if cc.ptr == nil {
-		return nil, errors.New("CryptoContext is closed or invalid")
+		return nil, ErrContextClosed
 	}
 
 	if ciphertext1 == nil || ciphertext1.ptr == nil {

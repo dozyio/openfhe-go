@@ -79,7 +79,7 @@ func NewParamsCKKSRNS() (*ParamsCKKS, error) {
 
 func (p *ParamsCKKS) SetScalingModSize(modSize int) error {
 	if p.ptr == nil {
-		return errors.New("ParamsCKKS is closed or invalid")
+		return ErrParamsCKKSNil
 	}
 
 	status := C.ParamsCKKS_SetScalingModSize(p.ptr, C.int(modSize))
@@ -93,7 +93,7 @@ func (p *ParamsCKKS) SetScalingModSize(modSize int) error {
 
 func (p *ParamsCKKS) SetBatchSize(batchSize int) error {
 	if p.ptr == nil {
-		return errors.New("ParamsCKKS is closed or invalid")
+		return ErrParamsCKKSNil
 	}
 
 	status := C.ParamsCKKS_SetBatchSize(p.ptr, C.int(batchSize))
@@ -107,7 +107,7 @@ func (p *ParamsCKKS) SetBatchSize(batchSize int) error {
 
 func (p *ParamsCKKS) SetMultiplicativeDepth(depth int) error {
 	if p.ptr == nil {
-		return errors.New("ParamsCKKS is closed or invalid")
+		return ErrParamsCKKSNil
 	}
 
 	status := C.ParamsCKKS_SetMultiplicativeDepth(p.ptr, C.int(depth))
@@ -121,7 +121,7 @@ func (p *ParamsCKKS) SetMultiplicativeDepth(depth int) error {
 
 func (p *ParamsCKKS) SetSecurityLevel(level SecurityLevel) error {
 	if p.ptr == nil {
-		return errors.New("ParamsCKKS is closed or invalid")
+		return ErrParamsCKKSNil
 	}
 
 	status := C.ParamsCKKS_SetSecurityLevel(p.ptr, C.OFHESecurityLevel(level))
@@ -135,7 +135,7 @@ func (p *ParamsCKKS) SetSecurityLevel(level SecurityLevel) error {
 
 func (p *ParamsCKKS) SetRingDim(ringDim uint64) error {
 	if p.ptr == nil {
-		return errors.New("ParamsCKKS is closed or invalid")
+		return ErrParamsCKKSNil
 	}
 
 	status := C.ParamsCKKS_SetRingDim(p.ptr, C.uint64_t(ringDim))
@@ -149,7 +149,7 @@ func (p *ParamsCKKS) SetRingDim(ringDim uint64) error {
 
 func (p *ParamsCKKS) SetScalingTechnique(technique int) error {
 	if p.ptr == nil {
-		return errors.New("ParamsCKKS is closed or invalid")
+		return ErrParamsCKKSNil
 	}
 
 	status := C.ParamsCKKS_SetScalingTechnique(p.ptr, C.int(technique))
@@ -163,7 +163,7 @@ func (p *ParamsCKKS) SetScalingTechnique(technique int) error {
 
 func (p *ParamsCKKS) SetFirstModSize(modSize int) error {
 	if p.ptr == nil {
-		return errors.New("ParamsCKKS is closed or invalid")
+		return ErrParamsCKKSNil
 	}
 
 	status := C.ParamsCKKS_SetFirstModSize(p.ptr, C.int(modSize))
@@ -177,7 +177,7 @@ func (p *ParamsCKKS) SetFirstModSize(modSize int) error {
 
 func (p *ParamsCKKS) SetNumLargeDigits(numDigits int) error {
 	if p.ptr == nil {
-		return errors.New("ParamsCKKS is closed or invalid")
+		return ErrParamsCKKSNil
 	}
 
 	status := C.ParamsCKKS_SetNumLargeDigits(p.ptr, C.int(numDigits))
@@ -191,7 +191,7 @@ func (p *ParamsCKKS) SetNumLargeDigits(numDigits int) error {
 
 func (p *ParamsCKKS) SetSecretKeyDist(d SecretKeyDist) error {
 	if p.ptr == nil {
-		return errors.New("ParamsCKKS is closed or invalid")
+		return ErrParamsCKKSNil
 	}
 
 	status := C.ParamsCKKS_SetSecretKeyDist(p.ptr, C.OFHESecretKeyDist(d))
@@ -205,7 +205,7 @@ func (p *ParamsCKKS) SetSecretKeyDist(d SecretKeyDist) error {
 
 func (p *ParamsCKKS) SetDigitSize(digitSize int) error {
 	if p.ptr == nil {
-		return errors.New("ParamsCKKS is closed or invalid")
+		return ErrParamsCKKSNil
 	}
 
 	status := C.ParamsCKKS_SetDigitSize(p.ptr, C.int(digitSize))
@@ -219,7 +219,7 @@ func (p *ParamsCKKS) SetDigitSize(digitSize int) error {
 
 func (p *ParamsCKKS) SetKeySwitchTechnique(technique int) error {
 	if p.ptr == nil {
-		return errors.New("ParamsCKKS is closed or invalid")
+		return ErrParamsCKKSNil
 	}
 
 	status := C.ParamsCKKS_SetKeySwitchTechnique(p.ptr, C.int(technique))
@@ -233,7 +233,7 @@ func (p *ParamsCKKS) SetKeySwitchTechnique(technique int) error {
 
 func (p *ParamsCKKS) SetMultipartyMode(mode int) error {
 	if p.ptr == nil {
-		return errors.New("ParamsCKKS is closed or invalid")
+		return ErrParamsCKKSNil
 	}
 
 	status := C.ParamsCKKS_SetMultipartyMode(p.ptr, C.int(mode))
@@ -253,7 +253,7 @@ const (
 
 func (p *ParamsCKKS) SetCKKSDataType(dataType int) error {
 	if p.ptr == nil {
-		return errors.New("ParamsCKKS is closed or invalid")
+		return ErrParamsCKKSNil
 	}
 
 	status := C.ParamsCKKS_SetCKKSDataType(p.ptr, C.int(dataType))
@@ -267,7 +267,7 @@ func (p *ParamsCKKS) SetCKKSDataType(dataType int) error {
 
 func (p *ParamsCKKS) SetInteractiveBootCompressionLevel(compressionLevel int) error {
 	if p.ptr == nil {
-		return errors.New("ParamsCKKS is closed or invalid")
+		return ErrParamsCKKSNil
 	}
 
 	status := C.ParamsCKKS_SetInteractiveBootCompressionLevel(p.ptr, C.int(compressionLevel))
@@ -307,7 +307,7 @@ func (cc *CryptoContext) GetCyclotomicOrder() uint64 {
 // --- CKKS CryptoContext ---
 func NewCryptoContextCKKS(p *ParamsCKKS) (*CryptoContext, error) {
 	if p == nil || p.ptr == nil {
-		return nil, errors.New("ParamsCKKS is closed or invalid")
+		return nil, ErrParamsCKKSNil
 	}
 
 	var ccH C.CryptoContextPtr
@@ -330,7 +330,7 @@ func NewCryptoContextCKKS(p *ParamsCKKS) (*CryptoContext, error) {
 // --- CKKS Plaintext ---
 func (cc *CryptoContext) MakeCKKSPackedPlaintext(vec []float64) (*Plaintext, error) {
 	if cc.ptr == nil {
-		return nil, errors.New("CryptoContext is closed or invalid")
+		return nil, ErrContextClosed
 	}
 
 	if len(vec) == 0 {
@@ -360,7 +360,7 @@ func (cc *CryptoContext) MakeCKKSPackedPlaintext(vec []float64) (*Plaintext, err
 // MakeCKKSPackedPlaintextWithParams creates a CKKS plaintext with specified scale and level.
 func (cc *CryptoContext) MakeCKKSPackedPlaintextWithParams(vec []float64, scaleDeg float64, level int) (*Plaintext, error) {
 	if cc.ptr == nil {
-		return nil, errors.New("CryptoContext is closed or invalid")
+		return nil, ErrContextClosed
 	}
 
 	if len(vec) == 0 {
@@ -390,7 +390,7 @@ func (cc *CryptoContext) MakeCKKSPackedPlaintextWithParams(vec []float64, scaleD
 // MakeCKKSComplexPackedPlaintext creates a CKKS plaintext from a slice of complex128.
 func (cc *CryptoContext) MakeCKKSComplexPackedPlaintext(vec []complex128) (*Plaintext, error) {
 	if cc.ptr == nil {
-		return nil, errors.New("CryptoContext is closed or invalid")
+		return nil, ErrContextClosed
 	}
 
 	if len(vec) == 0 {
@@ -426,7 +426,7 @@ func (cc *CryptoContext) MakeCKKSComplexPackedPlaintext(vec []complex128) (*Plai
 // MakeCKKSComplexPackedPlaintextWithParams creates a CKKS plaintext from complex numbers with specified scale and level.
 func (cc *CryptoContext) MakeCKKSComplexPackedPlaintextWithParams(vec []complex128, scaleDeg float64, level int) (*Plaintext, error) {
 	if cc.ptr == nil {
-		return nil, errors.New("CryptoContext is closed or invalid")
+		return nil, ErrContextClosed
 	}
 
 	if len(vec) == 0 {
@@ -462,11 +462,11 @@ func (cc *CryptoContext) MakeCKKSComplexPackedPlaintextWithParams(vec []complex1
 // --- CKKS Operations ---
 func (cc *CryptoContext) Rescale(ct *Ciphertext) (*Ciphertext, error) {
 	if cc.ptr == nil {
-		return nil, errors.New("CryptoContext is closed or invalid")
+		return nil, ErrContextClosed
 	}
 
 	if ct == nil || ct.ptr == nil {
-		return nil, errors.New("Input Ciphertext is closed or invalid")
+		return nil, ErrInputCiphertextNil
 	}
 
 	var ctH C.CiphertextPtr
@@ -489,11 +489,11 @@ func (cc *CryptoContext) Rescale(ct *Ciphertext) (*Ciphertext, error) {
 // ModReduce reduces the modulus of the ciphertext without rescaling.
 func (cc *CryptoContext) ModReduce(ct *Ciphertext) (*Ciphertext, error) {
 	if cc.ptr == nil {
-		return nil, errors.New("CryptoContext is closed or invalid")
+		return nil, ErrContextClosed
 	}
 
 	if ct == nil || ct.ptr == nil {
-		return nil, errors.New("Input Ciphertext is closed or invalid")
+		return nil, ErrInputCiphertextNil
 	}
 
 	var ctH C.CiphertextPtr
@@ -517,11 +517,11 @@ func (cc *CryptoContext) ModReduce(ct *Ciphertext) (*Ciphertext, error) {
 // This is more memory-efficient than ModReduce as it modifies the input ciphertext directly.
 func (cc *CryptoContext) ModReduceInPlace(ct *Ciphertext) error {
 	if cc.ptr == nil {
-		return errors.New("CryptoContext is closed or invalid")
+		return ErrContextClosed
 	}
 
 	if ct == nil || ct.ptr == nil {
-		return errors.New("Input Ciphertext is closed or invalid")
+		return ErrInputCiphertextNil
 	}
 
 	status := C.CryptoContext_ModReduceInPlace(cc.ptr, ct.ptr)
@@ -538,10 +538,10 @@ func (cc *CryptoContext) ModReduceInPlace(ct *Ciphertext) error {
 // EvalMultDouble multiplies a ciphertext by a scalar double value.
 func (cc *CryptoContext) EvalMultDouble(ct *Ciphertext, constant float64) (*Ciphertext, error) {
 	if cc.ptr == nil {
-		return nil, errors.New("CryptoContext is closed or invalid")
+		return nil, ErrContextClosed
 	}
 	if ct == nil || ct.ptr == nil {
-		return nil, errors.New("Input Ciphertext is closed or invalid")
+		return nil, ErrInputCiphertextNil
 	}
 
 	var ctH C.CiphertextPtr
@@ -560,10 +560,10 @@ func (cc *CryptoContext) EvalMultDouble(ct *Ciphertext, constant float64) (*Ciph
 // EvalMultComplex multiplies a ciphertext by a complex constant.
 func (cc *CryptoContext) EvalMultComplex(ct *Ciphertext, constant complex128) (*Ciphertext, error) {
 	if cc.ptr == nil {
-		return nil, errors.New("CryptoContext is closed or invalid")
+		return nil, ErrContextClosed
 	}
 	if ct == nil || ct.ptr == nil {
-		return nil, errors.New("Input Ciphertext is closed or invalid")
+		return nil, ErrInputCiphertextNil
 	}
 
 	var ctH C.CiphertextPtr
@@ -583,10 +583,10 @@ func (cc *CryptoContext) EvalMultComplex(ct *Ciphertext, constant complex128) (*
 // EvalAddDouble adds a scalar double value to a ciphertext.
 func (cc *CryptoContext) EvalAddDouble(ct *Ciphertext, constant float64) (*Ciphertext, error) {
 	if cc.ptr == nil {
-		return nil, errors.New("CryptoContext is closed or invalid")
+		return nil, ErrContextClosed
 	}
 	if ct == nil || ct.ptr == nil {
-		return nil, errors.New("Input Ciphertext is closed or invalid")
+		return nil, ErrInputCiphertextNil
 	}
 
 	var ctH C.CiphertextPtr
@@ -605,10 +605,10 @@ func (cc *CryptoContext) EvalAddDouble(ct *Ciphertext, constant float64) (*Ciphe
 // EvalAddComplex adds a complex constant to a ciphertext.
 func (cc *CryptoContext) EvalAddComplex(ct *Ciphertext, constant complex128) (*Ciphertext, error) {
 	if cc.ptr == nil {
-		return nil, errors.New("CryptoContext is closed or invalid")
+		return nil, ErrContextClosed
 	}
 	if ct == nil || ct.ptr == nil {
-		return nil, errors.New("Input Ciphertext is closed or invalid")
+		return nil, ErrInputCiphertextNil
 	}
 
 	var ctH C.CiphertextPtr
@@ -628,10 +628,10 @@ func (cc *CryptoContext) EvalAddComplex(ct *Ciphertext, constant complex128) (*C
 // EvalSubDouble subtracts a scalar double value from a ciphertext.
 func (cc *CryptoContext) EvalSubDouble(ct *Ciphertext, constant float64) (*Ciphertext, error) {
 	if cc.ptr == nil {
-		return nil, errors.New("CryptoContext is closed or invalid")
+		return nil, ErrContextClosed
 	}
 	if ct == nil || ct.ptr == nil {
-		return nil, errors.New("Input Ciphertext is closed or invalid")
+		return nil, ErrInputCiphertextNil
 	}
 
 	var ctH C.CiphertextPtr
@@ -650,10 +650,10 @@ func (cc *CryptoContext) EvalSubDouble(ct *Ciphertext, constant float64) (*Ciphe
 // EvalSubComplex subtracts a complex constant from a ciphertext.
 func (cc *CryptoContext) EvalSubComplex(ct *Ciphertext, constant complex128) (*Ciphertext, error) {
 	if cc.ptr == nil {
-		return nil, errors.New("CryptoContext is closed or invalid")
+		return nil, ErrContextClosed
 	}
 	if ct == nil || ct.ptr == nil {
-		return nil, errors.New("Input Ciphertext is closed or invalid")
+		return nil, ErrInputCiphertextNil
 	}
 
 	var ctH C.CiphertextPtr
@@ -675,10 +675,10 @@ func (cc *CryptoContext) EvalSubComplex(ct *Ciphertext, constant complex128) (*C
 // EvalAddInPlaceDouble adds a scalar double value to a ciphertext in place.
 func (cc *CryptoContext) EvalAddInPlaceDouble(ct *Ciphertext, constant float64) error {
 	if cc.ptr == nil {
-		return errors.New("CryptoContext is closed or invalid")
+		return ErrContextClosed
 	}
 	if ct == nil || ct.ptr == nil {
-		return errors.New("Input Ciphertext is closed or invalid")
+		return ErrInputCiphertextNil
 	}
 
 	status := C.CryptoContext_EvalAddInPlaceDouble(cc.ptr, ct.ptr, C.double(constant))
@@ -693,10 +693,10 @@ func (cc *CryptoContext) EvalAddInPlaceDouble(ct *Ciphertext, constant float64) 
 // EvalAddInPlaceComplex adds a complex constant to a ciphertext in place.
 func (cc *CryptoContext) EvalAddInPlaceComplex(ct *Ciphertext, constant complex128) error {
 	if cc.ptr == nil {
-		return errors.New("CryptoContext is closed or invalid")
+		return ErrContextClosed
 	}
 	if ct == nil || ct.ptr == nil {
-		return errors.New("Input Ciphertext is closed or invalid")
+		return ErrInputCiphertextNil
 	}
 
 	cConst := C.complex_double_t{real: C.double(real(constant)), imag: C.double(imag(constant))}
@@ -712,10 +712,10 @@ func (cc *CryptoContext) EvalAddInPlaceComplex(ct *Ciphertext, constant complex1
 // EvalSubInPlaceDouble subtracts a scalar double value from a ciphertext in place.
 func (cc *CryptoContext) EvalSubInPlaceDouble(ct *Ciphertext, constant float64) error {
 	if cc.ptr == nil {
-		return errors.New("CryptoContext is closed or invalid")
+		return ErrContextClosed
 	}
 	if ct == nil || ct.ptr == nil {
-		return errors.New("Input Ciphertext is closed or invalid")
+		return ErrInputCiphertextNil
 	}
 
 	status := C.CryptoContext_EvalSubInPlaceDouble(cc.ptr, ct.ptr, C.double(constant))
@@ -730,10 +730,10 @@ func (cc *CryptoContext) EvalSubInPlaceDouble(ct *Ciphertext, constant float64) 
 // EvalSubInPlaceComplex subtracts a complex constant from a ciphertext in place.
 func (cc *CryptoContext) EvalSubInPlaceComplex(ct *Ciphertext, constant complex128) error {
 	if cc.ptr == nil {
-		return errors.New("CryptoContext is closed or invalid")
+		return ErrContextClosed
 	}
 	if ct == nil || ct.ptr == nil {
-		return errors.New("Input Ciphertext is closed or invalid")
+		return ErrInputCiphertextNil
 	}
 
 	cConst := C.complex_double_t{real: C.double(real(constant)), imag: C.double(imag(constant))}
@@ -751,11 +751,11 @@ func (cc *CryptoContext) EvalSubInPlaceComplex(ct *Ciphertext, constant complex1
 // Returns the resulting ciphertext and a potential error.
 func (cc *CryptoContext) EvalPoly(ct *Ciphertext, coefficients []float64) (*Ciphertext, error) {
 	if cc.ptr == nil {
-		return nil, errors.New("CryptoContext is closed or invalid")
+		return nil, ErrContextClosed
 	}
 
 	if ct == nil || ct.ptr == nil {
-		return nil, errors.New("Input Ciphertext is closed or invalid")
+		return nil, ErrInputCiphertextNil
 	}
 
 	if len(coefficients) == 0 {
@@ -802,10 +802,10 @@ func GetBootstrapDepth(levelBudget []uint32, skd SecretKeyDist) uint32 {
 // The function generates all necessary rotation keys for summing slots.
 func (cc *CryptoContext) EvalSumKeyGen(keys *KeyPair) error {
 	if cc.ptr == nil {
-		return errors.New("CryptoContext is closed or invalid")
+		return ErrContextClosed
 	}
 	if keys == nil || keys.ptr == nil {
-		return errors.New("KeyPair is closed or invalid")
+		return ErrKeypairClosed
 	}
 
 	status := C.CryptoContext_EvalSumKeyGen(cc.ptr, keys.ptr)
@@ -831,10 +831,10 @@ func (cc *CryptoContext) EvalSumKeyGen(keys *KeyPair) error {
 //	output: [36, 36, 36, 36, 36, 36, 36, 36]  // sum = 1+2+3+4+5+6+7+8 = 36
 func (cc *CryptoContext) EvalSum(ct *Ciphertext, batchSize uint32) (*Ciphertext, error) {
 	if cc.ptr == nil {
-		return nil, errors.New("CryptoContext is closed or invalid")
+		return nil, ErrContextClosed
 	}
 	if ct == nil || ct.ptr == nil {
-		return nil, errors.New("Input Ciphertext is closed or invalid")
+		return nil, ErrInputCiphertextNil
 	}
 
 	var ctH C.CiphertextPtr
@@ -870,10 +870,10 @@ func (cc *CryptoContext) EvalSum(ct *Ciphertext, batchSize uint32) (*Ciphertext,
 //	output: [70, 70, 70, 70]  // 1*5 + 2*6 + 3*7 + 4*8 = 70
 func (cc *CryptoContext) EvalInnerProduct(ct1, ct2 *Ciphertext, batchSize uint32) (*Ciphertext, error) {
 	if cc.ptr == nil {
-		return nil, errors.New("CryptoContext is closed or invalid")
+		return nil, ErrContextClosed
 	}
 	if ct1 == nil || ct1.ptr == nil || ct2 == nil || ct2.ptr == nil {
-		return nil, errors.New("Input Ciphertext is closed or invalid")
+		return nil, ErrInputCiphertextNil
 	}
 
 	var ctH C.CiphertextPtr
@@ -912,7 +912,7 @@ func (cc *CryptoContext) EvalInnerProduct(ct1, ct2 *Ciphertext, batchSize uint32
 //	output:   [2.75, 3.75, 4.75]  // 0.5*[1,2,3] + 0.25*[4,5,6] + 0.25*[7,8,9]
 func (cc *CryptoContext) EvalLinearWSum(ciphertexts []*Ciphertext, constants []float64) (*Ciphertext, error) {
 	if cc.ptr == nil {
-		return nil, errors.New("CryptoContext is closed or invalid")
+		return nil, ErrContextClosed
 	}
 	if len(ciphertexts) == 0 {
 		return nil, errors.New("ciphertexts slice cannot be empty")
@@ -928,7 +928,7 @@ func (cc *CryptoContext) EvalLinearWSum(ciphertexts []*Ciphertext, constants []f
 	ctPtrs := make([]C.CiphertextPtr, len(ciphertexts))
 	for i, ct := range ciphertexts {
 		if ct == nil || ct.ptr == nil {
-			return nil, errors.New("Input Ciphertext is closed or invalid")
+			return nil, ErrInputCiphertextNil
 		}
 		ctPtrs[i] = ct.ptr
 	}
@@ -995,10 +995,10 @@ func (cc *CryptoContext) EvalLinearWSum(ciphertexts []*Ciphertext, constants []f
 //	// Output: [0.018, 0.047, 0.119, 0.269, 0.5, 0.731, 0.881, 0.953, 0.982]
 func (cc *CryptoContext) EvalLogistic(ct *Ciphertext, lowerBound, upperBound float64, polyDegree uint32) (*Ciphertext, error) {
 	if cc.ptr == nil {
-		return nil, errors.New("CryptoContext is closed or invalid")
+		return nil, ErrContextClosed
 	}
 	if ct == nil || ct.ptr == nil {
-		return nil, errors.New("Input Ciphertext is closed or invalid")
+		return nil, ErrInputCiphertextNil
 	}
 
 	var ctH C.CiphertextPtr
@@ -1046,10 +1046,10 @@ func (cc *CryptoContext) EvalLogistic(ct *Ciphertext, lowerBound, upperBound flo
 //	// Output: [1.0, 0.5, 0.333, 0.25, 0.2]
 func (cc *CryptoContext) EvalDivide(ct *Ciphertext, lowerBound, upperBound float64, polyDegree uint32) (*Ciphertext, error) {
 	if cc.ptr == nil {
-		return nil, errors.New("CryptoContext is closed or invalid")
+		return nil, ErrContextClosed
 	}
 	if ct == nil || ct.ptr == nil {
-		return nil, errors.New("Input Ciphertext is closed or invalid")
+		return nil, ErrInputCiphertextNil
 	}
 
 	var ctH C.CiphertextPtr
@@ -1098,10 +1098,10 @@ func (cc *CryptoContext) EvalDivide(ct *Ciphertext, lowerBound, upperBound float
 //	// Output: [0, 0.707, 1.0, 0.707, 0]
 func (cc *CryptoContext) EvalSin(ct *Ciphertext, lowerBound, upperBound float64, polyDegree uint32) (*Ciphertext, error) {
 	if cc.ptr == nil {
-		return nil, errors.New("CryptoContext is closed or invalid")
+		return nil, ErrContextClosed
 	}
 	if ct == nil || ct.ptr == nil {
-		return nil, errors.New("Input Ciphertext is closed or invalid")
+		return nil, ErrInputCiphertextNil
 	}
 
 	var ctH C.CiphertextPtr
@@ -1150,10 +1150,10 @@ func (cc *CryptoContext) EvalSin(ct *Ciphertext, lowerBound, upperBound float64,
 //	// Output: [1.0, 0.707, 0, -0.707, -1.0]
 func (cc *CryptoContext) EvalCos(ct *Ciphertext, lowerBound, upperBound float64, polyDegree uint32) (*Ciphertext, error) {
 	if cc.ptr == nil {
-		return nil, errors.New("CryptoContext is closed or invalid")
+		return nil, ErrContextClosed
 	}
 	if ct == nil || ct.ptr == nil {
-		return nil, errors.New("Input Ciphertext is closed or invalid")
+		return nil, ErrInputCiphertextNil
 	}
 
 	var ctH C.CiphertextPtr
@@ -1216,10 +1216,10 @@ func (cc *CryptoContext) EvalCos(ct *Ciphertext, lowerBound, upperBound float64,
 //	result, err := cc.EvalChebyshevFunction(customFunc, ciphertext, -5.0, 5.0, 32)
 func (cc *CryptoContext) EvalChebyshevFunction(fn ChebyshevFunc, ct *Ciphertext, lowerBound, upperBound float64, polyDegree uint32) (*Ciphertext, error) {
 	if cc.ptr == nil {
-		return nil, errors.New("CryptoContext is closed or invalid")
+		return nil, ErrContextClosed
 	}
 	if ct == nil || ct.ptr == nil {
-		return nil, errors.New("Input Ciphertext is closed or invalid")
+		return nil, ErrInputCiphertextNil
 	}
 	if fn == nil {
 		return nil, errors.New("Function is nil")
@@ -1385,10 +1385,10 @@ func EvalChebyshevCoefficients(fn func(float64) float64, lowerBound, upperBound 
 // otherwise the approximation will be incorrect.
 func (cc *CryptoContext) EvalChebyshevSeries(ct *Ciphertext, coeffs []float64, lowerBound, upperBound float64) (*Ciphertext, error) {
 	if cc.ptr == nil {
-		return nil, errors.New("CryptoContext is closed or invalid")
+		return nil, ErrContextClosed
 	}
 	if ct == nil || ct.ptr == nil {
-		return nil, errors.New("Input Ciphertext is closed or invalid")
+		return nil, ErrInputCiphertextNil
 	}
 	if len(coeffs) == 0 {
 		return nil, errors.New("Coefficients slice cannot be empty")
@@ -1520,11 +1520,11 @@ func EvalChebyshevFunctionPtxt(fn func(float64) float64, ptxt []float64, a, b fl
 // It compresses the ciphertext to the smallest possible number of towers (RNS limbs).
 func (cc *CryptoContext) IntMPBootAdjustScale(ciphertext *Ciphertext) (*Ciphertext, error) {
 	if cc.ptr == nil {
-		return nil, errors.New("CryptoContext is closed or invalid")
+		return nil, ErrContextClosed
 	}
 
 	if ciphertext == nil || ciphertext.ptr == nil {
-		return nil, errors.New("ciphertext is nil")
+		return nil, ErrCiphertextArgNil
 	}
 
 	var outCT C.CiphertextPtr
@@ -1547,11 +1547,11 @@ func (cc *CryptoContext) IntMPBootAdjustScale(ciphertext *Ciphertext) (*Cipherte
 // This CRP is shared with all parties and used in the IntMPBootDecrypt step.
 func (cc *CryptoContext) IntMPBootRandomElementGen(publicKey *PublicKey) (*Ciphertext, error) {
 	if cc.ptr == nil {
-		return nil, errors.New("CryptoContext is closed or invalid")
+		return nil, ErrContextClosed
 	}
 
 	if publicKey == nil || publicKey.ptr == nil {
-		return nil, errors.New("publicKey is nil")
+		return nil, ErrPublicKeyArgNil
 	}
 
 	var outCT C.CiphertextPtr
@@ -1580,11 +1580,11 @@ func (cc *CryptoContext) IntMPBootRandomElementGen(publicKey *PublicKey) (*Ciphe
 // Returns: A slice with 2 ciphertexts [h0, h1] representing the party's shares
 func (cc *CryptoContext) IntMPBootDecrypt(privateKey *PrivateKey, c1, a *Ciphertext) ([]*Ciphertext, error) {
 	if cc.ptr == nil {
-		return nil, errors.New("CryptoContext is closed or invalid")
+		return nil, ErrContextClosed
 	}
 
 	if privateKey == nil || privateKey.ptr == nil {
-		return nil, errors.New("privateKey is nil")
+		return nil, ErrPrivateKeyArgNil
 	}
 
 	if c1 == nil || c1.ptr == nil {
@@ -1622,7 +1622,7 @@ func (cc *CryptoContext) IntMPBootDecrypt(privateKey *PrivateKey, c1, a *Ciphert
 // Returns: A slice with 2 aggregated ciphertexts [aggregated_h0, aggregated_h1]
 func (cc *CryptoContext) IntMPBootAdd(sharesPairVec [][]*Ciphertext) ([]*Ciphertext, error) {
 	if cc.ptr == nil {
-		return nil, errors.New("CryptoContext is closed or invalid")
+		return nil, ErrContextClosed
 	}
 
 	if len(sharesPairVec) == 0 {
@@ -1699,11 +1699,11 @@ func (cc *CryptoContext) IntMPBootAdd(sharesPairVec [][]*Ciphertext) ([]*Ciphert
 // Returns: The bootstrapped ciphertext
 func (cc *CryptoContext) IntMPBootEncrypt(publicKey *PublicKey, aggregatedSharesPair []*Ciphertext, a, inCtxt *Ciphertext) (*Ciphertext, error) {
 	if cc.ptr == nil {
-		return nil, errors.New("CryptoContext is closed or invalid")
+		return nil, ErrContextClosed
 	}
 
 	if publicKey == nil || publicKey.ptr == nil {
-		return nil, errors.New("publicKey is nil")
+		return nil, ErrPublicKeyArgNil
 	}
 
 	if len(aggregatedSharesPair) != 2 {

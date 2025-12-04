@@ -30,7 +30,7 @@ func NewParamsBFVrns() (*ParamsBFV, error) {
 
 func (p *ParamsBFV) SetPlaintextModulus(mod uint64) error {
 	if p.ptr == nil {
-		return errors.New("ParamsBFV is closed or invalid")
+		return ErrParamsBFVNil
 	}
 	status := C.ParamsBFV_SetPlaintextModulus(p.ptr, C.uint64_t(mod))
 	err := checkPKEErrorMsg(status)
@@ -42,7 +42,7 @@ func (p *ParamsBFV) SetPlaintextModulus(mod uint64) error {
 
 func (p *ParamsBFV) SetMultiplicativeDepth(depth int) error {
 	if p.ptr == nil {
-		return errors.New("ParamsBFV is closed or invalid")
+		return ErrParamsBFVNil
 	}
 	status := C.ParamsBFV_SetMultiplicativeDepth(p.ptr, C.int(depth))
 	err := checkPKEErrorMsg(status)
@@ -54,7 +54,7 @@ func (p *ParamsBFV) SetMultiplicativeDepth(depth int) error {
 
 func (p *ParamsBFV) SetSecurityLevel(level SecurityLevel) error {
 	if p.ptr == nil {
-		return errors.New("ParamsBFV is closed or invalid")
+		return ErrParamsBFVNil
 	}
 	status := C.ParamsBFV_SetSecurityLevel(p.ptr, C.OFHESecurityLevel(level))
 	err := checkPKEErrorMsg(status)
@@ -66,7 +66,7 @@ func (p *ParamsBFV) SetSecurityLevel(level SecurityLevel) error {
 
 func (p *ParamsBFV) SetRingDim(ringDim uint64) error {
 	if p.ptr == nil {
-		return errors.New("ParamsBFV is closed or invalid")
+		return ErrParamsBFVNil
 	}
 	status := C.ParamsBFV_SetRingDim(p.ptr, C.uint64_t(ringDim))
 	err := checkPKEErrorMsg(status)
@@ -78,7 +78,7 @@ func (p *ParamsBFV) SetRingDim(ringDim uint64) error {
 
 func (p *ParamsBFV) SetMaxRelinSkDeg(maxRelinSkDeg uint32) error {
 	if p.ptr == nil {
-		return errors.New("ParamsBFV is closed or invalid")
+		return ErrParamsBFVNil
 	}
 	status := C.ParamsBFV_SetMaxRelinSkDeg(p.ptr, C.uint32_t(maxRelinSkDeg))
 	err := checkPKEErrorMsg(status)
@@ -90,7 +90,7 @@ func (p *ParamsBFV) SetMaxRelinSkDeg(maxRelinSkDeg uint32) error {
 
 func (p *ParamsBFV) SetMultipartyMode(mode int) error {
 	if p.ptr == nil {
-		return errors.New("ParamsBFV is closed or invalid")
+		return ErrParamsBFVNil
 	}
 	status := C.ParamsBFV_SetMultipartyMode(p.ptr, C.int(mode))
 	err := checkPKEErrorMsg(status)
@@ -110,7 +110,7 @@ func (p *ParamsBFV) Close() {
 // --- BFV CryptoContext ---
 func NewCryptoContextBFV(p *ParamsBFV) (*CryptoContext, error) {
 	if p == nil || p.ptr == nil {
-		return nil, errors.New("ParamsBFV is closed or invalid")
+		return nil, ErrParamsBFVNil
 	}
 	var ccH C.CryptoContextPtr
 	status := C.NewCryptoContextBFV(p.ptr, &ccH)
@@ -128,7 +128,7 @@ func NewCryptoContextBFV(p *ParamsBFV) (*CryptoContext, error) {
 // --- BFV Plaintext ---
 func (cc *CryptoContext) MakePackedPlaintext(vec []int64) (*Plaintext, error) {
 	if cc.ptr == nil {
-		return nil, errors.New("CryptoContext is closed or invalid")
+		return nil, ErrContextClosed
 	}
 	if len(vec) == 0 {
 		// Or return error? For now, match old behavior.
