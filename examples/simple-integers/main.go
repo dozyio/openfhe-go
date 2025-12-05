@@ -33,6 +33,13 @@ func main() {
 
 	checkErr(parameters.SetPlaintextModulus(65537), "SetPlaintextModulus")
 	checkErr(parameters.SetMultiplicativeDepth(2), "SetMultiplicativeDepth")
+
+	// Optional: Set key switching technique (BV or HYBRID)
+	// BV (Brakerski-Vaikuntanathan) uses digit decomposition with digitSize
+	// HYBRID uses a hybrid approach with numLargeDigits for better performance
+	// Default is typically HYBRID for better efficiency
+	checkErr(parameters.SetKeySwitchTechnique(openfhe.HYBRID), "SetKeySwitchTechnique")
+
 	fmt.Println("Parameters set.")
 
 	// 2. Generate CryptoContext

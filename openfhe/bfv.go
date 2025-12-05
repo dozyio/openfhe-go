@@ -88,6 +88,18 @@ func (p *ParamsBFV) SetMaxRelinSkDeg(maxRelinSkDeg uint32) error {
 	return nil
 }
 
+func (p *ParamsBFV) SetKeySwitchTechnique(technique int) error {
+	if p.ptr == nil {
+		return ErrParamsBFVNil
+	}
+	status := C.ParamsBFV_SetKeySwitchTechnique(p.ptr, C.int(technique))
+	err := checkPKEErrorMsg(status)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func (p *ParamsBFV) SetMultipartyMode(mode int) error {
 	if p.ptr == nil {
 		return ErrParamsBFVNil

@@ -79,6 +79,18 @@ PKEErr ParamsBFV_SetMaxRelinSkDeg(ParamsBFVPtr p, uint32_t maxRelinSkDeg) {
   PKE_CATCH_RETURN()
 }
 
+PKEErr ParamsBFV_SetKeySwitchTechnique(ParamsBFVPtr p, int technique) {
+  try {
+    if (!p) {
+      return MakePKEError("ParamsBFV_SetKeySwitchTechnique: null params");
+    }
+    reinterpret_cast<CCParams<CryptoContextBFVRNS> *>(p)->SetKeySwitchTechnique(
+        static_cast<KeySwitchTechnique>(technique));
+    return MakePKEOk();
+  }
+  PKE_CATCH_RETURN()
+}
+
 void DestroyParamsBFV(ParamsBFVPtr p) {
   delete reinterpret_cast<CCParams<CryptoContextBFVRNS> *>(p);
 }

@@ -27,6 +27,7 @@ func TestBFVParamsSetters(t *testing.T) {
 	}{
 		{"SetPlaintextModulus", func() error { return params.SetPlaintextModulus(65537) }},
 		{"SetMultiplicativeDepth", func() error { return params.SetMultiplicativeDepth(2) }},
+		{"SetKeySwitchTechnique", func() error { return params.SetKeySwitchTechnique(BV) }},
 	}
 
 	for _, tt := range tests {
@@ -378,5 +379,92 @@ func TestBFVRotationEdgeCases(t *testing.T) {
 
 	if !slicesEqual(result0[:len(vec)], vec) {
 		t.Errorf("Rotate by 0 changed values: expected %v, got %v", vec, result0[:len(vec)])
+	}
+}
+
+// TestBFVSetKeySwitchTechnique tests BFV key switch technique setting
+func TestBFVSetKeySwitchTechnique(t *testing.T) {
+	tests := []struct {
+		name      string
+		technique int
+		wantErr   bool
+	}{
+		{"BV technique", BV, false},
+		{"HYBRID technique", HYBRID, false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			params, err := NewParamsBFVrns()
+			mustT(t, err, "NewParamsBFVrns")
+			defer params.Close()
+
+			err = params.SetPlaintextModulus(65537)
+			mustT(t, err, "SetPlaintextModulus")
+
+			err = params.SetMultiplicativeDepth(2)
+			mustT(t, err, "SetMultiplicativeDepth")
+
+			err = params.SetKeySwitchTechnique(tt.technique)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("SetKeySwitchTechnique() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+
+			// Try to create a crypto context to verify the technique was set correctly
+			if !tt.wantErr {
+				cc, err := NewCryptoContextBFV(params)
+				if err != nil {
+					t.Errorf("Failed to create CryptoContext with %s: %v", tt.name, err)
+					return
+				}
+				defer cc.Close()
+
+				err = cc.Enable(PKE)
+				mustT(t, err, "Enable PKE")
+
+				err = cc.Enable(KEYSWITCH)
+				mustT(t, err, "Enable KEYSWITCH")
+
+				err = cc.Enable(LEVELEDSHE)
+				mustT(t, err, "Enable LEVELEDSHE")
+
+				// Generate keys and perform a simple operation to verify it works
+				keys, err := cc.KeyGen()
+				mustT(t, err, "KeyGen")
+				defer keys.Close()
+
+				err = cc.EvalMultKeyGen(keys)
+				mustT(t, err, "EvalMultKeyGen")
+
+				// Simple encryption/decryption test
+				vec := []int64{1, 2, 3, 4}
+				pt, err := cc.MakePackedPlaintext(vec)
+				mustT(t, err, "MakePackedPlaintext")
+				defer pt.Close()
+
+				ct, err := cc.Encrypt(keys, pt)
+				mustT(t, err, "Encrypt")
+				defer ct.Close()
+
+				// Test that key switching works with multiplication
+				ct2, err := cc.EvalMult(ct, ct)
+				mustT(t, err, "EvalMult")
+				defer ct2.Close()
+
+				result, err := cc.Decrypt(keys, ct2)
+				mustT(t, err, "Decrypt")
+				defer result.Close()
+
+				resultVec, err := result.GetPackedValue()
+				mustT(t, err, "GetPackedValue")
+
+				// Verify result (should be vec * vec)
+				expected := []int64{1, 4, 9, 16}
+				if !slicesEqual(resultVec[:len(expected)], expected) {
+					t.Errorf("Multiplication with %s failed: expected %v, got %v", tt.name, expected, resultVec[:len(expected)])
+				}
+			}
+		})
 	}
 }
