@@ -154,6 +154,30 @@ func (p *ParamsBGV) SetKeySwitchTechnique(technique int) error {
 	return nil
 }
 
+func (p *ParamsBGV) SetScalingModSize(modSize int) error {
+	if p.ptr == nil {
+		return ErrParamsBGVNil
+	}
+	status := C.ParamsBGV_SetScalingModSize(p.ptr, C.int(modSize))
+	err := checkPKEErrorMsg(status)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (p *ParamsBGV) SetFirstModSize(modSize int) error {
+	if p.ptr == nil {
+		return ErrParamsBGVNil
+	}
+	status := C.ParamsBGV_SetFirstModSize(p.ptr, C.int(modSize))
+	err := checkPKEErrorMsg(status)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 // Close method for ParamsBGV
 func (p *ParamsBGV) Close() {
 	if p.ptr != nil {

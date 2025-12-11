@@ -47,10 +47,13 @@ make run-examples   # Run all examples
 
 **Build times:**
 - **First-time OpenFHE build**: 3-5 minutes (builds C++ OpenFHE library)
-- **Subsequent Go builds**: 5-30 seconds (recompiles C++ wrappers, links against shared libs)
+- **First-time C++ wrapper compilation**: ~2 minutes (CGO compiles C++ wrapper files)
+- **Subsequent Go builds/tests**: <0.1 seconds (Go build cache)
+- **After C++ wrapper changes**: ~2 minutes (only recompiles changed C++ files)
+- **After Go code changes**: <0.1 seconds (doesn't recompile C++)
 - **OpenFHE only**: `make build_openfhe` (builds shared libraries only)
 
-The C++ wrapper files are recompiled by CGO on each build, but linking against shared libraries is much faster than static linking.
+CGO automatically handles compiling the C++ wrapper files and **intelligently caches** them. The cache only invalidates when C++ files actually change, not when Go code changes, providing very fast iteration.
 
 #### Production Mode (Static Libraries)
 Standalone binaries with statically linked OpenFHE - ideal for deployment.

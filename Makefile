@@ -36,7 +36,7 @@ CMAKE_STATIC_OPTIONS := $(CMAKE_BASE_OPTIONS) \
 
 # --- Targets ---
 
-.PHONY: all build build-static run clean fetch_openfhe build_openfhe build_openfhe_shared build_openfhe_static clean_openfhe test test-coverage benchmark
+.PHONY: all build build-static run clean fetch_openfhe build_openfhe build_openfhe_shared build_openfhe_static clean-openfhe test test-coverage benchmark
 
 # Default target: build with shared libraries (fast for development)
 all: build
@@ -81,7 +81,7 @@ $(OPENFHE_SRC_DIR)/CMakeLists.txt:
 		if [ "$$CURRENT_TAG" != "$(OPENFHE_TAG)" ]; then \
 			echo "Warning: OpenFHE directory exists but is not on tag $(OPENFHE_TAG)."; \
 			echo "Current state: $$CURRENT_TAG / $$(git rev-parse --abbrev-ref HEAD)"; \
-			echo "To fetch the correct version, run 'make clean_openfhe' then 'make build_openfhe'."; \
+			echo "To fetch the correct version, run 'make clean-openfhe' then 'make build_openfhe'."; \
 		else \
 			echo "OpenFHE is on the correct tag ($(OPENFHE_TAG))."; \
 		fi; \
@@ -140,6 +140,6 @@ clean:
 	@go clean
 
 # Target to clean OpenFHE build and install directories
-clean_openfhe:
+clean-openfhe:
 	@echo "--- Cleaning OpenFHE build and install directories ---"
 	@rm -rf $(OPENFHE_BUILD_DIR) $(OPENFHE_INSTALL_DIR) $(OPENFHE_SRC_DIR)

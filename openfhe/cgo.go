@@ -10,8 +10,6 @@ package openfhe
 // Production: Use static libraries when OPENFHE_STATIC=1 is set
 #cgo static LDFLAGS: ${SRCDIR}/../openfhe-install/lib/libOPENFHEpke_static.a ${SRCDIR}/../openfhe-install/lib/libOPENFHEcore_static.a ${SRCDIR}/../openfhe-install/lib/libOPENFHEbinfhe_static.a
 
-//CGO_SOURCES: pke_common_c.cpp bfv_c.cpp bgv_c.cpp ckks_c.cpp binfhe_c.cpp pre_c.cpp schemeswitch_c.cpp minmax_c.cpp multiparty_c.cpp
-
 #include <stdint.h>
 #include "binfhe_c.h"
 #include "pke_common_c.h"

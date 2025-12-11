@@ -112,6 +112,18 @@ func (p *ParamsBFV) SetMultipartyMode(mode int) error {
 	return nil
 }
 
+func (p *ParamsBFV) SetScalingModSize(modSize int) error {
+	if p.ptr == nil {
+		return ErrParamsBFVNil
+	}
+	status := C.ParamsBFV_SetScalingModSize(p.ptr, C.int(modSize))
+	err := checkPKEErrorMsg(status)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func (p *ParamsBFV) Close() {
 	if p.ptr != nil {
 		C.DestroyParamsBFV(p.ptr)

@@ -153,4 +153,16 @@ PKEErr ParamsBFV_SetMultipartyMode(ParamsBFVPtr p_ptr_to_sptr, int mode) {
   PKE_CATCH_RETURN()
 }
 
+PKEErr ParamsBFV_SetScalingModSize(ParamsBFVPtr p, int modSize) {
+  try {
+    if (!p) {
+      return MakePKEError("ParamsBFV_SetScalingModSize: null params");
+    }
+    reinterpret_cast<CCParams<CryptoContextBFVRNS> *>(p)->SetScalingModSize(
+        modSize);
+    return MakePKEOk();
+  }
+  PKE_CATCH_RETURN()
+}
+
 } // extern "C"

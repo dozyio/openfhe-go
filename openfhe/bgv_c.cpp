@@ -232,4 +232,28 @@ PKEErr ParamsBGV_SetKeySwitchTechnique(ParamsBGVPtr p, int technique) {
   PKE_CATCH_RETURN()
 }
 
+PKEErr ParamsBGV_SetScalingModSize(ParamsBGVPtr p, int modSize) {
+  try {
+    if (!p) {
+      return MakePKEError("ParamsBGV_SetScalingModSize: null params");
+    }
+    reinterpret_cast<CCParams<CryptoContextBGVRNS> *>(p)->SetScalingModSize(
+        modSize);
+    return MakePKEOk();
+  }
+  PKE_CATCH_RETURN()
+}
+
+PKEErr ParamsBGV_SetFirstModSize(ParamsBGVPtr p, int modSize) {
+  try {
+    if (!p) {
+      return MakePKEError("ParamsBGV_SetFirstModSize: null params");
+    }
+    reinterpret_cast<CCParams<CryptoContextBGVRNS> *>(p)->SetFirstModSize(
+        modSize);
+    return MakePKEOk();
+  }
+  PKE_CATCH_RETURN()
+}
+
 } // extern "C"

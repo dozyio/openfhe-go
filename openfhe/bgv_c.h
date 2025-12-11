@@ -22,6 +22,8 @@ PKEErr ParamsBGV_SetStatisticalSecurity(ParamsBGVPtr p, uint32_t statSec);
 PKEErr ParamsBGV_SetNumAdversarialQueries(ParamsBGVPtr p, uint32_t numQueries);
 PKEErr ParamsBGV_SetRingDim(ParamsBGVPtr p, uint32_t ringDim);
 PKEErr ParamsBGV_SetKeySwitchTechnique(ParamsBGVPtr p, int technique);
+PKEErr ParamsBGV_SetScalingModSize(ParamsBGVPtr p, int modSize);
+PKEErr ParamsBGV_SetFirstModSize(ParamsBGVPtr p, int modSize);
 void DestroyParamsBGV(ParamsBGVPtr p);
 
 // --- BGV CryptoContext ---
