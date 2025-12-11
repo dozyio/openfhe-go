@@ -617,7 +617,7 @@ func (cc *CryptoContext) EvalBootstrapSetup(levelBudget []uint32, bsgsDim []uint
 }
 
 func (ct *Ciphertext) GetLevel() (int, bool) {
-	if ct.ptr == nil {
+	if ct == nil || ct.ptr == nil {
 		return -1, false // Indicate invalid state
 	}
 	level := C.Ciphertext_GetLevel(ct.ptr)
@@ -629,14 +629,14 @@ func (ct *Ciphertext) GetLevel() (int, bool) {
 }
 
 func (ct *Ciphertext) GetNoiseScaleDeg() uint32 {
-	if ct.ptr == nil {
+	if ct == nil || ct.ptr == nil {
 		return 0
 	}
 	return uint32(C.Ciphertext_GetNoiseScaleDeg(ct.ptr))
 }
 
 func (ct *Ciphertext) GetKeyTag() (string, error) {
-	if ct.ptr == nil {
+	if ct == nil || ct.ptr == nil {
 		return "", ErrCiphertextNil
 	}
 
@@ -653,6 +653,51 @@ func (ct *Ciphertext) GetKeyTag() (string, error) {
 	defer C.free(unsafe.Pointer(cKeyTag))
 
 	return C.GoString(cKeyTag), nil
+}
+
+// GetScalingFactor returns the scaling factor of the ciphertext (CKKS scheme).
+// Returns 0.0 if the ciphertext is invalid.
+func (ct *Ciphertext) GetScalingFactor() float64 {
+	if ct == nil || ct.ptr == nil {
+		return 0.0
+	}
+	return float64(C.Ciphertext_GetScalingFactor(ct.ptr))
+}
+
+// SetScalingFactor sets the scaling factor of the ciphertext (CKKS scheme).
+// Does nothing if the ciphertext is invalid.
+func (ct *Ciphertext) SetScalingFactor(scalingFactor float64) {
+	if ct == nil || ct.ptr == nil {
+		return
+	}
+	C.Ciphertext_SetScalingFactor(ct.ptr, C.double(scalingFactor))
+}
+
+// GetSlots returns the number of slots in the ciphertext.
+// Returns 0 if the ciphertext is invalid.
+func (ct *Ciphertext) GetSlots() uint32 {
+	if ct == nil || ct.ptr == nil {
+		return 0
+	}
+	return uint32(C.Ciphertext_GetSlots(ct.ptr))
+}
+
+// SetSlots sets the number of slots in the ciphertext.
+// Does nothing if the ciphertext is invalid.
+func (ct *Ciphertext) SetSlots(slots uint32) {
+	if ct == nil || ct.ptr == nil {
+		return
+	}
+	C.Ciphertext_SetSlots(ct.ptr, C.uint32_t(slots))
+}
+
+// GetEncodingType returns the encoding type of the ciphertext.
+// Returns -1 if the ciphertext is invalid.
+func (ct *Ciphertext) GetEncodingType() int {
+	if ct == nil || ct.ptr == nil {
+		return -1
+	}
+	return int(C.Ciphertext_GetEncodingType(ct.ptr))
 }
 
 func (cc *CryptoContext) GetParameterElementString() (string, error) {

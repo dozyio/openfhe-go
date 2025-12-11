@@ -153,6 +153,60 @@ func (pt *Plaintext) SetLength(len int) error {
 	return nil
 }
 
+// GetLength returns the length of the plaintext.
+// Returns 0 if the plaintext is invalid.
+func (pt *Plaintext) GetLength() int {
+	if pt == nil || pt.ptr == nil {
+		return 0
+	}
+	return int(C.Plaintext_GetLength(pt.ptr))
+}
+
+// GetLevel returns the level (depth) of the plaintext.
+// Returns 0 if the plaintext is invalid.
+func (pt *Plaintext) GetLevel() int {
+	if pt == nil || pt.ptr == nil {
+		return 0
+	}
+	return int(C.Plaintext_GetLevel(pt.ptr))
+}
+
+// GetSlots returns the number of slots in the plaintext.
+// Returns 0 if the plaintext is invalid.
+func (pt *Plaintext) GetSlots() uint32 {
+	if pt == nil || pt.ptr == nil {
+		return 0
+	}
+	return uint32(C.Plaintext_GetSlots(pt.ptr))
+}
+
+// GetScalingFactor returns the scaling factor of the plaintext (CKKS scheme).
+// Returns 0.0 if the plaintext is invalid.
+func (pt *Plaintext) GetScalingFactor() float64 {
+	if pt == nil || pt.ptr == nil {
+		return 0.0
+	}
+	return float64(C.Plaintext_GetScalingFactor(pt.ptr))
+}
+
+// SetScalingFactor sets the scaling factor of the plaintext (CKKS scheme).
+// Does nothing if the plaintext is invalid.
+func (pt *Plaintext) SetScalingFactor(scalingFactor float64) {
+	if pt == nil || pt.ptr == nil {
+		return
+	}
+	C.Plaintext_SetScalingFactor(pt.ptr, C.double(scalingFactor))
+}
+
+// GetEncodingType returns the encoding type of the plaintext.
+// Returns -1 if the plaintext is invalid.
+func (pt *Plaintext) GetEncodingType() int {
+	if pt == nil || pt.ptr == nil {
+		return -1
+	}
+	return int(C.Plaintext_GetEncodingType(pt.ptr))
+}
+
 // Close frees the underlying C++ Plaintext object.
 func (pt *Plaintext) Close() {
 	if pt.ptr != nil {

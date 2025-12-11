@@ -871,6 +871,84 @@ PKEErr Plaintext_GetRealPackedValueBulk(PlaintextPtr pt_ptr_to_sptr,
   PKE_CATCH_RETURN()
 }
 
+int Plaintext_GetLength(PlaintextPtr pt_ptr_to_sptr) {
+  if (!pt_ptr_to_sptr) {
+    return 0;
+  }
+
+  auto &pt_sptr = GetPTSharedPtr(pt_ptr_to_sptr);
+  if (!pt_sptr) {
+    return 0;
+  }
+
+  return static_cast<int>(pt_sptr->GetLength());
+}
+
+int Plaintext_GetLevel(PlaintextPtr pt_ptr_to_sptr) {
+  if (!pt_ptr_to_sptr) {
+    return 0;
+  }
+
+  auto &pt_sptr = GetPTSharedPtr(pt_ptr_to_sptr);
+  if (!pt_sptr) {
+    return 0;
+  }
+
+  return static_cast<int>(pt_sptr->GetLevel());
+}
+
+uint32_t Plaintext_GetSlots(PlaintextPtr pt_ptr_to_sptr) {
+  if (!pt_ptr_to_sptr) {
+    return 0;
+  }
+
+  auto &pt_sptr = GetPTSharedPtr(pt_ptr_to_sptr);
+  if (!pt_sptr) {
+    return 0;
+  }
+
+  return pt_sptr->GetSlots();
+}
+
+double Plaintext_GetScalingFactor(PlaintextPtr pt_ptr_to_sptr) {
+  if (!pt_ptr_to_sptr) {
+    return 0.0;
+  }
+
+  auto &pt_sptr = GetPTSharedPtr(pt_ptr_to_sptr);
+  if (!pt_sptr) {
+    return 0.0;
+  }
+
+  return pt_sptr->GetScalingFactor();
+}
+
+void Plaintext_SetScalingFactor(PlaintextPtr pt_ptr_to_sptr, double sf) {
+  if (!pt_ptr_to_sptr) {
+    return;
+  }
+
+  auto &pt_sptr = GetPTSharedPtr(pt_ptr_to_sptr);
+  if (!pt_sptr) {
+    return;
+  }
+
+  pt_sptr->SetScalingFactor(sf);
+}
+
+int Plaintext_GetEncodingType(PlaintextPtr pt_ptr_to_sptr) {
+  if (!pt_ptr_to_sptr) {
+    return -1;
+  }
+
+  auto &pt_sptr = GetPTSharedPtr(pt_ptr_to_sptr);
+  if (!pt_sptr) {
+    return -1;
+  }
+
+  return static_cast<int>(pt_sptr->GetEncodingType());
+}
+
 void DestroyPlaintext(PlaintextPtr pt_ptr_to_sptr) {
   delete reinterpret_cast<PlaintextSharedPtr *>(pt_ptr_to_sptr);
 }
@@ -922,6 +1000,71 @@ PKEErr Ciphertext_GetKeyTag(CiphertextPtr ct_ptr_to_sptr, char **outString) {
     return MakePKEOk();
   }
   PKE_CATCH_RETURN()
+}
+
+double Ciphertext_GetScalingFactor(CiphertextPtr ct_ptr_to_sptr) {
+  if (!ct_ptr_to_sptr) {
+    return 0.0;
+  }
+
+  auto &ct_sptr = GetCTSharedPtr(ct_ptr_to_sptr);
+  if (!ct_sptr) {
+    return 0.0;
+  }
+
+  return ct_sptr->GetScalingFactor();
+}
+
+void Ciphertext_SetScalingFactor(CiphertextPtr ct_ptr_to_sptr, double sf) {
+  if (!ct_ptr_to_sptr) {
+    return;
+  }
+
+  auto &ct_sptr = GetCTSharedPtr(ct_ptr_to_sptr);
+  if (!ct_sptr) {
+    return;
+  }
+
+  ct_sptr->SetScalingFactor(sf);
+}
+
+uint32_t Ciphertext_GetSlots(CiphertextPtr ct_ptr_to_sptr) {
+  if (!ct_ptr_to_sptr) {
+    return 0;
+  }
+
+  auto &ct_sptr = GetCTSharedPtr(ct_ptr_to_sptr);
+  if (!ct_sptr) {
+    return 0;
+  }
+
+  return ct_sptr->GetSlots();
+}
+
+void Ciphertext_SetSlots(CiphertextPtr ct_ptr_to_sptr, uint32_t slots) {
+  if (!ct_ptr_to_sptr) {
+    return;
+  }
+
+  auto &ct_sptr = GetCTSharedPtr(ct_ptr_to_sptr);
+  if (!ct_sptr) {
+    return;
+  }
+
+  ct_sptr->SetSlots(slots);
+}
+
+int Ciphertext_GetEncodingType(CiphertextPtr ct_ptr_to_sptr) {
+  if (!ct_ptr_to_sptr) {
+    return -1;
+  }
+
+  auto &ct_sptr = GetCTSharedPtr(ct_ptr_to_sptr);
+  if (!ct_sptr) {
+    return -1;
+  }
+
+  return static_cast<int>(ct_sptr->GetEncodingType());
 }
 
 void DestroyCiphertext(CiphertextPtr ct_ptr_to_sptr) {

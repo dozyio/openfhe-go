@@ -76,6 +76,11 @@ uint64_t CryptoContext_GetCyclotomicOrder(CryptoContextPtr cc);
 int Ciphertext_GetLevel(CiphertextPtr ct);
 uint32_t Ciphertext_GetNoiseScaleDeg(CiphertextPtr ct);
 PKEErr Ciphertext_GetKeyTag(CiphertextPtr ct, char **outString);
+double Ciphertext_GetScalingFactor(CiphertextPtr ct);
+void Ciphertext_SetScalingFactor(CiphertextPtr ct, double sf);
+uint32_t Ciphertext_GetSlots(CiphertextPtr ct);
+void Ciphertext_SetSlots(CiphertextPtr ct, uint32_t slots);
+int Ciphertext_GetEncodingType(CiphertextPtr ct);
 void DestroyCryptoContext(CryptoContextPtr cc);
 int GetNativeInt();
 
@@ -129,6 +134,12 @@ PKEErr Plaintext_GetRealPackedValueLength(PlaintextPtr pt, int *out_len);
 PKEErr Plaintext_GetRealPackedValueAt(PlaintextPtr pt, int i, double *out_val);
 PKEErr Plaintext_GetRealPackedValueBulk(PlaintextPtr pt, double **out_values,
                                         int *out_len);
+int Plaintext_GetLength(PlaintextPtr pt);
+int Plaintext_GetLevel(PlaintextPtr pt);
+uint32_t Plaintext_GetSlots(PlaintextPtr pt);
+double Plaintext_GetScalingFactor(PlaintextPtr pt);
+void Plaintext_SetScalingFactor(PlaintextPtr pt, double sf);
+int Plaintext_GetEncodingType(PlaintextPtr pt);
 void DestroyPlaintext(PlaintextPtr pt);
 
 // --- Ciphertext ---
