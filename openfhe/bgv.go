@@ -70,6 +70,18 @@ func (p *ParamsBGV) SetScalingTechnique(technique int) error {
 	return nil
 }
 
+func (p *ParamsBGV) SetSecurityLevel(level SecurityLevel) error {
+	if p.ptr == nil {
+		return ErrParamsBGVNil
+	}
+	status := C.ParamsBGV_SetSecurityLevel(p.ptr, C.OFHESecurityLevel(level))
+	err := checkPKEErrorMsg(status)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func (p *ParamsBGV) SetMultipartyMode(mode int) error {
 	if p.ptr == nil {
 		return ErrParamsBGVNil

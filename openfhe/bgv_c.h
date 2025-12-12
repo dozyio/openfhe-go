@@ -15,6 +15,7 @@ PKEErr NewParamsBGV(ParamsBGVPtr *out);
 PKEErr ParamsBGV_SetPlaintextModulus(ParamsBGVPtr p, uint64_t mod);
 PKEErr ParamsBGV_SetMultiplicativeDepth(ParamsBGVPtr p, int depth);
 PKEErr ParamsBGV_SetScalingTechnique(ParamsBGVPtr p, int technique);
+PKEErr ParamsBGV_SetSecurityLevel(ParamsBGVPtr p, OFHESecurityLevel level);
 PKEErr ParamsBGV_SetMultipartyMode(ParamsBGVPtr p, int mode);
 PKEErr ParamsBGV_SetPREMode(ParamsBGVPtr p, int mode);
 PKEErr ParamsBGV_SetPRENumHops(ParamsBGVPtr p, uint32_t numHops);

@@ -53,6 +53,18 @@ PKEErr ParamsBGV_SetScalingTechnique(ParamsBGVPtr p, int technique) {
   PKE_CATCH_RETURN()
 }
 
+PKEErr ParamsBGV_SetSecurityLevel(ParamsBGVPtr p, OFHESecurityLevel level) {
+  try {
+    if (!p) {
+      return MakePKEError("ParamsBGV_SetSecurityLevel: null params");
+    }
+    reinterpret_cast<CCParams<CryptoContextBGVRNS> *>(p)->SetSecurityLevel(
+        static_cast<lbcrypto::SecurityLevel>(level));
+    return MakePKEOk();
+  }
+  PKE_CATCH_RETURN()
+}
+
 void DestroyParamsBGV(ParamsBGVPtr p) {
   delete reinterpret_cast<CCParams<CryptoContextBGVRNS> *>(p);
 }

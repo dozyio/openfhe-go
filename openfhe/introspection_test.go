@@ -380,6 +380,7 @@ func TestPlaintextIntrospection_BGV(t *testing.T) {
 
 	params.SetPlaintextModulus(65537)
 	params.SetMultiplicativeDepth(2)
+	params.SetSecurityLevel(HEStd128Classic)
 
 	cc, err := NewCryptoContextBGV(params)
 	mustT(t, err, "Failed to create CryptoContext")
