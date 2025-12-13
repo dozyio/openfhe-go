@@ -82,6 +82,18 @@ func (p *ParamsBGV) SetSecurityLevel(level SecurityLevel) error {
 	return nil
 }
 
+func (p *ParamsBGV) SetDigitSize(digitSize int) error {
+	if p.ptr == nil {
+		return ErrParamsBGVNil
+	}
+	status := C.ParamsBGV_SetDigitSize(p.ptr, C.int(digitSize))
+	err := checkPKEErrorMsg(status)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func (p *ParamsBGV) SetMultipartyMode(mode int) error {
 	if p.ptr == nil {
 		return ErrParamsBGVNil

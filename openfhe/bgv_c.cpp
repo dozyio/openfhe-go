@@ -65,6 +65,18 @@ PKEErr ParamsBGV_SetSecurityLevel(ParamsBGVPtr p, OFHESecurityLevel level) {
   PKE_CATCH_RETURN()
 }
 
+PKEErr ParamsBGV_SetDigitSize(ParamsBGVPtr p, int digitSize) {
+  try {
+    if (!p) {
+      return MakePKEError("ParamsBGV_SetDigitSize: null params");
+    }
+    reinterpret_cast<CCParams<CryptoContextBGVRNS> *>(p)->SetDigitSize(
+        digitSize);
+    return MakePKEOk();
+  }
+  PKE_CATCH_RETURN()
+}
+
 void DestroyParamsBGV(ParamsBGVPtr p) {
   delete reinterpret_cast<CCParams<CryptoContextBGVRNS> *>(p);
 }
